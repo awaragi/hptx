@@ -6,6 +6,6 @@
     "agent.html"
   ],
   "title": "About hptx",
-  "output": "../dist/about.html",
+  "output": "../../dist/about.html",
   "brand": "HPTX"
 }
