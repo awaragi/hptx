@@ -29,7 +29,15 @@ The design canvas is **1710×1107**. The shell scales it to fit the viewport.
 
 ```bash
 npm install
+npm link
 ```
+
+`npm link` registers the local `hptx` binary globally so you can run it from
+any folder without publishing to the npm registry. (`npm unlink -g hptx` to
+remove the link.)
+
+Inside this repo you can also use `npx hptx …` after `npm install`. From
+other directories, use the linked `hptx` command.
 
 Try the framework with either sample deck. Dev prints a Local URL (usually
 http://localhost:5173/).
@@ -38,24 +46,24 @@ http://localhost:5173/).
 looks in practice:
 
 ```bash
-npx hptx dev --cwd templates
+hptx dev --cwd templates
 ```
 
 **About hptx** — a short narrative deck that shows what the platform is for
 (escape static PPTX, agent authoring, ship a single HTML file):
 
 ```bash
-npx hptx dev --cwd decks/about
+hptx dev --cwd decks/about
 ```
 
 Build a single-file copy of either deck the same way:
 
 ```bash
-npx hptx build --cwd templates
-npx hptx build --cwd decks/about
+hptx build --cwd templates
+hptx build --cwd decks/about
 ```
 
-(`npm run dev -- --cwd templates` and the other `npm run … --` forms still work.)
+(`npx hptx …` inside this repo, and `npm run … --` forms, still work.)
 
 ## Navigation
 
