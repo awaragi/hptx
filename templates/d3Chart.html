@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>D3 chart</title>
+<!--
+  Template: d3Chart — themed D3 bar chart; ←/→ switch the data series.
+  Needs the D3 CDN script in deck.json `scripts` (npm run new adds it).
+  Pass elements to D3, not selector strings: d3.select(document.getElementById('…')).
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+  .dc-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 380px; gap: 28px; }
+  .dc-card {
+    min-height: 0; padding: 26px 30px; border-radius: 18px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  .dc-tabs { display: flex; gap: 10px; margin-bottom: 14px; }
+  .dc-tab {
+    appearance: none; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+    padding: 9px 18px; border-radius: 30px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text-dim);
+    transition: all .2s var(--ease);
+  }
+  .dc-tab.is-active { border-color: var(--brand); background: rgba(var(--brand-rgb), .12); color: var(--text-strong); }
+  .dc-chart { flex: 1; min-height: 0; width: 100%; }
+  /* Surface colors via tokens so the light/dark toggle restyles the axes. */
+  .dc-chart .tick text { fill: var(--text-dim); font-size: 15px; }
+  .dc-chart .tick line, .dc-chart .domain { stroke: var(--line); }
+  .dc-chart .dc-value { fill: var(--text-strong); font-size: 16px; font-weight: 700; }
+
+  .dc-notes h3 { margin: 0 0 12px; font-size: 24px; color: var(--text-strong); }
+  .dc-notes p { margin: 0 0 16px; font-size: 18px; line-height: 1.55; color: var(--text-dim); }
+  .dc-legend { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+  .dc-legend span { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--text); }
+  .dc-legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+</style>
+<script>
+  var series = [];
+  var current = 0;
+  var colors = {};
+
+  /* Accent colors come from theme tokens; refreshed when a theme is applied. */
+  function readColors(D) {
+    colors = { bar: D.cssVar('--brand'), highlight: D.cssVar('--accent') };
+  }
+
+  function draw() {
+    var data = series[current];
+    if (!data || !window.d3) return;
+    /* Fixed viewBox: the shell scales the whole canvas, so never measure pixels. */
+    var W = 1000, H = 560;
+    var m = { top: 30, right: 20, bottom: 44, left: 56 };
+    var svg = d3.select(document.getElementById('dcChart')).attr('viewBox', '0 0 ' + W + ' ' + H);
+    svg.selectAll('*').remove();
+
+    var x = d3.scaleBand().domain(data.points.map(function (p) { return p.label; })).range([m.left, W - m.right]).padding(0.32);
+    var y = d3.scaleLinear().domain([0, d3.max(data.points, function (p) { return p.value; }) * 1.15]).nice().range([H - m.bottom, m.top]);
+    var peak = d3.max(data.points, function (p) { return p.value; });
+
+    svg.append('g').attr('transform', 'translate(0,' + (H - m.bottom) + ')').call(d3.axisBottom(x).tickSizeOuter(0));
+    svg.append('g').attr('transform', 'translate(' + m.left + ',0)').call(d3.axisLeft(y).ticks(5).tickSizeOuter(0));
+
+    svg.append('g').selectAll('rect').data(data.points).join('rect')
+      .attr('x', function (p) { return x(p.label); })
+      .attr('width', x.bandwidth())
+      .attr('y', H - m.bottom).attr('height', 0).attr('rx', 6)
+      .attr('fill', function (p) { return p.value === peak ? colors.highlight : colors.bar; })
+      .transition().duration(600)
+      .attr('y', function (p) { return y(p.value); })
+      .attr('height', function (p) { return H - m.bottom - y(p.value); });
+
+    svg.append('g').selectAll('text').data(data.points).join('text')
+      .attr('class', 'dc-value').attr('text-anchor', 'middle')
+      .attr('x', function (p) { return x(p.label) + x.bandwidth() / 2; })
+      .attr('y', function (p) { return y(p.value) - 10; })
+      .text(function (p) { return p.value; });
+
+    document.getElementById('dcNoteTitle').textContent = data.name;
+    document.getElementById('dcNoteText').textContent = data.note;
+    document.querySelectorAll('.dc-tab').forEach(function (el, i) { el.classList.toggle('is-active', i === current); });
+    var legend = document.getElementById('dcLegend');
+    legend.innerHTML = '<span><i></i>Value</span><span><i></i>Peak</span>';
+    legend.querySelectorAll('i')[0].style.background = colors.bar;
+    legend.querySelectorAll('i')[1].style.background = colors.highlight;
+  }
+
+  window.registerSlide({
+    title: 'D3 chart',
+    icon: 'database',
+    boot: function (D) {
+      series = JSON.parse(document.getElementById('dcData').textContent);
+      readColors(D);
+      var tabs = document.getElementById('dcTabs');
+      series.forEach(function (s, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dc-tab';
+        b.textContent = s.name;
+        b.addEventListener('click', function () { D.setStep(D.currentKey(), i); });
+        tabs.appendChild(b);
+      });
+      this.stepCount = series.length;
+      D.onThemeRefresh(function () { readColors(D); draw(); });
+    },
+    stepCount: 0,
+    landingStep: 0,
+    setStep: function (i) { current = i; draw(); },
+    redraw: draw
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Metrics</div>
+  <h1 class="slide-title">A themed D3 chart</h1>
+  <p class="slide-sub">Press ← / → or click a tab to switch series. Bars use theme tokens and follow themes.</p>
+  <div class="dc-body">
+    <div class="dc-card">
+      <div class="dc-tabs" id="dcTabs"></div>
+      <svg class="dc-chart" id="dcChart" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+    </div>
+    <div class="dc-card dc-notes">
+      <h3 id="dcNoteTitle"></h3>
+      <p id="dcNoteText"></p>
+      <div class="dc-legend" id="dcLegend"></div>
+    </div>
+  </div>
+
+  <script type="application/json" id="dcData">
+    [
+      { "name": "Lead time (days)", "note": "Median days from commit to production, by quarter.",
+        "points": [{ "label": "Q1", "value": 21 }, { "label": "Q2", "value": 16 }, { "label": "Q3", "value": 11 }, { "label": "Q4", "value": 7 }] },
+      { "name": "Deploys per week", "note": "Production deployments per week, by quarter.",
+        "points": [{ "label": "Q1", "value": 3 }, { "label": "Q2", "value": 6 }, { "label": "Q3", "value": 11 }, { "label": "Q4", "value": 18 }] },
+      { "name": "Escaped defects", "note": "Defects found in production per release, by quarter.",
+        "points": [{ "label": "Q1", "value": 9 }, { "label": "Q2", "value": 7 }, { "label": "Q3", "value": 4 }, { "label": "Q4", "value": 2 }] }
+    ]
+  </script>
+</body>
+</html>

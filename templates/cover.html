@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deck title</title>
+<!--
+  Cover — the home page title block (deck.json "cover"). Not a slide: no registerSlide,
+  no navigation entry. The shell puts this markup top left on the home page, above the
+  keyboard hints and beside the agenda, and centers it when the agenda is turned off.
+  Rules: shell/contract/SLIDE-CONTRACT.md (Cover) · CSS here is scoped to the title block.
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  .title-main { font-size: 92px; }
+  .title-desc { font-size: 21px; line-height: 1.58; margin-top: 22px; }
+  .cover-meta {
+    margin: 18px 0 0; font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <div class="title-logo"><div class="mark"></div><div class="word">Brand.</div></div>
+  <h1 class="title-main">Deck<br><span>title.</span></h1>
+  <p class="title-desc">One or two sentences on what this presentation covers and why it matters to
+    the audience.</p>
+  <p class="cover-meta">Month YYYY · Presenter name</p>
+</body>
+</html>

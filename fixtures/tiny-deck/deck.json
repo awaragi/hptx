@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "title": "Tiny Deck",
+  "output": "./Tiny-Deck.html",
+  "slides": ["hello.html"]
+}

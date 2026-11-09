@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Product direction: a reusable platform for authoring HTML
+  presentations. Decks are folders with deck.json and standalone slide
+  HTML files, built into a single HTML file.
+
+  Stack: TypeScript, Vite, Vitest (and related tooling). The shell
+  runtime is a vanilla HTML/JS template (shell/template.html).
+  Deck themes are CSS files set as deck.json `theme` (baked at build)
+  or loaded in Settings (browser preview). Design canvas for
+  decks: 1710×1107. Theme colors must use named CSS tokens
+  (var(--brand), etc.) — do not invent new color tokens without approval.
+
+  Prefer OpenSpec changes for all feature and platform work.
+
+rules:
+  proposal:
+    - State whether the change is platform (engine/tooling) or deck content
+    - Call out migration impact on existing decks when relevant
+  specs:
+    - Prefer observable behavior (Given/When/Then) over implementation detail
+  design:
+    - Prefer TypeScript for build tooling; keep the shell runtime dependency-free
+    - Note how theme files (deck.json `theme`, Settings) are loaded or packaged
+  tasks:
+    - Include verification (unit/Vitest and/or visual Playwright MCP) where UI changes
+
+operations:
+  apply:
+    guidance:
+      - Implement only tasks from the active OpenSpec change
+      - Prefer focused tests before broad suites
+  archive:
+    guidance:
+      - Keep the completion summary concise and note any leftover follow-up work

@@ -1,0 +1,18 @@
+{
+  "section": {
+    "description": "Section divider with number, heading, and lead text"
+  },
+  "cardGrid": {
+    "description": "Grid of icon cards; arrow keys highlight, Enter or click opens the detail modal"
+  },
+  "stepper": {
+    "description": "Process steps revealed one at a time through the shell's step navigation"
+  },
+  "d3Chart": {
+    "description": "Themed D3 bar chart that steps through data series and follows theme changes",
+    "scripts": ["https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"]
+  },
+  "blank": {
+    "description": "Minimal skeleton showing every contract piece with comments"
+  }
+}

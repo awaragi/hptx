@@ -1,0 +1,28 @@
+---
+description: All features and non-trivial changes must go through OpenSpec
+alwaysApply: true
+---
+
+# OpenSpec required for features
+
+This project uses OpenSpec. Do **not** implement features, refactors, or behavior changes by coding first.
+
+## When this applies
+
+- New capabilities, user-facing behavior, architecture moves, and non-trivial refactors
+- Platform work (build tooling, deck APIs, theming)
+
+## When this does not apply
+
+- Typos, comments, formatting-only edits
+- Trivial one-line fixes with no behavior change
+- Answering questions / read-only exploration
+
+## Required flow
+
+1. **Explore** (optional): `/opsx-explore` or the `openspec-explore` skill
+2. **Propose**: `/opsx-propose` (or `openspec-propose`) — create the change with proposal, specs, design, and tasks under `openspec/changes/`
+3. **Apply**: `/opsx-apply` — implement only from that change’s tasks
+4. **Archive**: `/opsx-archive` when the change is done and specs are synced
+
+If the user asks for a feature without an OpenSpec change, start the propose flow (or ask which change to use). Do not skip OpenSpec because the request sounds small if it changes product behavior.

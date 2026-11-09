@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blank</title>
+<!--
+  Template: blank — every contract piece, with comments.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+  The filename stem is the slide key; never write it in this file.
+-->
+<!-- Reference only (editor support); assemble removes this link. -->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  /* Every rule is scoped to this slide. :scope is the slide <section>. */
+  :scope { justify-content: flex-start; }
+
+  .blank-body {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  }
+  .blank-cell {
+    padding: 26px 28px; border-radius: 16px;
+    background: var(--panel); border: 1px solid var(--line);
+    font-size: 19px; line-height: 1.55; color: var(--text);
+    transition: border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .blank-cell h3 { margin: 0 0 10px; font-size: 22px; color: var(--text-strong); }
+  /* Colors come from theme tokens only (see slide-contract.css). */
+  .blank-cell.is-current { border-color: var(--brand); background: rgba(var(--brand-rgb), .08); }
+</style>
+<script>
+  /* All scripts of this slide (head, then body) share one scope.
+     Top-level names stay private to the slide. */
+  function blankCells() { return document.querySelectorAll('.blank-cell'); }
+
+  window.registerSlide({
+    title: 'Blank',          /* agenda / nav drawer label */
+    icon: 'compass',         /* any key of D.iconPaths */
+    // agendaTitle: 'Short tile label',
+    // agendaSection: 'Group heading',
+    // showOnTitleAgenda: false,
+
+    /* Runs once after the deck is parsed and CDN libraries are loaded. */
+    boot: function (D) {
+      /* `document` lookups only see this slide. */
+      var data = JSON.parse(document.getElementById('blankData').textContent);
+      var body = document.getElementById('blankBody');
+      data.forEach(function (cell) {
+        var el = document.createElement('div');
+        el.className = 'blank-cell';
+        el.innerHTML = '<h3>' + cell.heading + '</h3><p>' + cell.text + '</p>';
+        body.appendChild(el);
+      });
+      this.stepCount = data.length;
+    },
+    stepCount: 0,            /* number, or function returning one */
+    landingStep: 0,
+    /* The shell owns ←/→ and calls setStep with the new index. */
+    setStep: function (i) {
+      blankCells().forEach(function (el, idx) { el.classList.toggle('is-current', idx === i); });
+    },
+    activateStep: function () { /* Enter on the current step */ },
+    onEnter: function (prevKey) { /* slide became active */ },
+    onLeave: function (nextKey) { /* slide is being left */ },
+    onKey: function (e) { return false; /* return true to consume the key */ },
+    onReset: function () { blankCells().forEach(function (el) { el.classList.remove('is-current'); }); },
+    redraw: function () { /* re-render charts before print */ }
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Eyebrow</div>
+  <h1 class="slide-title">Slide title</h1>
+  <p class="slide-sub">One or two sentences that frame the slide. Sized for the 1710×1107 canvas.</p>
+  <div class="blank-body" id="blankBody"></div>
+
+  <!-- Data block: stays in the markup, read with JSON.parse. -->
+  <script type="application/json" id="blankData">
+    [
+      { "heading": "Markup", "text": "Write slide markup in the body. Assemble adds the section wrapper." },
+      { "heading": "Styles", "text": "Style blocks in the head are scoped to this slide." },
+      { "heading": "Scripts", "text": "Inline scripts in head or body; one registerSlide call per slide." }
+    ]
+  </script>
+</body>
+</html>

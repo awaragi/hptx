@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>You brief. The agent builds.</title>
+<!--
+  About hptx — Agent: brief → sketch → files → theme → preview/ship (chevron + artifact).
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+
+  .ag-body {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-rows: auto 1fr; gap: 20px;
+  }
+
+  .ag-rail {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+    flex-shrink: 0; min-height: 80px;
+  }
+  .ag-step {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 0 26px 0 34px; min-height: 80px; cursor: pointer;
+    background: var(--panel); border: none; color: var(--text-dim);
+    font: inherit; opacity: .55;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%);
+    margin-left: -12px;
+    transition: opacity .3s var(--ease), background .3s var(--ease), color .3s var(--ease);
+  }
+  .ag-step:first-child {
+    margin-left: 0; padding-left: 22px;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+    border-radius: 14px 0 0 14px;
+  }
+  .ag-step:last-child {
+    padding-right: 22px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 18px 50%);
+    border-radius: 0 14px 14px 0;
+  }
+  .ag-step.is-done {
+    opacity: .85; background: rgba(var(--brand-rgb), .12); color: var(--text-strong);
+  }
+  .ag-step.is-current {
+    opacity: 1; background: var(--brand); color: var(--on-brand); z-index: 1;
+  }
+  .ag-num {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800;
+    border: 2px solid currentColor;
+  }
+  .ag-step.is-current .ag-num {
+    background: var(--on-brand); color: var(--brand); border-color: var(--on-brand);
+  }
+  .ag-step.is-done .ag-num {
+    background: var(--brand); color: var(--on-brand); border-color: var(--brand);
+  }
+  .ag-label { font-size: 22px; font-weight: 750; letter-spacing: .2px; }
+
+  .ag-panel {
+    padding: 28px 32px; border-radius: 20px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.55fr); gap: 22px;
+    min-height: 0; overflow: hidden; align-items: stretch;
+  }
+  .ag-panel.is-in { animation: agentPanelIn .45s var(--ease) both; }
+  .ag-copy {
+    display: flex; flex-direction: column; gap: 14px; min-width: 0;
+    justify-content: flex-start; padding-top: 4px;
+  }
+  .ag-kicker { font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--brand); }
+  .ag-copy h3 { margin: 0; font-size: 34px; line-height: 1.15; color: var(--text-strong); }
+  .ag-copy p { margin: 0; font-size: 19px; line-height: 1.45; color: var(--text-dim); }
+  .ag-points { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .ag-points li { display: flex; gap: 12px; align-items: baseline; font-size: 18px; line-height: 1.35; color: var(--text); }
+  .ag-points li::before {
+    content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--brand);
+    flex-shrink: 0; transform: translateY(-2px);
+  }
+
+  .ag-viz {
+    min-width: 0; min-height: 0;
+    border-radius: 16px; border: 1px solid var(--line); background: var(--bg);
+    padding: 18px 20px; display: flex; align-items: stretch; justify-content: stretch;
+  }
+  .ag-viz > * { flex: 1; width: 100%; min-height: 0; }
+  .ag-viz:has(.viz-ascii) {
+    align-items: center; justify-content: center;
+  }
+  .ag-viz:has(.viz-ascii) > .viz-ascii {
+    flex: 0 1 auto; width: max-content; max-width: 100%; height: auto; max-height: 100%;
+  }
+
+  /* Chat window */
+  .viz-chat {
+    display: grid; grid-template-rows: auto 1fr; height: 100%; min-height: 0;
+    border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel);
+  }
+  .viz-chat-bar {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid var(--line); background: var(--bg);
+    font-size: 13px; font-weight: 700; color: var(--text-dim); letter-spacing: .3px;
+  }
+  .viz-chat-bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--brand); }
+  .viz-chat-log {
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;
+    overflow: hidden; justify-content: flex-start;
+  }
+  .viz-msg {
+    max-width: 96%; padding: 11px 16px; border-radius: 12px;
+    font-size: 16px; line-height: 1.4; animation: agentFieldIn .4s var(--ease) both;
+  }
+  .viz-msg.you {
+    align-self: flex-end; background: var(--brand); color: var(--on-brand);
+    border-bottom-right-radius: 4px;
+  }
+  .viz-msg.agent {
+    align-self: flex-start; background: var(--bg); border: 1px solid var(--line);
+    color: var(--text); border-bottom-left-radius: 4px;
+  }
+  .viz-msg .who {
+    display: block; font-size: 11px; font-weight: 750; letter-spacing: .6px;
+    text-transform: uppercase; margin-bottom: 4px; opacity: .8;
+  }
+  .viz-msg:nth-child(2) { animation-delay: .06s; }
+  .viz-msg:nth-child(3) { animation-delay: .12s; }
+  .viz-msg:nth-child(4) { animation-delay: .18s; }
+  .viz-msg:nth-child(5) { animation-delay: .24s; }
+  .viz-msg:nth-child(6) { animation-delay: .3s; }
+
+  /* ASCII sketch */
+  .viz-ascii {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 16px; line-height: 1.32; color: var(--text); white-space: pre; overflow: auto;
+  }
+  .viz-ascii .prompt { color: var(--brand); font-weight: 700; }
+
+  /* Authoring: four equal squares */
+  .viz-files {
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 12px; height: 100%; min-height: 0;
+  }
+  .viz-files-cell {
+    padding: 14px; border-radius: 14px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden;
+  }
+  .viz-files-cell .cell-label {
+    font-size: 12px; font-weight: 750; letter-spacing: .7px; text-transform: uppercase; color: var(--brand);
+    flex-shrink: 0;
+  }
+  .viz-files-cell .cell-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  .viz-files-cell .cell-note { font-size: 13px; line-height: 1.35; color: var(--text-dim); margin-top: auto; }
+  .viz-tree {
+    display: flex; flex-direction: column; gap: 4px; justify-content: flex-start;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+    min-height: 0; overflow: auto;
+  }
+  .viz-tree .folder { font-weight: 750; color: var(--text-strong); margin-bottom: 2px; }
+  .viz-tree .row {
+    display: grid; grid-template-columns: 10px 1fr; align-items: center; column-gap: 8px;
+    padding: 5px 8px; border-radius: 8px;
+    color: var(--text); border: 1px solid transparent;
+  }
+  .viz-tree .row.is-hot {
+    background: rgba(var(--brand-rgb), .1); border-color: rgba(var(--brand-rgb), .35); color: var(--text-strong);
+  }
+  .viz-tree .row i {
+    width: 8px; height: 8px; border-radius: 2px; background: var(--line); justify-self: center;
+  }
+  .viz-tree .row.is-hot i { background: var(--brand); }
+  .viz-files-store {
+    position: relative; flex: 1; min-height: 120px; width: 100%;
+  }
+  .viz-files-store .src {
+    position: absolute; left: 0; top: 18%; width: 36%; height: 64%; z-index: 2;
+    box-sizing: border-box;
+    border-radius: 10px; border: 2px solid var(--brand); background: var(--panel);
+  }
+  .viz-files-store .src em {
+    position: absolute; left: 10px; top: 10px;
+    font-style: normal; font-size: 11px; font-weight: 800; color: var(--brand);
+    letter-spacing: .4px; text-transform: uppercase;
+  }
+  .viz-files-store .src i {
+    position: absolute; left: 10px; height: 7px; border-radius: 3px;
+    background: rgba(var(--brand-rgb), .4);
+  }
+  .viz-files-store .src i:nth-child(2) { top: 40%; width: 68%; }
+  .viz-files-store .src i:nth-child(3) { top: 56%; width: 50%; }
+  .viz-files-store .src i:nth-child(4) { top: 72%; width: 60%; background: rgba(var(--brand-rgb), .22); }
+  .viz-files-store .arm {
+    position: absolute; z-index: 1; height: 3px; background: var(--brand);
+    transform-origin: left center;
+  }
+  .viz-files-store .arm::after {
+    content: ""; position: absolute; right: -1px; top: 50%;
+    width: 0; height: 0; transform: translateY(-50%);
+    border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+    border-left: 8px solid var(--brand);
+  }
+  .viz-files-store .arm.a1 { left: 36%; top: 30%; width: 16%; transform: rotate(-28deg); }
+  .viz-files-store .arm.a2 { left: 36%; top: 68%; width: 16%; transform: rotate(28deg); }
+  .viz-files-store .dest {
+    position: absolute; right: 0; width: 46%; height: 40%; z-index: 2;
+    box-sizing: border-box; border-radius: 10px; overflow: hidden;
+  }
+  .viz-files-store .dest.sp {
+    top: 4%;
+    border: 1px solid rgba(var(--brand-rgb), .4); background: rgba(var(--brand-rgb), .1);
+  }
+  .viz-files-store .dest.git {
+    bottom: 4%;
+    border: 1px solid var(--line); background: var(--bg);
+  }
+  .viz-files-store .dest .badge {
+    position: absolute; left: 10px; top: 8px;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
+  }
+  .viz-files-store .dest.sp .badge { background: var(--brand); color: var(--on-brand); }
+  .viz-files-store .dest.git .badge { background: var(--text-strong); color: var(--bg); }
+  .viz-files-store .dest .title {
+    position: absolute; left: 10px; top: 48%;
+    font-size: 14px; font-weight: 750; color: var(--text-strong);
+  }
+  .viz-files-store .dest .sub {
+    position: absolute; left: 10px; bottom: 8px;
+    font-size: 11px; font-weight: 650; color: var(--text-dim);
+  }
+  .viz-files-store .dest.git .dots {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 52px; height: 10px;
+  }
+  .viz-files-store .dest.git .dots i {
+    position: absolute; top: 0; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--brand);
+  }
+  .viz-files-store .dest.git .dots i:nth-child(1) { left: 0; opacity: .35; }
+  .viz-files-store .dest.git .dots i:nth-child(2) { left: 18px; opacity: .65; }
+  .viz-files-store .dest.git .dots i:nth-child(3) { left: 36px; }
+  .viz-files-store .dest.git .dots::before {
+    content: ""; position: absolute; left: 5px; right: 5px; top: 4px; height: 2px;
+    background: rgba(var(--brand-rgb), .35);
+  }
+  .viz-files-mod {
+    position: relative; flex: 1; min-height: 130px; width: 100%;
+  }
+  .viz-files-mod .mod-card {
+    position: absolute; left: 0; top: 10%; width: 38%; height: 80%; z-index: 2;
+    box-sizing: border-box;
+    border-radius: 10px; border: 2px solid var(--brand);
+    background: var(--panel);
+  }
+  .viz-files-mod .mod-card em {
+    position: absolute; left: 10px; top: 10px;
+    font-style: normal; font-size: 11px; font-weight: 800; color: var(--brand);
+    letter-spacing: .5px; text-transform: uppercase;
+  }
+  .viz-files-mod .mod-card i {
+    position: absolute; left: 10px; height: 7px; border-radius: 3px;
+    background: rgba(var(--brand-rgb), .4);
+  }
+  .viz-files-mod .mod-card i:nth-child(2) { top: 42%; width: 70%; }
+  .viz-files-mod .mod-card i:nth-child(3) { top: 58%; width: 52%; }
+  .viz-files-mod .mod-card i:nth-child(4) { top: 74%; width: 64%; background: rgba(var(--brand-rgb), .22); }
+  .viz-files-mod .arm {
+    position: absolute; z-index: 1; height: 3px; background: var(--brand);
+    transform-origin: left center;
+  }
+  .viz-files-mod .arm::after {
+    content: ""; position: absolute; right: -1px; top: 50%;
+    width: 0; height: 0; transform: translateY(-50%);
+    border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+    border-left: 8px solid var(--brand);
+  }
+  .viz-files-mod .arm.a1 {
+    left: 38%; top: 28%; width: 18%;
+    transform: rotate(-32deg);
+  }
+  .viz-files-mod .arm.a2 {
+    left: 38%; top: 70%; width: 18%;
+    transform: rotate(32deg);
+  }
+  .viz-files-mod .deck {
+    position: absolute; right: 0; width: 40%; height: 34%; z-index: 2;
+    box-sizing: border-box;
+    border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  }
+  .viz-files-mod .deck.d1 { top: 8%; }
+  .viz-files-mod .deck.d2 { bottom: 8%; }
+  .viz-files-mod .deck span {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; font-weight: 750; color: var(--text-strong);
+  }
+  .viz-files-loop {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: 1;
+  }
+  .viz-files-loop .hop {
+    flex: 1; padding: 12px 8px; border-radius: 10px; text-align: center;
+    background: var(--bg); border: 1px solid var(--line);
+    font-size: 13px; font-weight: 750; color: var(--text-strong);
+  }
+  .viz-files-loop .hop.hot {
+    background: rgba(var(--brand-rgb), .12); border-color: rgba(var(--brand-rgb), .4); color: var(--brand);
+  }
+  .viz-files-loop .sep {
+    font-size: 14px; font-weight: 800; color: var(--brand); flex-shrink: 0;
+  }
+
+  /* Theme artifact — color tiles + bake / override */
+  .viz-theme {
+    display: grid; grid-template-rows: auto auto; gap: 14px; height: 100%; min-height: 0;
+    align-content: start;
+  }
+  .viz-swatches {
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto auto;
+    gap: 12px; min-height: 0;
+  }
+  .viz-swatches span {
+    border-radius: 12px; border: 1px solid var(--line);
+    display: flex; align-items: flex-end; justify-content: flex-start;
+    padding: 18px 20px; font-size: 20px; font-weight: 750; letter-spacing: .4px;
+    min-height: 0; height: 200px;
+  }
+  .viz-swatches span:nth-child(1) { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+  .viz-swatches span:nth-child(2) { background: rgba(var(--brand-rgb), .45); color: var(--text-strong); }
+  .viz-swatches span:nth-child(3) { background: var(--panel); color: var(--text-dim); }
+  .viz-swatches span:nth-child(4) { background: var(--text-strong); color: var(--bg); border-color: var(--text-strong); }
+  .viz-swatches span:nth-child(5) { background: var(--bg); color: var(--text-dim); }
+  .viz-swatches span:nth-child(6) { background: rgba(var(--brand-rgb), .16); color: var(--brand); }
+  .viz-theme-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-shrink: 0;
+    align-items: start;
+  }
+  .viz-theme-card {
+    padding: 12px 16px; border-radius: 10px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .viz-theme-card h4 { margin: 0; font-size: 20px; color: var(--text-strong); }
+  .viz-theme-card p { margin: 0; font-size: 16px; line-height: 1.35; color: var(--text-dim); }
+
+  /* Preview + ship — browser with Escape “fully custom” models */
+  .viz-preview {
+    display: grid; grid-template-rows: auto 1fr; gap: 0; height: 100%; min-height: 0;
+    border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel);
+  }
+  .viz-chrome {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  .viz-chrome .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .viz-chrome .dot:nth-child(1) { background: rgba(var(--brand-rgb), .55); }
+  .viz-chrome .url {
+    flex: 1; margin-left: 8px; padding: 6px 12px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--line);
+    font-size: 13px; font-weight: 600; color: var(--text-dim);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .viz-preview-body {
+    padding: 16px; display: grid; grid-template-rows: auto 1fr; gap: 12px; min-height: 0;
+  }
+  .viz-preview-body .live {
+    font-size: 12px; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; color: var(--brand);
+  }
+  .viz-model.chart {
+    height: 100%; min-height: 0; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .viz-model.chart strong {
+    font-size: 16px; font-weight: 750; color: var(--text-strong); letter-spacing: .2px;
+  }
+  .viz-model.chart .viz-model-frame {
+    flex: 1; min-height: 0; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); padding: 16px; display: grid; grid-template-rows: auto 1fr; gap: 12px;
+    align-items: end;
+  }
+  .viz-model.chart .viz-model-frame .h {
+    height: 14px; border-radius: 4px; background: rgba(var(--brand-rgb), .35); width: 42%;
+  }
+  .viz-model.chart .bars {
+    display: flex; align-items: flex-end; gap: 14px; height: 100%; min-height: 0;
+  }
+  .viz-model.chart .bars i {
+    flex: 1; border-radius: 6px 6px 2px 2px; background: rgba(var(--brand-rgb), .4);
+  }
+  .viz-model.chart .bars i:nth-child(1) { height: 45%; }
+  .viz-model.chart .bars i:nth-child(2) { height: 70%; background: var(--brand); }
+  .viz-model.chart .bars i:nth-child(3) { height: 85%; }
+  .viz-model.chart .bars i:nth-child(4) { height: 55%; background: rgba(var(--brand-rgb), .55); }
+  .viz-model.chart .bars i:nth-child(5) { height: 92%; background: var(--brand); }
+  .viz-model.chart .bars i:nth-child(6) { height: 62%; }
+
+  @keyframes agentPanelIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes agentFieldIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes agentPulse {
+    0%, 100% { opacity: .75; }
+    50% { opacity: 1; }
+  }
+</style>
+<script>
+  var agSteps = [];
+
+  function agPaint(i) {
+    document.querySelectorAll('.ag-step').forEach(function (el, idx) {
+      el.classList.toggle('is-done', idx < i);
+      el.classList.toggle('is-current', idx === i);
+    });
+    var step = agSteps[i];
+    if (!step) return;
+    var panel = document.getElementById('agPanel');
+    var copy = '<div class="ag-copy">' +
+      '<div class="ag-kicker">Step ' + (i + 1) + ' of ' + agSteps.length + '</div>' +
+      '<h3>' + step.title + '</h3><p>' + step.text + '</p>';
+    if (step.points && step.points.length) {
+      copy += '<ul class="ag-points">' + step.points.map(function (p) {
+        return '<li>' + p + '</li>';
+      }).join('') + '</ul>';
+    }
+    copy += '</div>';
+    panel.innerHTML = copy + '<div class="ag-viz">' + (step.viz || '') + '</div>';
+    panel.classList.remove('is-in');
+    void panel.offsetWidth;
+    panel.classList.add('is-in');
+  }
+
+  window.registerSlide({
+    title: 'You brief. The agent builds.',
+    icon: 'robot',
+    boot: function (D) {
+      agSteps = JSON.parse(document.getElementById('agData').textContent);
+      var rail = document.getElementById('agRail');
+      agSteps.forEach(function (step, i) {
+        var el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'ag-step';
+        el.innerHTML = '<span class="ag-num">' + (i + 1) + '</span><span class="ag-label">' + step.label + '</span>';
+        el.addEventListener('click', function () { D.setStep(D.currentKey(), i); });
+        rail.appendChild(el);
+      });
+      this.stepCount = agSteps.length;
+      agPaint(0);
+    },
+    stepCount: 0,
+    landingStep: 0,
+    setStep: agPaint,
+    onReset: function () { agPaint(0); }
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Authoring</div>
+  <h1 class="slide-title">You brief. The agent builds.</h1>
+  <p class="slide-sub">Describe the talk — don't draw boxes in PowerPoint. Press → to walk the workflow.</p>
+  <div class="ag-body">
+    <div class="ag-rail" id="agRail"></div>
+    <div class="ag-panel" id="agPanel"></div>
+  </div>
+
+  <script type="application/json" id="agData">
+    [
+      {
+        "label": "Brief",
+        "title": "You set the brief",
+        "text": "Talk to the agent like a director. Work out audience, length, story, and brand before anyone writes HTML.",
+        "points": [
+          "Who is in the room and what should they leave with",
+          "How many slides and what each one owns",
+          "Brand constraints (colors, tone, must-use terms)"
+        ],
+        "viz": "<div class=\"viz-chat\" aria-hidden=\"true\"><div class=\"viz-chat-bar\"><span class=\"dot\"></span>Agent chat</div><div class=\"viz-chat-log\"><div class=\"viz-msg you\"><span class=\"who\">You</span>I need a presentation about why teams should leave PPTX for interactive HTML…</div><div class=\"viz-msg agent\"><span class=\"who\">Agent</span>Who’s the audience — eng, leadership, mixed?</div><div class=\"viz-msg you\"><span class=\"who\">You</span>Mostly engineers + a few product partners…</div><div class=\"viz-msg agent\"><span class=\"who\">Agent</span>How many slides? Tight keynote or deeper walkthrough?</div><div class=\"viz-msg you\"><span class=\"who\">You</span>Short — cover + ~2 content slides. Story: pain → how agents author → ship…</div><div class=\"viz-msg agent\"><span class=\"who\">Agent</span>Brand? Any tone or “don’ts” I should lock?</div><div class=\"viz-msg you\"><span class=\"who\">You</span>Acme. Calm, no clip art. Theme tokens only…</div></div></div>"
+      },
+      {
+        "label": "Sketch",
+        "title": "Lock the layout in ASCII first",
+        "text": "Freeze structure in a wireframe before pixels. The agent iterates on boxes and hierarchy in chat — you approve the layout, then ask for the real slide.",
+        "points": [
+          "Lock regions first: title, contrast cards, capability rail, detail panel",
+          "Cheap to revise in ASCII — no font or spacing debates yet",
+          "Call out interactive bits (stepper chips, clicker viz) so the agent keeps them",
+          "When it looks right: “turn this ASCII into the Escape slide”"
+        ],
+        "viz": "<pre class=\"viz-ascii\" aria-hidden=\"true\">+--------------------------------------------------------------------------+\n| WHY HPTX                                                                 |\n| Escape the slide trap                                                    |\n| PPTX is a document. You want something that moves — and coding agents…   |\n|                                                                          |\n| +-------------------------------+  +----------------------------------+  |\n| | WHAT YOU'RE LEAVING           |  | WHAT YOU GET                     |  |\n| | · Static boxes and basic fades|  | · Modern HTML, CSS, and JS       |  |\n| | · Formats hard for agents…    |  | · Agents write slides fluently   |  |\n| | · Rebuild the deck per brand  |  | · Charts, motion, custom layouts |  |\n| +-------------------------------+  +----------------------------------+  |\n|                                                                          |\n| CAPABILITIES · press → to explore                                        |\n| [ Graphs ] [ Motion ] [ Clicker* ] [ Scale ] [ Theme ] [ Custom ]        |\n|                                                                          |\n| +----------------------------------------------------------------------+ |\n| | Two buttons. Whole deck.                                             | |\n| | Turn on clicker mode in Settings and a presentation remote walks…    | |\n| |                                                                      | |\n| |      ((laser))====[ BACK ]====[ NEXT ]====grip====( USB )            | |\n| |                                                                      | |\n| |      Steps ████████████████░░░░░░   Slides ██████████░░░░░░          | |\n| +----------------------------------------------------------------------+ |\n| Need PPTX later? Screenshot a slide and paste…                           |\n+--------------------------------------------------------------------------+\n<span class=\"prompt\">\"Lock this layout — then turn the ASCII into the Escape slide…\"</span></pre>"
+      },
+      {
+        "label": "Authoring",
+        "title": "The agent writes the deck",
+        "text": "You drive the agent and preview what it writes. The platform ships extensive docs and tooling so the AI can follow the contract while it builds.",
+        "points": [
+          "One HTML file per slide, plus a small deck.json",
+          "Slide contract, theme tokens, and build checks guide the agent",
+          "Store the deck in Git or SharePoint — real source control for the presentation",
+          "Reuse slides across decks; mix and match into new talks",
+          "Agents can use MCP to screenshot and check visuals — layouts, fonts, navigation — then fine-tune",
+          "You stay in chat: direct changes, then look at the preview"
+        ],
+        "viz": "<div class=\"viz-files\" aria-hidden=\"true\"><div class=\"viz-files-cell\"><div class=\"cell-label\">Structure</div><div class=\"cell-body\"><div class=\"viz-tree\"><div class=\"folder\">decks/about/</div><div class=\"row\"><i></i><span>deck.json</span></div><div class=\"row\"><i></i><span>cover.html</span></div><div class=\"row\"><i></i><span>escape.html</span></div><div class=\"row is-hot\"><i></i><span>agent.html ← writing…</span></div></div></div></div><div class=\"viz-files-cell\"><div class=\"cell-label\">Storage</div><div class=\"cell-body\"><div class=\"viz-files-store\"><div class=\"src\"><em>Deck</em><i></i><i></i><i></i></div><div class=\"arm a1\"></div><div class=\"arm a2\"></div><div class=\"dest sp\"><span class=\"badge\">SharePoint</span><span class=\"title\">Team library</span><span class=\"sub\">Preview in place</span></div><div class=\"dest git\"><span class=\"badge\">Git</span><span class=\"title\">Source control</span><span class=\"sub\">Diff every change</span><span class=\"dots\"><i></i><i></i><i></i></span></div></div><div class=\"cell-note\">Backed up, reviewable, diffable HTML — not a binary blob.</div></div></div><div class=\"viz-files-cell\"><div class=\"cell-label\">Modular</div><div class=\"cell-body\"><div class=\"viz-files-mod\"><div class=\"mod-card\"><em>Slide</em><i></i><i></i><i></i></div><div class=\"arm a1\"></div><div class=\"arm a2\"></div><div class=\"deck d1\"><span>Deck A</span></div><div class=\"deck d2\"><span>Deck B</span></div></div><div class=\"cell-note\">One slide, many presentations.</div></div></div><div class=\"viz-files-cell\"><div class=\"cell-label\">Visual QA</div><div class=\"cell-body\"><div class=\"viz-files-loop\"><div class=\"hop\">Agent</div><div class=\"sep\">→</div><div class=\"hop hot\">MCP</div><div class=\"sep\">→</div><div class=\"hop\">Browser</div></div><div class=\"cell-note\">Screenshot, check layout &amp; type, then refine.</div></div></div></div>"
+      },
+      {
+        "label": "Theme",
+        "title": "Bake it — or restyle at show time",
+        "text": "Colors are role tokens, not one-off hex values. The agent can author a full theme from Settings → Generate theme — not just the slides.",
+        "points": [
+          "Ask the agent for a theme that matches your brand voice",
+          "Bake it into the build for a locked audience look",
+          "Or override at show time: Settings → Apply theme, no rebuild",
+          "Same HTML deck, many brands or events"
+        ],
+        "viz": "<div class=\"viz-theme\" aria-hidden=\"true\"><div class=\"viz-swatches\"><span>brand</span><span>accent</span><span>panel</span><span>ink</span><span>bg</span><span>tint</span></div><div class=\"viz-theme-grid\"><div class=\"viz-theme-card\"><h4>Bake into the file</h4><p>deck.json theme or --theme locks the look into the build for that audience.</p></div><div class=\"viz-theme-card\"><h4>Override at show time</h4><p>Settings → Apply theme on the finished HTML. Same deck, many brands.</p></div></div></div>"
+      },
+      {
+        "label": "Ship",
+        "title": "Preview, restyle, then ship",
+        "text": "Ask the agent to start the preview server and send you the link. When the story lands, have it build a single HTML file.",
+        "points": [
+          "“Start the dev server for this deck and give me the URL to open”",
+          "Try an override theme in Settings (C) without rebuilding",
+          "“Build the deck” → one file under decks/dist/",
+          "Print-compatible — same deck works for handouts and PDF export",
+          "Escape hatch: need a PPTX slide? Screenshot the canvas and paste — authoring still happened in HTML"
+        ],
+        "viz": "<div class=\"viz-preview\" aria-hidden=\"true\"><div class=\"viz-chrome\"><span class=\"dot\"></span><span class=\"dot\"></span><span class=\"dot\"></span><div class=\"url\">localhost:5173/?slide=escape · Chart</div></div><div class=\"viz-preview-body\"><div class=\"live\">Live preview · from your agent</div><div class=\"viz-model chart\"><strong>Chart</strong><div class=\"viz-model-frame\"><div class=\"h\"></div><div class=\"bars\"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div></div></div>"
+      }
+    ]
+  </script>
+</body>
+</html>

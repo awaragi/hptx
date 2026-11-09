@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+dist/
+.tmp/
+*.local
+.vite/
+coverage/
+fixtures/tiny-deck/Tiny-Deck.html

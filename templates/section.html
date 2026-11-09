@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Section</title>
+<!--
+  Template: section — divider between parts of the deck.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: center; }
+  .section-wrap { display: flex; align-items: center; gap: 64px; max-width: 1360px; }
+  .section-num {
+    font-size: 220px; font-weight: 800; line-height: .9; letter-spacing: -8px;
+    color: transparent; -webkit-text-stroke: 2px var(--brand);
+    flex-shrink: 0;
+  }
+  .section-text { min-width: 0; padding-left: 56px; border-left: 2px solid var(--line); }
+  .section-title { font-size: 76px; font-weight: 800; line-height: 1.04; letter-spacing: -1.5px; margin: 0 0 22px; color: var(--text-strong); }
+  .section-title span { color: var(--brand); }
+  .section-lead { font-size: 23px; line-height: 1.55; color: var(--text-dim); margin: 0; max-width: 860px; }
+  .section-points { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+  .section-points span {
+    font-size: 15px; font-weight: 600; padding: 9px 16px; border-radius: 30px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  }
+</style>
+<script>
+  window.registerSlide({
+    title: 'Section',
+    icon: 'flag',
+    /* Dividers are usually left off the home page agenda. */
+    showOnTitleAgenda: false
+  });
+</script>
+</head>
+<body>
+  <div class="section-wrap">
+    <div class="section-num">02</div>
+    <div class="section-text">
+      <div class="eyebrow">Part two</div>
+      <h2 class="section-title">Section <span>heading</span></h2>
+      <p class="section-lead">A sentence that sets up the slides in this section and what the audience
+        should take away from them.</p>
+      <div class="section-points"><span>First topic</span><span>Second topic</span><span>Third topic</span></div>
+    </div>
+  </div>
+</body>
+</html>

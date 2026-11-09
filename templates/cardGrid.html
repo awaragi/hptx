@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Card grid</title>
+<!--
+  Template: cardGrid — icon cards; ←/→ highlight a card, Enter or click opens its detail.
+  Edit the cards in the JSON data block at the bottom of the body.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+  .cg-grid {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 22px;
+  }
+  .cg-card {
+    display: flex; flex-direction: column; gap: 16px;
+    padding: 28px 30px; border-radius: 18px;
+    background: var(--panel); border: 1px solid var(--line);
+    transition: border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease);
+  }
+  .cg-card:hover, .cg-card.highlight {
+    border-color: var(--brand); background: rgba(var(--brand-rgb), .06); transform: translateY(-3px);
+  }
+  .cg-card:hover .icon-badge, .cg-card.highlight .icon-badge {
+    background: var(--brand); border-color: var(--brand); color: var(--on-brand);
+  }
+  .cg-card h3 { margin: 0; font-size: 25px; line-height: 1.25; color: var(--text-strong); }
+  .cg-card p { margin: 0; font-size: 18px; line-height: 1.55; color: var(--text-dim); }
+  .cg-card .box-hint { margin-top: auto; }
+</style>
+<script>
+  var cards = [];
+
+  function highlight(i) {
+    document.querySelectorAll('.cg-card').forEach(function (el, idx) {
+      el.classList.toggle('highlight', idx === i);
+    });
+  }
+
+  window.registerSlide({
+    title: 'Card grid',
+    icon: 'layers',
+    boot: function (D) {
+      cards = JSON.parse(document.getElementById('cgData').textContent);
+      var grid = document.getElementById('cgGrid');
+      cards.forEach(function (card, i) {
+        var el = document.createElement('div');
+        el.className = 'cg-card box detail-box';
+        el.innerHTML = D.iconBadge(card.icon, 'lg') + '<h3>' + card.title + '</h3><p>' + card.summary + '</p>' +
+          '<div class="box-hint">Click or press Enter for detail</div>';
+        el.addEventListener('click', function () {
+          D.setStep(D.currentKey(), i);
+          D.openModal(card.tag, card.title, card.detail, card.icon);
+        });
+        grid.appendChild(el);
+      });
+      this.stepCount = cards.length;
+    },
+    stepCount: 0,
+    landingStep: 0,
+    setStep: highlight,
+    activateStep: function () {
+      var i = window.Deck.stepIndex(window.Deck.currentKey());
+      var card = cards[i];
+      if (card) window.Deck.openModal(card.tag, card.title, card.detail, card.icon);
+    },
+    onReset: function () { highlight(-1); }
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Capabilities</div>
+  <h1 class="slide-title">Six cards, one idea each</h1>
+  <p class="slide-sub">Use the grid for parallel ideas of equal weight. Keep each summary to two lines and put the
+    depth in the detail.</p>
+  <div class="cg-grid" id="cgGrid"></div>
+
+  <script type="application/json" id="cgData">
+    [
+      { "icon": "requirements", "tag": "Capability", "title": "Requirements",
+        "summary": "Capture intent as structured, testable requirements.",
+        "detail": "<p>Detail text for the modal. Use paragraphs, lists, or any markup the modal classes support.</p>" },
+      { "icon": "design", "tag": "Capability", "title": "Design",
+        "summary": "Turn requirements into an architecture the team can build on.",
+        "detail": "<p>Explain the design approach and the decisions it records.</p>" },
+      { "icon": "develop", "tag": "Capability", "title": "Develop",
+        "summary": "Build in small, reviewable increments.",
+        "detail": "<p>Describe how work is sliced and reviewed.</p>" },
+      { "icon": "test", "tag": "Capability", "title": "Test",
+        "summary": "Prove behavior with acceptance and regression tests.",
+        "detail": "<p>Describe the test strategy and its gates.</p>" },
+      { "icon": "release", "tag": "Capability", "title": "Release",
+        "summary": "Ship through an automated, repeatable pipeline.",
+        "detail": "<p>Describe the release path and its controls.</p>" },
+      { "icon": "maintain", "tag": "Capability", "title": "Operate",
+        "summary": "Observe, learn, and feed improvements back.",
+        "detail": "<p>Describe monitoring, incidents, and the feedback loop.</p>" }
+    ]
+  </script>
+</body>
+</html>

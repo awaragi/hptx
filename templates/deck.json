@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "title": "Slide templates",
+  "brand": "hptx. Templates",
+  "output": "../dist/templates.html",
+  "cover": "cover.html",
+  "slides": [
+    "section.html",
+    "cardGrid.html",
+    "stepper.html",
+    "d3Chart.html",
+    "blank.html"
+  ],
+  "scripts": [
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"
+  ]
+}

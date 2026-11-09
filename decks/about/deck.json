@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "cover": "cover.html",
+  "slides": [
+    "escape.html",
+    "agent.html"
+  ],
+  "title": "About hptx",
+  "output": "../dist/about.html",
+  "brand": "HPTX"
+}

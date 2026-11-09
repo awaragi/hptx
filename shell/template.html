@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="en" class="is-loading" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation</title>
+<style id="deck-theme">
+/* DECK_CONTRACT_CSS */
+</style>
+<style id="deck-chrome">
+  /* ---------- background fx ---------- */
+  .bg-fx{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(var(--brand-rgb),.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(var(--brand-deep-rgb),.08), transparent 50%),
+      linear-gradient(180deg,var(--bg) 0%, var(--panel-2) 100%);
+  }
+  html[data-theme="dark"] .bg-fx{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(var(--brand-rgb),.10), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(var(--brand-deep-rgb),.16), transparent 50%),
+      linear-gradient(180deg,var(--bg) 0%, var(--bg-deep) 100%);
+  }
+  .bg-grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:
+      linear-gradient(rgba(var(--brand-rgb),.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--brand-rgb),.06) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at 50% 40%, black 10%, transparent 75%);
+  }
+  html[data-theme="dark"] .bg-grid{ opacity:.35; }
+  /* ---------- shell ---------- */
+  .deck{ position:relative; height:100vh; width:100vw; z-index:1; }
+  /* 1710×1107 design canvas — scaled to fit the viewport, never above 100%.
+     Header, progress, dots, arrows, and the agenda drawer live inside the canvas so they scale with the slides. */
+  .deck.deck-viewport-fit{
+    position:fixed; inset:0; width:auto; height:auto;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; z-index:1;
+  }
+  .deck-viewport-fit .deck-canvas{
+    width:1710px; height:1107px; position:relative; flex-shrink:0;
+    transform-origin:center center; will-change:transform;
+  }
+  .deck-viewport-fit .slides{ width:1710px; height:1107px; }
+  header.chrome{
+    position:fixed; top:0; left:0; right:0; z-index:280;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 34px; pointer-events:none;
+  }
+  .brand-row{ display:flex; align-items:center; gap:12px; pointer-events:auto; }
+  .nav-menu-slot{
+    flex:0 0 30px; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.5px;
+    font-size:16px; color:var(--text-strong);
+  }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--brand); box-shadow:0 0 10px var(--brand); }
+  .brand small{ display:block; font-weight:400; color:var(--text-dim); font-size:11.5px; letter-spacing:1.2px; margin-top:1px; }
+  .deck-title{ font-size:12.5px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); pointer-events:auto; }
+  /* progress bar */
+  .progress{
+    position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--brand),var(--brand-strong));
+    z-index:60; transition:width .5s var(--ease); box-shadow:0 0 8px rgba(var(--brand-rgb),.6);
+  }
+  /* slide counter + dots */
+  .navdots{
+    position:fixed; right:26px; top:50%; transform:translateY(-50%); z-index:50;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .navdots button{
+    width:9px; height:9px; border-radius:50%; border:1.5px solid var(--text-dim);
+    background:transparent; cursor:pointer; padding:0; transition:all .25s var(--ease);
+  }
+  .navdots button:hover{ border-color:var(--brand); }
+  .navdots button.active{ background:var(--brand); border-color:var(--brand); box-shadow:0 0 8px var(--brand); transform:scale(1.3); }
+  .counter{
+    position:fixed; left:34px; bottom:22px; z-index:50; font-size:13px; color:var(--text-dim);
+    letter-spacing:1px; font-variant-numeric:tabular-nums;
+  }
+  .counter b{ color:var(--text-strong); }
+  .counter.is-agenda-hidden{ visibility:hidden; opacity:0; pointer-events:none; }
+  .arrows{ position:fixed; bottom:18px; right:26px; z-index:50; display:flex; gap:10px; }
+  .arrows button{
+    width:42px; height:42px; border-radius:50%; border:1px solid var(--line);
+    background:rgba(var(--paper-rgb),.03); color:var(--text-strong); font-size:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .2s var(--ease);
+    backdrop-filter: blur(6px);
+  }
+  .arrows button:hover{ background:var(--brand); border-color:var(--brand); color:var(--ink); }
+  .hint{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:50;
+    font-size:12.5px; color:var(--text-dim); letter-spacing:.5px; opacity:.7;
+  }
+  /* ---------- theme toggle + settings gear ---------- */
+  .chrome-theme-tools{ display:flex; align-items:center; gap:10px; pointer-events:auto; }
+  .deck-settings-btn{
+    appearance:none; font:inherit;
+    display:var(--deck-settings-gear-display); align-items:center; justify-content:center;
+    width:30px; height:30px; padding:0; border-radius:6px; border:none;
+    background:transparent; color:var(--text-dim); cursor:pointer;
+    transition:background .2s var(--ease), color .2s var(--ease); flex-shrink:0;
+  }
+  .deck-settings-btn .icon{ width:14px; height:14px; stroke-width:1.5; opacity:.85; }
+  .deck-settings-btn:hover{ background:rgba(var(--ink-rgb),.04); color:var(--text); }
+  .deck-settings-btn:hover .icon{ opacity:1; }
+  html[data-theme="dark"] .deck-settings-btn:hover{ background:rgba(var(--paper-rgb),.04); }
+  .deck-settings-btn.is-not-agenda{ visibility:hidden; opacity:0; pointer-events:none; }
+  .deck-settings-btn:focus-visible{ outline:2px solid rgba(var(--brand-rgb),.35); outline-offset:2px; }
+  .theme-toggle{ display:flex; align-items:center; gap:8px; }
+  /* Visible on the home page only; content slides hide the control to reduce distraction. T still works when the theme token allows it. */
+  #themeToggleWrap{ display:none; }
+  html.is-deck-home #themeToggleWrap{ display:var(--deck-theme-toggle-display); }
+  .theme-toggle span{ font-size:11px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
+  .switch{ position:relative; width:40px; height:22px; display:inline-block; }
+  .switch input{ opacity:0; width:0; height:0; position:absolute; }
+  .switch .slider{ position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:24px; cursor:pointer; transition:all .25s var(--ease); }
+  .switch .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:var(--brand); border-radius:50%; transition:transform .25s var(--ease); }
+  .switch input:checked + .slider::before{ transform:translateX(18px); }
+  /* ---------- full screen prompt ---------- */
+  #fsPrompt{ z-index:250; }
+  #fsPrompt .fs-prompt-card{ max-width:540px; text-align:center; padding:40px 44px 36px; }
+  #fsPrompt .fs-prompt-card h3{ font-size:28px; margin:0 0 12px 0; }
+  #fsPrompt .fs-prompt-card .fs-lead{ font-size:17px; line-height:1.55; color:var(--text-dim); margin:0 0 24px 0; }
+  #fsPrompt .fs-prompt-actions{ display:flex; flex-direction:column; gap:10px; align-items:stretch; }
+  #fsPrompt .fs-btn{
+    appearance:none; font:inherit; cursor:pointer; border-radius:30px; padding:14px 22px; font-size:16px; font-weight:700;
+    transition:all .2s var(--ease); outline:none;
+  }
+  #fsPrompt .fs-btn-primary{ border:none; background:var(--brand); color:var(--on-brand); }
+  #fsPrompt .fs-btn-primary:hover{ background:var(--brand-strong); }
+  #fsPrompt .fs-btn-ghost{ border:1px solid var(--line); background:var(--panel-2); color:var(--text-dim); }
+  #fsPrompt .fs-btn-ghost:hover{ border-color:var(--brand); color:var(--brand); }
+  #fsPrompt .fs-btn.is-selected{
+    box-shadow:0 0 0 3px rgba(var(--brand-rgb),.35);
+  }
+  #fsPrompt .fs-btn-ghost.is-selected{
+    border-color:var(--brand); color:var(--brand);
+  }
+  #fsPrompt .fs-hint{ font-size:13px; color:var(--text-dim); margin:16px 0 0 0; line-height:1.5; }
+  #fsPrompt .fs-hint kbd{
+    font-family:inherit; font-size:12px; padding:2px 7px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text);
+  }
+  /* ---------- home page (index 0): cover block, keyboard hints, agenda tiles ---------- */
+  .toc-grid{ display:flex; flex-direction:column; gap:12px; }
+  .toc-item{
+    appearance:none; font:inherit; display:flex; align-items:center; gap:18px; border:1px solid var(--line);
+    border-radius:14px; padding:16px 22px; background:var(--panel); cursor:pointer; transition:all .2s var(--ease);
+    text-align:left; color:var(--text);
+  }
+  .toc-item:hover, .toc-item.highlight{ border-color:var(--brand); background:var(--panel-2); transform:translateX(6px); }
+  .toc-item:hover .icon-badge, .toc-item.highlight .icon-badge{ background:var(--brand); border-color:var(--brand); color:var(--on-brand); }
+  .toc-item .icon-badge{ width:46px; height:46px; border-radius:12px; }
+  .toc-item .icon-badge .icon{ width:22px; height:22px; }
+  .toc-item .toc-label{ font-size:18px; font-weight:600; line-height:1.3; }
+  .deck-home{ align-items:stretch; }
+  .deck-home .title-row{ display:flex; align-items:center; gap:70px; width:100%; flex:1; min-height:0; max-width:100%; }
+  .deck-home .title-left{ flex:0 1 44%; min-width:0; max-width:48%; }
+  .deck-home .agenda-col{ flex:1 1 0; min-width:0; max-width:none; align-self:stretch; display:flex; flex-direction:column; justify-content:center; }
+  .deck-home .agenda-label{
+    font-size:14px; letter-spacing:2.5px; text-transform:uppercase; color:var(--brand); font-weight:700;
+    margin-bottom:24px; display:flex; align-items:center; gap:10px;
+  }
+  .deck-home .agenda-label::before{ content:""; width:26px; height:2px; background:var(--brand); display:inline-block; }
+  .deck-home .deck-home-cover:empty + .title-kbd-hints{ margin-top:0; }
+  .deck-home .title-kbd-hints{ display:flex; flex-direction:column; gap:8px; margin-top:32px; }
+  /* Normal: ↑/↓ then ←/→. Clicker: ←/→, ↑/↓, Pg↑/Pg↓. */
+  html:not(.deck-clicker-mode) #titleKbdHintNavUpDown{ order:1; }
+  html:not(.deck-clicker-mode) #titleKbdHintNavLeftRight{ order:2; }
+  html:not(.deck-clicker-mode) #titleKbdHintNavPage{ order:3; }
+  html.deck-clicker-mode #titleKbdHintNavLeftRight{ order:1; }
+  html.deck-clicker-mode #titleKbdHintNavUpDown{ order:2; }
+  html.deck-clicker-mode #titleKbdHintNavPage{ order:3; }
+  .deck-home .title-kbd-hints .title-kbd-hint:not([data-kbd-nav]){ order:10; }
+  .deck-home .title-kbd-hint{
+    margin:0; font-size:13px; color:var(--text-dim); letter-spacing:.2px; line-height:1.45;
+    display:grid; grid-template-columns:4.75rem 1fr; column-gap:12px; align-items:center;
+  }
+  .deck-home .title-kbd-hint .key{
+    border:1px solid var(--line); border-radius:6px; padding:3px 6px; font-size:12px;
+    color:var(--text-strong); text-align:center; box-sizing:border-box; width:100%;
+    font-variant-numeric:tabular-nums;
+  }
+  .deck-home .title-kbd-hint .kbd-desc{ min-width:0; }
+  .deck-home .title-kbd-hint-settings{ display:var(--deck-agenda-settings-hint-display); }
+  .deck-home .title-kbd-hint-theme{ display:var(--deck-agenda-theme-hint-display); }
+  .deck-home .toc-grid{ flex-wrap:nowrap; align-items:stretch; width:100%; min-width:0; }
+  .deck-home .toc-section-block{ width:100%; max-width:100%; flex:none; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .deck-home .toc-section-label{
+    font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:700;
+    color:var(--text-dim); margin:0 0 2px 2px;
+  }
+  .deck-home .toc-section-tiles{ display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; width:100%; min-width:0; }
+  .deck-home .toc-section-tiles .toc-item{
+    flex:1 1 calc(50% - 4px); min-width:calc(50% - 4px); max-width:100%; box-sizing:border-box;
+    flex-direction:row; align-items:center; justify-content:flex-start; padding:14px 16px; gap:12px; transform:none;
+  }
+  .deck-home .toc-section-tiles .toc-item:only-child{ flex:1 1 100%; min-width:100%; }
+  .deck-home .toc-section-tiles .toc-item:hover,
+  .deck-home .toc-section-tiles .toc-item.highlight{ transform:none; }
+  .deck-home .toc-section-tiles .toc-item .icon-badge{ width:44px; height:44px; border-radius:11px; flex-shrink:0; }
+  .deck-home .toc-section-tiles .toc-item .icon-badge .icon{ width:22px; height:22px; }
+  .deck-home .toc-section-tiles .toc-item .toc-label{
+    flex:1; min-width:0; font-size:18px; font-weight:600; line-height:1.25;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  /* Agenda off (Settings → Slides): title block and hints centered on the canvas. */
+  .deck-home.is-agenda-off .agenda-col{ display:none; }
+  .deck-home.is-agenda-off .title-row{ justify-content:center; }
+  .deck-home.is-agenda-off .title-left{ flex:0 1 auto; max-width:60%; }
+  .nav-drawer-list .toc-item{
+    transform:none; max-width:100%; min-width:0;
+    padding:9px 12px; gap:10px; border-radius:10px;
+  }
+  .nav-drawer-list .toc-item .icon-badge{
+    width:32px; height:32px; border-radius:8px;
+  }
+  .nav-drawer-list .toc-item .icon-badge .icon{ width:16px; height:16px; }
+  .nav-drawer-list .toc-item .toc-label{
+    min-width:0; overflow-wrap:anywhere;
+    font-size:13.5px; font-weight:600; line-height:1.28;
+  }
+  .nav-drawer-list .toc-item.highlight,
+  .nav-drawer-list .toc-item.is-current{
+    border-color:var(--brand); background:var(--panel-2);
+  }
+  .nav-drawer-list .toc-item.highlight .icon-badge,
+  .nav-drawer-list .toc-item.is-current .icon-badge{
+    background:var(--brand); border-color:var(--brand); color:var(--on-brand);
+  }
+  .nav-drawer-list .toc-item.is-concealed{ opacity:.62; }
+  .nav-drawer-list .toc-section-label{
+    font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:700;
+    color:var(--text-dim); margin:10px 0 2px 4px;
+  }
+  .nav-drawer-list .toc-section-label:first-child{ margin-top:0; }
+  /* ---------- agenda drawer (all slides) ---------- */
+  .nav-menu-btn{
+    pointer-events:auto; appearance:none; font:inherit; flex-shrink:0; position:relative; z-index:1;
+    width:30px; height:30px; border-radius:6px; border:none;
+    background:transparent; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px; padding:0;
+    transition:background .2s var(--ease), opacity .2s var(--ease), visibility .2s var(--ease);
+  }
+  .nav-menu-btn span{
+    display:block; width:14px; height:1px; border-radius:1px; background:var(--text-dim);
+    transition:transform .25s var(--ease), opacity .25s var(--ease), background .2s var(--ease);
+  }
+  .nav-menu-btn:hover{ background:rgba(var(--ink-rgb),.04); }
+  .nav-menu-btn:hover span{ background:var(--text); }
+  html[data-theme="dark"] .nav-menu-btn:hover{ background:rgba(var(--paper-rgb),.04); }
+  /* No activation highlight: the open menu covers the button, and the close routine re-focuses it —
+     a background/outline here would linger after the menu closes. */
+  .nav-menu-btn:focus, .nav-menu-btn:focus-visible{ outline:none; box-shadow:none; }
+  .nav-menu-btn[aria-expanded="true"] span{ background:var(--text); }
+  .nav-menu-btn[aria-expanded="true"] span:nth-child(1){ transform:translateY(5.5px) rotate(45deg); }
+  .nav-menu-btn[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+  .nav-menu-btn[aria-expanded="true"] span:nth-child(3){ transform:translateY(-5.5px) rotate(-45deg); }
+  .nav-menu-btn.is-agenda-hidden{ visibility:hidden; opacity:0; pointer-events:none; }
+  .nav-drawer{
+    position:fixed; inset:0; z-index:320; pointer-events:none; visibility:hidden; overflow:hidden;
+  }
+  .nav-drawer.open, .nav-drawer.is-closing{ visibility:visible; }
+  .nav-drawer.open{ pointer-events:auto; }
+  .nav-drawer.is-closing{ pointer-events:none; }
+  body.nav-drawer-open header.chrome{ z-index:300; }
+  .nav-drawer-backdrop{
+    position:absolute; inset:0; z-index:0; background:var(--ink); opacity:0;
+    transition:opacity .38s var(--ease);
+  }
+  .nav-drawer.open .nav-drawer-backdrop{ opacity:.78; }
+  .nav-drawer.is-closing .nav-drawer-backdrop{ opacity:0; }
+  .nav-drawer-panel{
+    position:absolute; left:0; top:0; bottom:0; z-index:1; width:min(440px,92%); max-width:100%;
+    background:var(--surface); border-right:1px solid var(--line);
+    box-shadow:12px 0 48px rgba(var(--ink-rgb),.55);
+    display:flex; flex-direction:column; padding:22px 20px 18px; overflow:hidden;
+    transform:translateX(-104%); transition:transform .38s var(--ease);
+  }
+  html[data-theme="dark"] .nav-drawer-panel{ background:var(--surface); }
+  .nav-drawer.open .nav-drawer-panel{ transform:translateX(0); }
+  .nav-drawer-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin-bottom:16px; flex-shrink:0; padding:8px 4px 12px;
+    background:inherit; border-bottom:1px solid var(--line);
+  }
+  .nav-drawer-head h2{
+    margin:0; font-size:14px; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--brand); font-weight:700;
+    display:flex; align-items:center; gap:10px; min-width:0;
+  }
+  .nav-drawer-head h2::before{
+    content:""; width:26px; height:2px; background:var(--brand); flex-shrink:0;
+  }
+  .nav-drawer-close{
+    appearance:none; font:inherit; flex-shrink:0;
+    width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
+    background:transparent; color:var(--text-dim); cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+  }
+  .nav-drawer-close .icon{ width:17px; height:17px; stroke-width:2.4; pointer-events:none; }
+  .nav-drawer-close:hover, .nav-drawer-close:focus-visible{
+    background:var(--brand); border-color:var(--brand); color:var(--on-brand); outline:none;
+  }
+  .nav-drawer-list{
+    flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:7px;
+    padding:10px 2px 6px; background:inherit;
+  }
+  .nav-drawer-list::-webkit-scrollbar{ width:6px; }
+  .nav-drawer-list::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .nav-drawer-hint{ background:inherit; }
+  .nav-drawer-hint{
+    flex-shrink:0; margin:12px 4px 0; font-size:12px; color:var(--text-dim); letter-spacing:.3px;
+  }
+  .nav-drawer-hint kbd{
+    font-family:inherit; font-size:11px; padding:2px 6px; border-radius:5px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text);
+  }
+  /* ---------- Print / PDF (1710×1107 native pages, Cmd/Ctrl+P) ---------- */
+  @page{
+    size: 17.8125in 11.53125in;
+    margin: 0;
+  }
+  @media print{
+    html.deck-print-mode, html.deck-print-mode body{
+      overflow: visible !important;
+      height: auto !important;
+      width: auto !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: var(--bg) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    html.deck-print-mode .bg-fx,
+    html.deck-print-mode .bg-grid,
+    html.deck-print-mode header.chrome,
+    html.deck-print-mode .progress,
+    html.deck-print-mode .navdots,
+    html.deck-print-mode .counter,
+    html.deck-print-mode .arrows,
+    html.deck-print-mode .hint,
+    html.deck-print-mode #fsPrompt,
+    html.deck-print-mode .nav-drawer,
+    html.deck-print-mode #appLoader{
+      display: none !important;
+    }
+    html.deck-print-mode .slide.slide-print-frame{
+      width: 1710px !important;
+      height: 1107px !important;
+      min-height: 1107px !important;
+      max-height: 1107px !important;
+      display: block !important;
+      transform: none !important;
+      zoom: normal !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+    }
+    html.deck-print-mode .slide-print-fit{
+      position: relative !important;
+      width: 1710px !important;
+      height: 1107px !important;
+      transform: none !important;
+      zoom: normal !important;
+    }
+  }
+  html.deck-print-mode .modal-overlay{ display: none !important; visibility: hidden !important; opacity: 0 !important; }
+  html.deck-print-mode .slide.slide-print-frame.is-hidden-slide{ display: none !important; }
+  html.deck-print-mode .bg-fx,
+  html.deck-print-mode .bg-grid,
+  html.deck-print-mode header.chrome,
+  html.deck-print-mode .progress,
+  html.deck-print-mode .navdots,
+  html.deck-print-mode .counter,
+  html.deck-print-mode .arrows,
+  html.deck-print-mode .hint{
+    display: none !important;
+  }
+  html.deck-print-mode .deck.deck-viewport-fit{
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+  html.deck-print-mode .deck-viewport-fit .deck-canvas{
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 auto !important;
+  }
+  html.deck-print-mode .slides{
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+  }
+  html.deck-print-mode .slide{
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: none !important;
+  }
+  html.deck-print-mode .slide.slide-print-frame{
+    position: relative !important;
+    inset: auto !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 1710px !important;
+    height: 1107px !important;
+    min-height: 1107px !important;
+    max-height: 1107px !important;
+    display: block !important;
+    overflow: hidden !important;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(var(--brand-rgb),.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(var(--brand-deep-rgb),.08), transparent 50%),
+      linear-gradient(180deg,var(--bg) 0%, var(--panel-2) 100%);
+  }
+  html.deck-print-mode[data-theme="dark"] .slide.slide-print-frame{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(var(--brand-rgb),.10), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(var(--brand-deep-rgb),.16), transparent 50%),
+      linear-gradient(180deg,var(--bg) 0%, var(--bg-deep) 100%);
+  }
+  html.deck-print-mode .slide.slide-print-frame:last-child{
+    page-break-after: auto;
+    break-after: auto;
+  }
+  html.deck-print-mode .slide-print-fit{
+    position: relative;
+    width: 1710px;
+    height: 1107px;
+    padding: 76px 70px 56px 70px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  html.deck-print-mode .gold-wrap{ grid-template-columns: 1.7fr 1fr !important; }
+  html.deck-print-mode .title-row{ flex-direction: row !important; align-items: center !important; }
+  html.deck-print-mode .scale-grid{ grid-template-columns: minmax(280px,320px) 1fr !important; }
+  html.deck-print-mode .slide-print-fit h1.slide-title{ font-size: 50px !important; }
+  html.deck-print-mode .detail-box::before,
+  html.deck-print-mode .title-kbd-hints,
+  html.deck-print-mode .scale-scrub-hint,
+  html.deck-print-mode .box-hint{ display: none !important; }
+  /* ---------- initial load screen ---------- */
+  html.is-loading{ overflow:hidden; }
+  html.is-loading body > *:not(#appLoader){ visibility:hidden; }
+  #appLoader{
+    position:fixed; inset:0; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:28px; background:var(--bg); color:var(--text); transition:opacity .45s cubic-bezier(.65,.05,.36,1), visibility .45s;
+  }
+  #appLoader.is-done{ opacity:0; visibility:hidden; pointer-events:none; }
+  #appLoader .loader-brand{ font-size:22px; font-weight:700; letter-spacing:-.3px; }
+  #appLoader .loader-brand span{ color:var(--brand); }
+  #appLoader .loader-status{ font-size:13px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-dim); font-weight:600; }
+  #appLoader .loader-spinner{
+    width:44px; height:44px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--brand);
+    animation:appLoaderSpin .85s linear infinite;
+  }
+  @keyframes appLoaderSpin{ to{ transform:rotate(360deg); } }
+  .theme-customizer-overlay{
+    position:fixed; inset:0; z-index:320; display:flex; align-items:center; justify-content:center;
+    background:rgba(var(--ink-rgb),.62); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    opacity:0; visibility:hidden; transition:opacity .28s var(--ease), visibility .28s; padding:28px;
+  }
+  .theme-customizer-overlay.open{ opacity:1; visibility:visible; }
+  .theme-customizer-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    max-width:920px; width:100%; max-height:92vh; overflow:hidden; display:flex; flex-direction:column;
+    box-shadow:var(--shadow); transform:scale(.96) translateY(8px); transition:transform .28s var(--ease);
+  }
+  .theme-customizer-overlay.open .theme-customizer-card{ transform:scale(1) translateY(0); }
+  .theme-customizer-head{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    padding:22px 26px 14px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .theme-customizer-head .modal-tag{ font-size:15px; margin-bottom:8px; }
+  .theme-customizer-head p{ margin:0; font-size:14px; line-height:1.55; color:var(--text-dim); max-width:720px; }
+  .theme-customizer-close{
+    flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text); cursor:pointer; font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .theme-customizer-close:hover{ border-color:var(--brand); color:var(--brand); }
+  .tc-tabs{
+    display:flex; flex-wrap:wrap; gap:6px; padding:0 26px; border-bottom:1px solid var(--line);
+    flex-shrink:0; background:var(--panel);
+  }
+  .tc-tab{
+    appearance:none; font:inherit; cursor:pointer; border:none; background:transparent;
+    padding:12px 16px; margin:0 0 -1px; font-size:13px; font-weight:700; letter-spacing:.3px;
+    color:var(--text-dim); border-bottom:2px solid transparent; transition:color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .tc-tab:hover{ color:var(--text); }
+  .tc-tab[aria-selected="true"]{ color:var(--brand); border-bottom-color:var(--brand); }
+  .tc-tab:focus-visible{ outline:2px solid rgba(var(--brand-rgb),.45); outline-offset:2px; border-radius:6px; }
+  .theme-customizer-body{
+    position:relative; padding:0; overflow:hidden; flex:0 0 auto;
+    height:min(420px, calc(92vh - 200px)); min-height:320px;
+  }
+  .tc-panel{
+    display:none; flex-direction:column; gap:18px;
+    position:absolute; inset:0; padding:18px 26px 22px; overflow-y:auto;
+    box-sizing:border-box;
+  }
+  .tc-panel.is-active{ display:flex; }
+  .tc-panel .tc-field{ display:flex; flex-direction:column; flex:1; min-height:0; }
+  .tc-panel .tc-textarea{ flex:1; min-height:200px; resize:none; }
+  .tc-field label{ display:block; font-size:11px; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-dim); font-weight:700; margin-bottom:8px; }
+  .tc-field-hint{ font-size:12.5px; color:var(--text-dim); margin:0 0 8px; line-height:1.45; }
+  .tc-mode-row{ display:flex; flex-wrap:wrap; gap:10px 18px; }
+  .tc-mode-row label{ display:flex; align-items:center; gap:8px; font-size:14px; text-transform:none; letter-spacing:0; color:var(--text); font-weight:600; cursor:pointer; margin:0; }
+  .tc-textarea{
+    width:100%; min-height:120px; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px; line-height:1.45; padding:12px 14px; border-radius:10px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text); box-sizing:border-box;
+  }
+  .tc-textarea:focus{ outline:2px solid rgba(var(--brand-rgb),.45); outline-offset:1px; border-color:var(--brand); }
+  .tc-textarea[readonly]{ opacity:.92; cursor:text; }
+  .tc-paste-drop{
+    position:relative; flex:1; min-height:0; display:flex; flex-direction:column;
+    border-radius:12px; transition:box-shadow .18s var(--ease), background .18s var(--ease);
+  }
+  .tc-paste-drop .tc-textarea{ flex:1; min-height:160px; }
+  .tc-paste-drop.is-dragover{
+    box-shadow:0 0 0 2px var(--brand);
+    background:rgba(var(--brand-rgb),.06);
+  }
+  .tc-paste-drop.is-dragover .tc-textarea{ border-color:var(--brand); }
+  .tc-file-input{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .tc-actions{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .tc-btn{
+    appearance:none; font:inherit; cursor:pointer; border-radius:24px; padding:10px 18px; font-size:14px; font-weight:700;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text); transition:all .2s var(--ease);
+  }
+  .tc-btn:hover{ border-color:var(--brand); color:var(--brand); }
+  .tc-btn-primary{ background:var(--brand); border-color:var(--brand); color:var(--on-brand); }
+  .tc-btn-primary:hover{ background:var(--brand-strong); border-color:var(--brand-strong); color:var(--on-brand); }
+  .tc-btn-danger{ border-color:rgba(var(--danger-rgb),.45); color:var(--danger-soft); }
+  .tc-btn-danger:hover{ background:rgba(var(--danger-rgb),.12); border-color:var(--danger); color:var(--danger-soft); }
+  .tc-status{ font-size:13px; color:var(--text-dim); min-height:1.2em; }
+  .tc-status.ok{ color:var(--brand); }
+  .tc-status.err{ color:var(--danger-soft); }
+  .theme-customizer-footer{
+    flex-shrink:0; padding:10px 26px 16px; border-top:1px solid var(--line); min-height:2.5em;
+  }
+  .theme-customizer-footer .tc-status{ margin:0; min-height:1.2em; }
+  .tc-check-row{ display:flex; align-items:center; gap:10px; }
+  .tc-check-row input{ width:18px; height:18px; accent-color:var(--brand); cursor:pointer; }
+  .tc-check-row span{ font-size:14px; color:var(--text); font-weight:600; }
+  .tc-slide-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:10px; }
+  .tc-slide-head .tc-field-hint{ margin:0; }
+  .tc-slide-head .tc-btn{ flex-shrink:0; }
+  .tc-slide-list{ display:flex; flex-direction:column; gap:12px; }
+  .tc-slide-group{ border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .tc-slide-list .tc-check-row{
+    display:flex; align-items:center; gap:10px; color:var(--text);
+    padding:8px 14px; cursor:pointer; text-transform:none; letter-spacing:0; margin:0; font-size:14px;
+    border-top:1px solid var(--line);
+  }
+  .tc-slide-list .tc-check-row:hover{ background:rgba(var(--brand-rgb),.08); }
+  .tc-slide-list .tc-check-row.is-off span{ color:var(--text-dim); font-weight:500; }
+  .tc-slide-list .tc-check-row.tc-slide-group-row{ border-top:none; background:var(--panel-2); padding:9px 14px; }
+  .tc-slide-list .tc-check-row.tc-slide-group-row span{
+    font-size:11.5px; letter-spacing:1.2px; text-transform:uppercase; font-weight:800; color:var(--brand);
+  }
+  .tc-slide-list .tc-check-row.tc-slide-group-row.is-off span{ color:var(--text-dim); }
+  .tc-slide-list .tc-slide-item{ padding-left:42px; }
+</style>
+<style id="hptxCustomThemeStyle">
+/* Preview overlay only (shortcut C). Paste :root / theme CSS here to test before baking a theme into the build. */
+</style>
+<!-- DECK_CDN_STYLES -->
+</head>
+<body>
+
+<!-- ===== COMMON:CORE — slide registration queue =====
+     Lets co-located per-slide script blocks register themselves before the engine exists.
+     The engine (end of body) drains this queue: it calls each module's boot(Deck) to render,
+     then wires the module's hooks. Keeping only this tiny shim up top means the full engine can
+     stay at the end of the file (where the DOM is ready). -->
+<script>
+  window.__deckSlideQueue = [];
+  window.registerSlide = function(mod){
+    var el = document.currentScript;
+    var key = el && el.getAttribute('data-slide-script');
+    if(!key){ console.error('[deck] registerSlide() missing data-slide-script on currentScript'); return; }
+    window.__deckSlideQueue.push([key, mod || {}]);
+  };
+  /* Slide-scoped `document` passed into each slide's script wrapper (see SLIDE-CONTRACT.md):
+     id / selector lookups search only that slide's section (or the home page cover block);
+     everything else is the page document. */
+  window.__deckSlideDocument = function(script){
+    var page = window.document;
+    var root = script && script.closest ? script.closest('[data-deck-cover], .slide') : null;
+    if(!root){ console.error('[deck] slide script is not inside a .slide section or the cover block; using the page document'); return page; }
+    /* Lookups cover the slide section itself and its descendants, in document order. */
+    var own = {
+      slideRoot: root,
+      getElementById: function(id){
+        return root.id === String(id) ? root : root.querySelector('[id="' + String(id).replace(/["\\]/g, '\\$&') + '"]');
+      },
+      querySelector: function(sel){ return root.matches(sel) ? root : root.querySelector(sel); },
+      querySelectorAll: function(sel){
+        var found = root.querySelectorAll(sel);
+        if(!root.matches(sel)) return found;
+        var list = [root].concat(Array.prototype.slice.call(found));
+        list.item = function(i){ return list[i] || null; };
+        return list;
+      }
+    };
+    return new Proxy(page, {
+      get: function(target, prop){
+        if(Object.prototype.hasOwnProperty.call(own, prop)) return own[prop];
+        var v = target[prop];
+        return typeof v === 'function' ? v.bind(target) : v;
+      },
+      set: function(target, prop, value){ target[prop] = value; return true; }
+    });
+  };
+</script>
+
+<div id="appLoader" role="status" aria-live="polite" aria-busy="true" aria-label="Loading presentation">
+  <div class="loader-brand">Brand.</div>
+  <div class="loader-spinner" aria-hidden="true"></div>
+  <div class="loader-status">Loading presentation</div>
+</div>
+
+<div class="bg-fx"></div>
+<div class="bg-grid"></div>
+
+<div class="deck deck-viewport-fit" id="deckViewportFit">
+  <div class="deck-canvas" id="deckCanvas">
+<div class="progress" id="progressBar" style="width:12.5%"></div>
+
+<div class="nav-drawer" id="navDrawer" aria-hidden="true">
+  <div class="nav-drawer-backdrop" id="navDrawerBackdrop" tabindex="-1"></div>
+  <aside class="nav-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="navDrawerTitle">
+    <div class="nav-drawer-head">
+      <h2 id="navDrawerTitle">Agenda</h2>
+      <button type="button" class="nav-drawer-close" id="navDrawerClose" aria-label="Close agenda">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="nav-drawer-list" id="navDrawerList"></div>
+    <p class="nav-drawer-hint"><kbd>H</kbd> overview · <kbd>M</kbd> visible · <kbd>⇧M</kbd> all · <kbd>↑</kbd><kbd>↓</kbd> move · <kbd>↵</kbd> go · <kbd>Esc</kbd> close</p>
+  </aside>
+</div>
+
+<header class="chrome">
+  <div class="brand-row">
+    <div class="nav-menu-slot" aria-hidden="true">
+      <button type="button" class="nav-menu-btn" id="navMenuBtn" aria-label="Open agenda" aria-expanded="false" aria-controls="navDrawerList" title="Agenda (M)">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="brand">Brand.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:24px;">
+    <div class="deck-title">Presentation</div>
+    <div class="chrome-theme-tools">
+      <label class="theme-toggle" id="themeToggleWrap" title="Toggle theme (T)"><span>Light</span><span class="switch"><input type="checkbox" id="themeCheckbox" aria-label="Dark mode"><span class="slider"></span></span><span>Dark</span></label>
+      <button type="button" class="deck-settings-btn" id="deckSettingsBtn" title="Settings" aria-label="Open settings">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="navdots" id="navDots"></div>
+<div class="counter is-agenda-hidden" id="slideCounter"><b id="curNum">00</b> / <span id="totalNum">—</span></div>
+<div class="arrows">
+  <button id="prevBtn" title="Previous (↑)">&#8593;</button>
+  <button id="nextBtn" title="Next (↓)">&#8595;</button>
+</div>
+
+  <div class="slides" id="slides">
+    <!-- COMMON:HOME — shell-owned home page (index 0): deck.json `cover` in the title block, keyboard hints, agenda. -->
+    <section class="slide deck-home" data-slide="agenda">
+      <div class="title-row">
+        <div class="title-left">
+          <div class="deck-home-cover" data-deck-cover><!-- DECK_COVER --></div>
+          <div class="title-kbd-hints">
+            <p class="title-kbd-hint" id="titleKbdHintNavLeftRight" data-kbd-nav="lr"><span class="key">←/→</span><span class="kbd-desc">highlight a section on the page</span></p>
+            <p class="title-kbd-hint" id="titleKbdHintNavUpDown" data-kbd-nav="ud"><span class="key">↑/↓</span><span class="kbd-desc">navigate between pages</span></p>
+            <p class="title-kbd-hint" id="titleKbdHintNavPage" data-kbd-nav="pg" hidden><span class="key">Pg↑/Pg↓</span><span class="kbd-desc">step on the slide, then change page at the ends</span></p>
+            <p class="title-kbd-hint"><span class="key">M</span><span class="kbd-desc">open agenda from any content slide</span></p>
+            <p class="title-kbd-hint"><span class="key">⇧M</span><span class="kbd-desc">agenda of every slide, including hidden ones</span></p>
+            <p class="title-kbd-hint"><span class="key">H</span><span class="kbd-desc">return to this overview from anywhere</span></p>
+            <p class="title-kbd-hint"><span class="key">F</span><span class="kbd-desc">toggle full screen</span></p>
+            <p class="title-kbd-hint title-kbd-hint-theme"><span class="key">T</span><span class="kbd-desc">toggle dark / light theme</span></p>
+            <p class="title-kbd-hint title-kbd-hint-settings"><span class="key">C</span><span class="kbd-desc">open settings (theme)</span></p>
+          </div>
+        </div>
+        <div class="agenda-col">
+          <div class="agenda-label">Agenda</div>
+          <div class="toc-grid" id="tocGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMON:SLIDES — content slides from deck.json, in deck order. -->
+    <!-- DECK_SLIDES -->
+
+  </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fsPrompt" aria-hidden="true" role="dialog" aria-labelledby="fsPromptTitle" aria-describedby="fsPromptDesc">
+  <div class="modal-card fs-prompt-card">
+    <span class="modal-tag">Presentation tip</span>
+    <h3 id="fsPromptTitle">Full screen recommended</h3>
+    <p class="fs-lead" id="fsPromptDesc">This deck is laid out for full screen. Enter full screen for the best typography, spacing, and slide flow.</p>
+    <div class="fs-prompt-actions">
+      <button type="button" class="fs-btn fs-btn-primary" id="fsEnterBtn">Enter full screen</button>
+      <button type="button" class="fs-btn fs-btn-ghost" id="fsDismissBtn">Continue without full screen</button>
+    </div>
+    <p class="fs-hint" id="fsHint">You can also use <kbd>F11</kbd> (Windows) or <kbd>⌃⌘F</kbd> (Mac) in most browsers.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+    <div class="modal-head">
+      <span id="modalIcon"></span>
+      <div class="modal-head-text"><span class="modal-tag" id="modalTag"></span><h3 id="modalTitle"></h3></div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="theme-customizer-overlay" id="themeCustomizer" aria-hidden="true">
+  <div class="theme-customizer-card" role="dialog" aria-modal="true" aria-labelledby="themeCustomizerTitle">
+    <div class="theme-customizer-head">
+      <div>
+        <span class="modal-tag" id="themeCustomizerTitle">Settings</span>
+        <p>Load or paste a theme and apply it in this browser (overrides defaults and any bake). To create a theme, use Generate theme, then come back here and apply it. To bake a theme into the built file, set <code>theme</code> in <code>deck.json</code> and build — bake appends over shell defaults (see Instructions).</p>
+      </div>
+      <button type="button" class="theme-customizer-close" id="themeCustomizerClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="tc-tabs" role="tablist" aria-label="Settings sections">
+      <button type="button" class="tc-tab" role="tab" id="tcTabPreview" aria-selected="true" aria-controls="tcPanelPreview" data-tc-tab="preview">Theme</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabPrompt" aria-selected="false" aria-controls="tcPanelPrompt" data-tc-tab="prompt" tabindex="-1">Generate theme</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabDelivery" aria-selected="false" aria-controls="tcPanelDelivery" data-tc-tab="delivery" tabindex="-1">Instructions</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabSlides" aria-selected="false" aria-controls="tcPanelSlides" data-tc-tab="slides" tabindex="-1">Slides</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabNavigation" aria-selected="false" aria-controls="tcPanelNavigation" data-tc-tab="navigation" tabindex="-1">Navigation</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabStorage" aria-selected="false" aria-controls="tcPanelStorage" data-tc-tab="storage" tabindex="-1">Reset</button>
+    </div>
+    <div class="theme-customizer-body">
+      <div class="tc-panel is-active" role="tabpanel" id="tcPanelPreview" aria-labelledby="tcTabPreview">
+        <div class="tc-field">
+          <label for="tcPasteIn">Theme CSS</label>
+          <p class="tc-field-hint">Load a <code>.css</code> file (picker or drag onto the box), or paste from your AI assistant. The theme stays in this browser for presentations. If the theme hides the gear, <kbd>C</kbd> still opens Settings. To ship the theme in the file, put the same <code>:root</code> values into the main stylesheet.</p>
+          <div class="tc-paste-drop" id="tcPasteDrop">
+            <textarea class="tc-textarea" id="tcPasteIn" rows="8" spellcheck="false" placeholder="/* hptx-custom-theme BEGIN */&#10;:root { --brand: #...; }&#10;/* hptx-custom-theme END */&#10;&#10;Or drop a .css file here"></textarea>
+          </div>
+          <input type="file" class="tc-file-input" id="tcCssFileInput" accept=".css,text/css,text/plain" tabindex="-1" aria-hidden="true">
+          <div class="tc-actions" style="margin-top:10px">
+            <button type="button" class="tc-btn" id="tcLoadFileBtn">Load theme…</button>
+            <button type="button" class="tc-btn tc-btn-primary" id="tcApplyBtn">Apply theme</button>
+            <button type="button" class="tc-btn tc-btn-danger" id="tcResetBtn">Clear theme</button>
+          </div>
+        </div>
+      </div>
+      <div class="tc-panel" role="tabpanel" id="tcPanelPrompt" aria-labelledby="tcTabPrompt" hidden>
+        <div class="tc-field">
+          <label for="tcPromptOut">Prompt for AI assistant</label>
+          <p class="tc-field-hint">Paste into chat; the assistant asks for brand colors (which is the primary CTA), accent roles, and single vs dual theme, then returns a complete <code>:root</code> CSS block remapped from the live baseline in this file.</p>
+          <textarea class="tc-textarea" id="tcPromptOut" readonly rows="10"></textarea>
+          <div class="tc-actions" style="margin-top:10px">
+            <button type="button" class="tc-btn" id="tcCopyPromptBtn">Copy prompt</button>
+          </div>
+        </div>
+      </div>
+      <div class="tc-panel" role="tabpanel" id="tcPanelDelivery" aria-labelledby="tcTabDelivery" hidden>
+        <div class="tc-field">
+          <label for="tcThemeInstructions">How to bake a theme into the build</label>
+          <textarea class="tc-textarea" id="tcThemeInstructions" readonly rows="12"></textarea>
+        </div>
+      </div>
+      <div class="tc-panel" role="tabpanel" id="tcPanelSlides" aria-labelledby="tcTabSlides" hidden>
+        <div class="tc-field">
+          <div class="tc-slide-head">
+            <div>
+              <label>Slides shown in this browser</label>
+              <p class="tc-field-hint">Uncheck a slide (or a whole group) to hide it from navigation, the agenda, and the slide count. Uncheck Agenda to show only the title block on the home page. Saved in this browser only, the same way as an applied theme.</p>
+            </div>
+            <button type="button" class="tc-btn" id="tcShowAllSlidesBtn">Show all</button>
+          </div>
+          <div class="tc-slide-list" id="tcSlideList"></div>
+        </div>
+      </div>
+      <div class="tc-panel" role="tabpanel" id="tcPanelNavigation" aria-labelledby="tcTabNavigation" hidden>
+        <div class="tc-field">
+          <label class="tc-check-row" id="tcClickerModeRow" for="tcClickerMode">
+            <input type="checkbox" id="tcClickerMode">
+            <span>Clicker mode</span>
+          </label>
+          <p class="tc-field-hint">When on, Left/Right, Up/Down, and Page Up/Down step inside the current slide, then change slides at the ends. Saved in this browser only. Other shortcuts stay available.</p>
+        </div>
+        <div class="tc-field">
+          <label class="tc-check-row" id="tcRememberSlideStepRow" for="tcRememberSlideStep">
+            <input type="checkbox" id="tcRememberSlideStep">
+            <span>Remember last step on each slide</span>
+          </label>
+          <p class="tc-field-hint">When on, returning to a slide restores the step you left on (session only; cleared on refresh). When off, each visit uses the slide’s authored landing step. Preference is saved in this browser; applies in clicker and normal mode.</p>
+        </div>
+      </div>
+      <div class="tc-panel" role="tabpanel" id="tcPanelStorage" aria-labelledby="tcTabStorage" hidden>
+        <div class="tc-field">
+          <label>Clear saved presentation data</label>
+          <p class="tc-field-hint">Removes the applied theme, hidden-slide selection, clicker-mode and remember-step preferences, and light/dark preference from this browser. Does not change the HTML file.</p>
+          <div class="tc-actions">
+            <button type="button" class="tc-btn tc-btn-danger" id="tcEraseAllBtn">Erase all stored data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="theme-customizer-footer">
+      <p class="tc-status" id="tcStatus" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<!-- DECK_CDN_SCRIPTS -->
+<script>
+  function deckCssVar(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function deckCssVarList(names){
+    return names.map(function(n){ return deckCssVar(n); });
+  }
+(function(){
+  /* Fall back to in-memory storage when localStorage is blocked (e.g. some sandboxed embeds). */
+  var deckStore = (function(){
+    var mem = {};
+    var ls = null;
+    try{
+      ls = window.localStorage;
+      var probe = '__hptx_ls_probe__';
+      ls.setItem(probe, '1');
+      ls.removeItem(probe);
+    }catch(_err){
+      ls = null;
+    }
+    return {
+      getItem: function(key){
+        if(!ls) return Object.prototype.hasOwnProperty.call(mem, key) ? mem[key] : null;
+        try{ return ls.getItem(key); }catch(_e){ return Object.prototype.hasOwnProperty.call(mem, key) ? mem[key] : null; }
+      },
+      setItem: function(key, value){
+        var stored = String(value);
+        if(!ls){ mem[key] = stored; return; }
+        try{ ls.setItem(key, stored); }catch(_e){ mem[key] = stored; }
+      },
+      removeItem: function(key){
+        delete mem[key];
+        if(!ls) return;
+        try{ ls.removeItem(key); }catch(_e){}
+      }
+    };
+  })();
+
+  /* ============ THEME ============ */
+  var themeCheckbox = document.getElementById('themeCheckbox');
+  function setPresentationTheme(light, opts){
+    opts = opts || {};
+    var persist = opts.persist !== false;
+    document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+    if(persist) deckStore.setItem('hptx-theme', light ? 'light' : 'dark');
+    if(themeCheckbox) themeCheckbox.checked = !light;
+  }
+  function togglePresentationTheme(){
+    if(isThemeSwitchDisabled() || !themeCheckbox) return;
+    setPresentationTheme(themeCheckbox.checked);
+  }
+  function isKeyboardTypingTarget(el){
+    if(!el || !el.tagName) return false;
+    if(themeCustomizerEl && !themeCustomizerIsOpen() && themeCustomizerEl.contains(el)) return false;
+    var tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+  }
+  var storedTheme = deckStore.getItem('hptx-theme');
+  if(storedTheme === 'dark') setPresentationTheme(false);
+  else setPresentationTheme(true);
+  if(themeCheckbox){
+    themeCheckbox.addEventListener('change', function(){
+      if(isThemeSwitchDisabled()) return;
+      setPresentationTheme(!themeCheckbox.checked);
+    });
+  }
+
+  /* ============ HIDDEN AI THEME CUSTOMIZER (shortcut C — not documented in UI) ============ */
+  var CUSTOM_THEME_STYLE_ID = 'hptxCustomThemeStyle';
+  var LS_CUSTOM_THEME_CSS = 'hptx-custom-theme-css';
+  var embeddedThemeCssSnapshot = (function(){
+    var el = document.getElementById(CUSTOM_THEME_STYLE_ID);
+    return el ? el.textContent : '';
+  })();
+  var deckThemeRefreshers = [];
+  window.registerDeckThemeRefresh = function(fn){
+    if(typeof fn === 'function') deckThemeRefreshers.push(fn);
+  };
+  window.deckNotifyCustomThemeApplied = function(){
+    deckThemeRefreshers.forEach(function(fn){
+      try{ fn(); }catch(_err){}
+    });
+    syncThemeSwitchControl();
+  };
+  var BRAND_TOKEN_NAMES = [
+    '--brand','--brand-strong','--brand-deep','--danger','--danger-soft',
+    '--accent-warm','--accent-warm-deep','--accent','--accent-soft',
+    '--accent-warn','--accent-info','--accent-info-soft','--accent-alt',
+    '--accent-highlight','--accent-highlight-soft',
+    '--neutral-hover','--neutral-mid','--neutral-divider','--on-brand','--donut-1','--donut-2',
+    '--donut-4','--donut-6','--gauge-tint-1','--gauge-tint-2','--gauge-tint-1-light',
+    '--gauge-tint-2-light','--ai-grad-top','--ai-grad-bottom'
+  ];
+  var SURFACE_TOKEN_NAMES = [
+    '--bg','--bg-deep','--surface','--panel','--panel-2','--line',
+    '--text','--text-dim','--text-strong'
+  ];
+  var CONSTANT_TOKEN_NAMES = ['--ink','--paper'];
+  var RGB_TOKEN_NAMES = [
+    '--brand-rgb','--brand-deep-rgb','--accent-rgb','--accent-warn-rgb',
+    '--accent-info-rgb','--danger-rgb','--accent-warm-rgb','--accent-highlight-rgb',
+    '--paper-rgb','--ink-rgb'
+  ];
+  var DECK_CHROME_TOKEN_NAMES = [
+    '--deck-theme-toggle-display',
+    '--deck-settings-gear-display',
+    '--deck-agenda-theme-hint-display',
+    '--deck-agenda-settings-hint-display',
+    '--deck-settings-shortcut-enabled'
+  ];
+  var ROOT_TOKEN_NAMES = DECK_CHROME_TOKEN_NAMES
+    .concat(BRAND_TOKEN_NAMES, CONSTANT_TOKEN_NAMES, SURFACE_TOKEN_NAMES, RGB_TOKEN_NAMES);
+  function deckChromeTokenLine(name){
+    if(name === '--deck-settings-shortcut-enabled') return '  ' + name + ': <0|1>;';
+    if(name === '--deck-agenda-theme-hint-display' || name === '--deck-agenda-settings-hint-display'){
+      return '  ' + name + ': <grid|none>;';
+    }
+    if(name.indexOf('-display') !== -1) return '  ' + name + ': <flex|none>;';
+    return '  ' + name + ': <value>;';
+  }
+  function isSettingsShortcutEnabled(){
+    var v = deckCssVar('--deck-settings-shortcut-enabled').trim().toLowerCase();
+    var tokenOff = (v === '0' || v === 'false' || v === 'off' || v === 'no');
+    if(!tokenOff) return true;
+    /* Themes may hide the gear and set this token to 0 together. C stays available
+       whenever the gear itself cannot be clicked. */
+    var gear = document.getElementById('deckSettingsBtn');
+    if(!gear) return true;
+    return getComputedStyle(gear).display === 'none';
+  }
+  function isThemeSwitchDisabled(){
+    /* Lock from the theme token only — do not use wrap visibility (hidden off-home for chrome declutter). */
+    var v = deckCssVar('--deck-theme-toggle-display').trim().toLowerCase();
+    return v === 'none';
+  }
+  function syncThemeSwitchControl(){
+    if(themeCheckbox) themeCheckbox.disabled = isThemeSwitchDisabled();
+  }
+  function normalizePastedThemeCss(text){
+    var t = (text || '').trim();
+    var fence = t.match(/^```(?:css)?\s*\n?([\s\S]*?)```\s*$/im);
+    if(fence) t = fence[1].trim();
+    else {
+      t = t.replace(/^```(?:css)?\s*\n?/i, '').replace(/\n?```\s*$/, '').trim();
+    }
+    return t;
+  }
+  function validateCustomThemeCss(text){
+    var t = normalizePastedThemeCss(text);
+    if(!t) return { ok:false, message:'Load a .css file or paste a CSS block first.' };
+    if(/<script/i.test(t) || /@import/i.test(t) || /javascript:/i.test(t)){
+      return { ok:false, message:'Block contains disallowed CSS directives.' };
+    }
+    if(!/:root\b/.test(t) && !/html\[data-theme\s*=\s*["']dark["']\s*\]/.test(t)){
+      return { ok:false, message:'Include a :root { … } block (optional html[data-theme="dark"] { … } for dark surfaces).' };
+    }
+    if(!/--[\w-]+\s*:/.test(t)){
+      return { ok:false, message:'No CSS custom properties (--name: value) found.' };
+    }
+    if(!/--brand\s*:/.test(t)){
+      return { ok:false, message:'Theme must set --brand (primary CTA).' };
+    }
+    return { ok:true, css:t };
+  }
+  function injectCustomThemeCss(text){
+    var el = document.getElementById(CUSTOM_THEME_STYLE_ID);
+    if(!el){
+      el = document.createElement('style');
+      el.id = CUSTOM_THEME_STYLE_ID;
+      document.head.appendChild(el);
+    }
+    el.textContent = text || '';
+  }
+  function applyStoredCustomTheme(opts){
+    opts = opts || {};
+    var css = deckStore.getItem(LS_CUSTOM_THEME_CSS);
+    if(css && css.trim()){
+      injectCustomThemeCss(css);
+      if(opts.notify !== false) deckNotifyCustomThemeApplied();
+    } else {
+      var embedded = document.getElementById(CUSTOM_THEME_STYLE_ID);
+      if(embedded && embedded.textContent.trim() && opts.notify !== false){
+        deckNotifyCustomThemeApplied();
+      }
+    }
+    syncThemeSwitchControl();
+  }
+  function resetStoredCustomTheme(){
+    deckStore.removeItem(LS_CUSTOM_THEME_CSS);
+    var el = document.getElementById(CUSTOM_THEME_STYLE_ID);
+    if(el) el.textContent = embeddedThemeCssSnapshot;
+    deckNotifyCustomThemeApplied();
+    syncThemeSwitchControl();
+  }
+  var LS_HIDDEN_SLIDES = 'hptx-hidden-slides';
+  var LS_CLICKER_MODE = 'hptx-clicker-mode';
+  var LS_REMEMBER_SLIDE_STEP = 'hptx-remember-slide-step';
+  var LS_SHOW_AGENDA = 'hptx-show-agenda';
+  var DECK_LS_KEYS = ['hptx-theme', LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA];
+  var clickerModeEnabled = deckStore.getItem(LS_CLICKER_MODE) === '1';
+  var rememberSlideStepEnabled = deckStore.getItem(LS_REMEMBER_SLIDE_STEP) === '1';
+  function isClickerMode(){ return !!clickerModeEnabled; }
+  function isRememberSlideStep(){ return !!rememberSlideStepEnabled; }
+  function syncTitleKbdHintsForClicker(){
+    var lr = document.getElementById('titleKbdHintNavLeftRight');
+    var ud = document.getElementById('titleKbdHintNavUpDown');
+    var pg = document.getElementById('titleKbdHintNavPage');
+    if(!lr || !ud || !pg) return;
+    var clickerDesc = 'step on the slide, then change page at the ends';
+    var lrDesc = lr.querySelector('.kbd-desc');
+    var udDesc = ud.querySelector('.kbd-desc');
+    var pgDesc = pg.querySelector('.kbd-desc');
+    if(clickerModeEnabled){
+      if(lrDesc) lrDesc.textContent = clickerDesc;
+      if(udDesc) udDesc.textContent = clickerDesc;
+      if(pgDesc) pgDesc.textContent = clickerDesc;
+      pg.hidden = false;
+    } else {
+      if(lrDesc) lrDesc.textContent = 'highlight a section on the page';
+      if(udDesc) udDesc.textContent = 'navigate between pages';
+      pg.hidden = true;
+    }
+  }
+  function setClickerMode(on, opts){
+    opts = opts || {};
+    clickerModeEnabled = !!on;
+    if(opts.persist !== false){
+      if(clickerModeEnabled) deckStore.setItem(LS_CLICKER_MODE, '1');
+      else deckStore.removeItem(LS_CLICKER_MODE);
+    }
+    var cb = document.getElementById('tcClickerMode');
+    if(cb) cb.checked = clickerModeEnabled;
+    var row = document.getElementById('tcClickerModeRow');
+    if(row) row.classList.toggle('is-off', !clickerModeEnabled);
+    document.documentElement.classList.toggle('deck-clicker-mode', clickerModeEnabled);
+    syncTitleKbdHintsForClicker();
+  }
+  function setRememberSlideStep(on, opts){
+    opts = opts || {};
+    rememberSlideStepEnabled = !!on;
+    if(opts.persist !== false){
+      if(rememberSlideStepEnabled) deckStore.setItem(LS_REMEMBER_SLIDE_STEP, '1');
+      else deckStore.removeItem(LS_REMEMBER_SLIDE_STEP);
+    }
+    var cb = document.getElementById('tcRememberSlideStep');
+    if(cb) cb.checked = rememberSlideStepEnabled;
+    var row = document.getElementById('tcRememberSlideStepRow');
+    if(row) row.classList.toggle('is-off', !rememberSlideStepEnabled);
+  }
+  function buildThemeInstructions(){
+    return [
+      'Bake a theme into the built HTML (file:// friendly)',
+      '',
+      'Theme layers (CSS cascade): shell defaults → deck.json bake → Settings override.',
+      'A partial theme file is fine — unspecified tokens keep the defaults.',
+      '',
+      '1. Save the themed CSS from your AI assistant as a .css file in the deck folder',
+      '   (for example theme.css), or host it at an https:// URL.',
+      '',
+      '2. In the deck\'s deck.json, set "theme" to that path or URL, for example',
+      '   "theme": "./theme.css".',
+      '',
+      '3. Single theme (light only)',
+      '   • Use :root { … } only — light colors (backgrounds, text, panels, and brand).',
+      '   • Leave out the html[data-theme="dark"] { … } block.',
+      '   • Set --deck-theme-toggle-display: none; --deck-settings-gear-display: none;',
+      '     --deck-agenda-theme-hint-display: none; --deck-agenda-settings-hint-display: none;',
+      '     --deck-settings-shortcut-enabled: 0;',
+      '',
+      '4. Dual theme (light + dark)',
+      '   • :root { … } for brand + light surfaces, then html[data-theme="dark"] { … } for dark surface overrides.',
+      '   • Keep --deck-theme-toggle-display: flex; so users can switch modes.',
+      '',
+      '5. Run npm run build -- <deck-folder>. The theme is appended after the shell defaults',
+      '   between DECK THEME — START and DECK THEME — END (cascade, not replace).',
+      '   Applying a theme from Settings overrides both defaults and the bake in this browser only.',
+      '',
+      '6. Open the built .html file in a browser. No local storage required.'
+    ].join('\n');
+  }
+  function eraseAllDeckStoredData(){
+    DECK_LS_KEYS.forEach(function(key){ deckStore.removeItem(key); });
+    resetStoredCustomTheme();
+    if(tcPasteIn) tcPasteIn.value = '';
+    setPresentationTheme(true);
+    syncThemeSwitchControl();
+    setHiddenSlideKeys([], { showAgenda:true });
+    setClickerMode(false, { persist:false });
+    setRememberSlideStep(false, { persist:false });
+  }
+  function readDeliveryThemeRootDeclMap(){
+    var map = {};
+    var styles = document.getElementsByTagName('style');
+    var markerStart = 'DECK THEME — START';
+    var markerEnd = 'DECK THEME — END';
+    for(var i = 0; i < styles.length; i++){
+      var t = styles[i].textContent || '';
+      var start = t.indexOf(markerStart);
+      var end = t.indexOf(markerEnd);
+      if(start === -1 || end === -1 || end < start) continue;
+      var region = t.slice(start, end);
+      /* Later :root blocks (baked theme) win over earlier defaults — same as CSS cascade. */
+      var rootRe = /:root\s*\{([\s\S]*?)\}/g;
+      var rootMatch;
+      while((rootMatch = rootRe.exec(region))){
+        var body = rootMatch[1];
+        var re = /(--[\w-]+)\s*:\s*([^;]+);/g;
+        var m;
+        while((m = re.exec(body))){
+          map[m[1]] = m[2].trim();
+        }
+      }
+      break;
+    }
+    return map;
+  }
+  function baselineThemeTokenLines(names){
+    var map = readDeliveryThemeRootDeclMap();
+    return names.map(function(n){
+      var v = map[n];
+      if(v) return '  ' + n + ': ' + v + ';';
+      if(n.indexOf('-rgb') !== -1) return '  ' + n + ': <r,g,b>;';
+      return '  ' + n + ': <value>;';
+    }).join('\n');
+  }
+  function buildAiThemePrompt(){
+    var fullRootLines = ROOT_TOKEN_NAMES.map(function(n){
+      if(n.indexOf('-rgb') !== -1) return '  ' + n + ': <r,g,b>;';
+      return deckChromeTokenLine(n);
+    }).join('\n');
+    var sharedBrandLines = BRAND_TOKEN_NAMES.concat(CONSTANT_TOKEN_NAMES, RGB_TOKEN_NAMES).map(function(n){
+      if(n.indexOf('-rgb') !== -1) return '  ' + n + ': <r,g,b>;';
+      return '  ' + n + ': <value>;';
+    }).join('\n');
+    var lightSurfLines = SURFACE_TOKEN_NAMES.map(function(n){ return '  ' + n + ': <value>;'; }).join('\n');
+    var darkSurfLines = SURFACE_TOKEN_NAMES.map(function(n){ return '  ' + n + ': <value>;'; }).join('\n');
+    var baselineNames = BRAND_TOKEN_NAMES.concat(CONSTANT_TOKEN_NAMES, SURFACE_TOKEN_NAMES, RGB_TOKEN_NAMES);
+    var baselineLines = baselineThemeTokenLines(baselineNames);
+    return [
+      'You are helping theme a single-file HTML presentation via CSS custom properties.',
+      'Your CSS becomes the deck\'s theme file (set as "theme" in deck.json); the build appends it after the shell defaults between the DECK THEME START/END markers so CSS cascade applies (partial themes keep unspecified defaults; :root; dual theme also includes html[data-theme="dark"]).',
+      'Internal preview may use a separate overlay style tag (Settings override, third layer); your output is still one fenced css code block for copy/paste.',
+      '',
+      'STEP 1 — Before generating any CSS, ask me (in plain language) for:',
+      '1. Company or brand name (and any public brand guidelines link, if I have one).',
+      '2. Brand colors — hex codes and/or names, and which one is the primary CTA / button color (this maps to --brand).',
+      '3. Secondary / accent roles I care about (emphasis → --accent*; errors → --danger*; warnings → --accent-warn; info → --accent-info* / --accent-alt). Prefer my brand palette for --accent-warn, --accent-highlight*, and --accent-warm* — do not keep the default orange/gold unless my brand has equivalents.',
+      '4. Whether to keep the default Bootstrap primary blue as --brand or fully replace it with my brand primary.',
+      '5. Any colors or hues to avoid.',
+      '6. Single theme or dual theme?',
+      '   • Single theme — one complete :root { … } with every variable below set for a light presentation (brand + light surfaces in :root only).',
+      '   • Dual theme — :root { … } for brand + light surfaces, plus html[data-theme="dark"] { … } for dark surface/text overrides (both blocks in one theme region).',
+      '',
+      'Do NOT produce CSS until I have answered (single theme or dual theme). One short follow-up is fine if incomplete.',
+      '',
+      'STEP 2 — After I answer, reply with:',
+      '- One brief sentence confirming the palette and single theme or dual theme.',
+      '- Then EXACTLY ONE markdown fenced code block (language tag: css) containing ONLY the theme CSS — no prose inside the fence.',
+      '',
+      'Single theme — inside ```css include ONLY:',
+      '/* hptx-custom-theme BEGIN */',
+      ':root {',
+      fullRootLines,
+      '  /* Single theme must include:',
+      '       --deck-theme-toggle-display: none;',
+      '       --deck-settings-gear-display: none;',
+      '       --deck-agenda-theme-hint-display: none;',
+      '       --deck-agenda-settings-hint-display: none;',
+      '       --deck-settings-shortcut-enabled: 0; */',
+      '}',
+      '/* hptx-custom-theme END */',
+      '(Remap from the Current :root baseline section below. Include ALL variables listed — no omissions.',
+      ' For single theme, set all --deck-* chrome variables to the none/0 values in the comment — not comment-only.)',
+      '',
+      'Dual theme — inside ```css include:',
+      '/* hptx-custom-theme BEGIN */',
+      ':root {',
+      '  --deck-theme-toggle-display: flex;',
+      '  --deck-settings-gear-display: flex;',
+      '  --deck-agenda-theme-hint-display: grid;',
+      '  --deck-agenda-settings-hint-display: grid;',
+      '  --deck-settings-shortcut-enabled: 1;',
+      sharedBrandLines,
+      lightSurfLines,
+      '}',
+      'html[data-theme="dark"] {',
+      darkSurfLines,
+      '}',
+      '/* hptx-custom-theme END */',
+      '(I will save both :root and html[data-theme="dark"] in the deck\'s theme file.)',
+      '',
+      'CSS rules:',
+      '- Use hex (#RRGGBB) or rgb()/rgba() values; *-rgb as comma-separated integers without rgb().',
+      '- Keep --on-brand readable on the primary button; choose white or dark ink from contrast against the new primary.',
+      '- If --brand changes, rematch the full brand family (--brand-strong/deep, *-rgb, donuts, gauges, chart grads) to that hue — no leftover default Bootstrap primary in charts.',
+      '- Prefer my brand colors for accent tokens; do not invent orange/gold when my brand already has a strong warm/red.',
+      '- --ink and --paper are fixed dark/light constants (overlays, shadows, text on --brand-deep / --danger). Set them only in :root; never invert them in html[data-theme="dark"].',
+      '',
+      'Token roles (names describe the job, not the hue):',
+      '- --brand / --brand-strong / --brand-deep: primary CTA, active states, hover, deep fills; --on-brand: text/icons on --brand.',
+      '- --accent* / --accent-soft: secondary emphasis; --accent-warn: warnings; --accent-info*: informational callouts; --accent-alt: extra chart accent.',
+      '- --accent-highlight*: highlighted callouts; --accent-warm*: warm secondary accent.',
+      '- --neutral-hover / --neutral-mid / --neutral-divider: neutral borders, bars, and dividers.',
+      '- --bg / --bg-deep: page background gradient; --surface: drawer and node fill; --panel / --panel-2: cards; --line: borders.',
+      '- --text: body text; --text-dim: secondary text; --text-strong: headings and highest-contrast text.',
+      '- Single theme: recommend <html data-theme="light">; omit html[data-theme="dark"]; hide the settings gear and agenda hints. Keyboard C still opens Settings when the gear is hidden.',
+      '- Dual theme: keep settings gear and C hint enabled unless I ask otherwise; include html[data-theme="dark"] in the fenced block.',
+      '',
+      'Current :root baseline (from this deck\'s DECK THEME — remap these values to my brand; still include every required token in your output):',
+      ':root {',
+      baselineLines,
+      '}',
+      '',
+      'I will save the fenced CSS as the deck\'s theme file (single theme: :root only; dual theme: :root + html[data-theme="dark"]).'
+    ].join('\n');
+  }
+  var themeCustomizerEl = document.getElementById('themeCustomizer');
+  var tcTabButtons = document.querySelectorAll('.tc-tab');
+  var TC_TAB_PANELS = {
+    prompt: document.getElementById('tcPanelPrompt'),
+    preview: document.getElementById('tcPanelPreview'),
+    delivery: document.getElementById('tcPanelDelivery'),
+    slides: document.getElementById('tcPanelSlides'),
+    navigation: document.getElementById('tcPanelNavigation'),
+    storage: document.getElementById('tcPanelStorage')
+  };
+  function tcSwitchTab(key){
+    tcTabButtons.forEach(function(btn){
+      var on = btn.getAttribute('data-tc-tab') === key;
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
+    });
+    Object.keys(TC_TAB_PANELS).forEach(function(k){
+      var panel = TC_TAB_PANELS[k];
+      if(!panel) return;
+      var on = k === key;
+      panel.classList.toggle('is-active', on);
+      panel.hidden = !on;
+    });
+  }
+  tcTabButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tcSwitchTab(btn.getAttribute('data-tc-tab'));
+    });
+  });
+  var tcTabsEl = document.querySelector('.tc-tabs');
+  if(tcTabsEl){
+    tcTabsEl.addEventListener('keydown', function(e){
+      var tabs = Array.prototype.slice.call(tcTabButtons);
+      var idx = tabs.indexOf(document.activeElement);
+      if(idx < 0) return;
+      if(e.key === 'ArrowRight'){
+        e.preventDefault();
+        tcSwitchTab(tabs[(idx + 1) % tabs.length].getAttribute('data-tc-tab'));
+        tabs[(idx + 1) % tabs.length].focus();
+      } else if(e.key === 'ArrowLeft'){
+        e.preventDefault();
+        tcSwitchTab(tabs[(idx - 1 + tabs.length) % tabs.length].getAttribute('data-tc-tab'));
+        tabs[(idx - 1 + tabs.length) % tabs.length].focus();
+      }
+    });
+  }
+  var tcPromptOut = document.getElementById('tcPromptOut');
+  var tcPasteIn = document.getElementById('tcPasteIn');
+  var tcPasteDrop = document.getElementById('tcPasteDrop');
+  var tcCssFileInput = document.getElementById('tcCssFileInput');
+  var tcThemeInstructions = document.getElementById('tcThemeInstructions');
+  var tcStatus = document.getElementById('tcStatus');
+  function tcSetStatus(msg, kind){
+    if(!tcStatus) return;
+    tcStatus.textContent = msg || '';
+    tcStatus.classList.remove('ok','err');
+    if(kind) tcStatus.classList.add(kind);
+  }
+  function tcIsCssFileName(name){
+    return /\.(css|txt)$/i.test(name || '');
+  }
+  function tcLoadCssText(text, sourceLabel){
+    if(!tcPasteIn) return;
+    var check = validateCustomThemeCss(text);
+    if(!check.ok){
+      tcPasteIn.value = normalizePastedThemeCss(text) || (text || '');
+      tcSetStatus((sourceLabel ? sourceLabel + ': ' : '') + check.message, 'err');
+      return;
+    }
+    tcPasteIn.value = check.css;
+    tcSetStatus((sourceLabel ? 'Loaded ' + sourceLabel + '. ' : '') + 'Review, then Apply theme.', 'ok');
+    tcPasteIn.focus();
+  }
+  function tcReadCssFile(file){
+    if(!file) return;
+    var name = file.name || 'file';
+    if(file.type && !/^(text\/|application\/octet-stream)/i.test(file.type) && !tcIsCssFileName(name)){
+      tcSetStatus('Choose a .css (or .txt) theme file.', 'err');
+      return;
+    }
+    if(!tcIsCssFileName(name) && file.type && !/^text\//i.test(file.type)){
+      tcSetStatus('Choose a .css (or .txt) theme file.', 'err');
+      return;
+    }
+    if(file.size > 512 * 1024){
+      tcSetStatus('File is too large (max 512 KB).', 'err');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      tcLoadCssText(String(reader.result || ''), name);
+    };
+    reader.onerror = function(){
+      tcSetStatus('Could not read ' + name + '.', 'err');
+    };
+    reader.readAsText(file);
+  }
+  var tcLoadFileBtn = document.getElementById('tcLoadFileBtn');
+  if(tcLoadFileBtn && tcCssFileInput){
+    tcLoadFileBtn.addEventListener('click', function(){
+      tcCssFileInput.value = '';
+      tcCssFileInput.click();
+    });
+    tcCssFileInput.addEventListener('change', function(){
+      var file = tcCssFileInput.files && tcCssFileInput.files[0];
+      if(file) tcReadCssFile(file);
+      tcCssFileInput.value = '';
+    });
+  }
+  if(tcPasteDrop){
+    var tcDragDepth = 0;
+    function tcClearDrag(){
+      tcDragDepth = 0;
+      tcPasteDrop.classList.remove('is-dragover');
+    }
+    tcPasteDrop.addEventListener('dragenter', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      tcDragDepth += 1;
+      tcPasteDrop.classList.add('is-dragover');
+    });
+    tcPasteDrop.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+      tcPasteDrop.classList.add('is-dragover');
+    });
+    tcPasteDrop.addEventListener('dragleave', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      tcDragDepth = Math.max(0, tcDragDepth - 1);
+      if(tcDragDepth === 0) tcPasteDrop.classList.remove('is-dragover');
+    });
+    tcPasteDrop.addEventListener('drop', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      tcClearDrag();
+      var files = e.dataTransfer && e.dataTransfer.files;
+      if(!files || !files.length){
+        tcSetStatus('Drop a .css file onto the box.', 'err');
+        return;
+      }
+      tcReadCssFile(files[0]);
+    });
+  }
+  function tcRefreshPromptTextarea(){
+    if(tcPromptOut) tcPromptOut.value = buildAiThemePrompt();
+    if(tcThemeInstructions) tcThemeInstructions.value = buildThemeInstructions();
+  }
+  function themeCustomizerIsOpen(){
+    return !!(themeCustomizerEl && themeCustomizerEl.classList.contains('open'));
+  }
+  function openThemeCustomizer(){
+    if(!themeCustomizerEl) return;
+    tcSwitchTab('preview');
+    tcRefreshPromptTextarea();
+    var stored = deckStore.getItem(LS_CUSTOM_THEME_CSS);
+    if(tcPasteIn) tcPasteIn.value = stored || '';
+    tcSetStatus('');
+    themeCustomizerEl.classList.add('open');
+    themeCustomizerEl.setAttribute('aria-hidden', 'false');
+  }
+  function closeThemeCustomizer(){
+    if(!themeCustomizerEl) return;
+    if(themeCustomizerEl.contains(document.activeElement)) document.activeElement.blur();
+    themeCustomizerEl.classList.remove('open');
+    themeCustomizerEl.setAttribute('aria-hidden', 'true');
+  }
+  var tcCopyPromptBtn = document.getElementById('tcCopyPromptBtn');
+  if(tcCopyPromptBtn){
+    tcCopyPromptBtn.addEventListener('click', function(){
+      tcRefreshPromptTextarea();
+      var text = tcPromptOut ? tcPromptOut.value : '';
+      function copiedOk(){
+        tcSetStatus('Prompt copied to clipboard.', 'ok');
+      }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(copiedOk).catch(function(){
+          tcPromptOut.focus(); tcPromptOut.select();
+          tcSetStatus('Select the prompt and copy manually.', 'err');
+        });
+      } else if(tcPromptOut){
+        tcPromptOut.focus(); tcPromptOut.select();
+        try{
+          if(document.execCommand('copy')) copiedOk();
+          else tcSetStatus('Copy the prompt manually.', 'err');
+        }catch(_e){ tcSetStatus('Copy the prompt manually.', 'err'); }
+      }
+    });
+  }
+  var tcApplyBtn = document.getElementById('tcApplyBtn');
+  if(tcApplyBtn){
+    tcApplyBtn.addEventListener('click', function(){
+      var text = tcPasteIn ? tcPasteIn.value : '';
+      var check = validateCustomThemeCss(text);
+      if(!check.ok){ tcSetStatus(check.message, 'err'); return; }
+      var css = check.css || normalizePastedThemeCss(text);
+      deckStore.setItem(LS_CUSTOM_THEME_CSS, css);
+      injectCustomThemeCss(css);
+      if(tcPasteIn) tcPasteIn.value = css;
+      deckNotifyCustomThemeApplied();
+      closeThemeCustomizer();
+    });
+  }
+  var tcResetBtn = document.getElementById('tcResetBtn');
+  if(tcResetBtn){
+    tcResetBtn.addEventListener('click', function(){
+      resetStoredCustomTheme();
+      if(tcPasteIn) tcPasteIn.value = '';
+      tcSetStatus('Theme cleared. The theme in this file is unchanged.', 'ok');
+    });
+  }
+  var tcEraseAllBtn = document.getElementById('tcEraseAllBtn');
+  if(tcEraseAllBtn){
+    tcEraseAllBtn.addEventListener('click', function(){
+      if(!window.confirm('Erase saved presentation data in this browser (applied theme, hidden slides, clicker mode, remember-step preference, and light/dark preference)?')) return;
+      eraseAllDeckStoredData();
+      tcSetStatus('All local presentation data erased.', 'ok');
+    });
+  }
+  var tcClickerMode = document.getElementById('tcClickerMode');
+  if(tcClickerMode){
+    tcClickerMode.checked = clickerModeEnabled;
+    tcClickerMode.addEventListener('change', function(){ setClickerMode(tcClickerMode.checked); });
+  }
+  setClickerMode(clickerModeEnabled, { persist:false });
+  var tcRememberSlideStep = document.getElementById('tcRememberSlideStep');
+  if(tcRememberSlideStep){
+    tcRememberSlideStep.checked = rememberSlideStepEnabled;
+    tcRememberSlideStep.addEventListener('change', function(){ setRememberSlideStep(tcRememberSlideStep.checked); });
+  }
+  setRememberSlideStep(rememberSlideStepEnabled, { persist:false });
+  var deckSettingsBtn = document.getElementById('deckSettingsBtn');
+  if(deckSettingsBtn) deckSettingsBtn.addEventListener('click', openThemeCustomizer);
+  var themeCustomizerClose = document.getElementById('themeCustomizerClose');
+  if(themeCustomizerClose) themeCustomizerClose.addEventListener('click', closeThemeCustomizer);
+  if(themeCustomizerEl){
+    themeCustomizerEl.addEventListener('click', function(e){
+      if(e.target === themeCustomizerEl) closeThemeCustomizer();
+    });
+  }
+  applyStoredCustomTheme({ notify:false });
+
+  /* ============ FULL SCREEN PROMPT (on load, any ?slide=) ============ */
+  var fsPromptOverlay = document.getElementById('fsPrompt');
+  function fsPromptIsOpen(){ return !!(fsPromptOverlay && fsPromptOverlay.classList.contains('open')); }
+  function getFullscreenElement(){
+    return document.fullscreenElement || document.webkitFullscreenElement ||
+      document.mozFullScreenElement || document.msFullscreenElement || null;
+  }
+  function requestPresentationFullscreen(){
+    var el = document.documentElement;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen ||
+      el.mozRequestFullScreen || el.msRequestFullscreen;
+    if(!fn) return Promise.reject(new Error('unsupported'));
+    try{
+      var ret = fn.call(el);
+      return ret && typeof ret.then === 'function' ? ret : Promise.resolve();
+    }catch(err){ return Promise.reject(err); }
+  }
+  function exitPresentationFullscreen(){
+    if(!getFullscreenElement()) return Promise.resolve();
+    var fn = document.exitFullscreen || document.webkitExitFullscreen ||
+      document.mozCancelFullScreen || document.msExitFullscreen;
+    if(!fn) return Promise.reject(new Error('unsupported'));
+    try{
+      var ret = fn.call(document);
+      return ret && typeof ret.then === 'function' ? ret : Promise.resolve();
+    }catch(err){ return Promise.reject(err); }
+  }
+  function togglePresentationFullscreen(){
+    if(getFullscreenElement()) return exitPresentationFullscreen();
+    return requestPresentationFullscreen();
+  }
+  (function initFullscreenPrompt(){
+    if(!fsPromptOverlay) return;
+    function isMacOSDesktop(){
+      return /Mac/i.test(navigator.userAgent) && !/(iPhone|iPad|iPod)/i.test(navigator.userAgent);
+    }
+    function isLikelyFullscreen(){
+      if(getFullscreenElement()) return true;
+      if(window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return true;
+      var ah = window.screen.availHeight || window.screen.height;
+      var aw = window.screen.availWidth || window.screen.width;
+      var ih = window.innerHeight;
+      var iw = window.innerWidth;
+      if(window.visualViewport){
+        ih = Math.max(ih, window.visualViewport.height);
+        iw = Math.max(iw, window.visualViewport.width);
+      }
+      if(isMacOSDesktop()){
+        var macTol = 28;
+        if(window.outerHeight >= ah - macTol && window.outerWidth >= aw - macTol) return true;
+        if(iw >= aw - macTol && ih >= ah - 88) return true;
+      }
+      var tol = 56;
+      return ih >= ah - tol && iw >= aw - tol;
+    }
+    var enterBtn = document.getElementById('fsEnterBtn');
+    var dismissBtn = document.getElementById('fsDismissBtn');
+    var fsHint = document.getElementById('fsHint');
+    var fsActionBtns = [enterBtn, dismissBtn].filter(Boolean);
+    var fsSelectedIdx = 0;
+    function setFsSelection(idx){
+      if(!fsActionBtns.length) return;
+      fsSelectedIdx = ((idx % fsActionBtns.length) + fsActionBtns.length) % fsActionBtns.length;
+      fsActionBtns.forEach(function(btn, i){
+        var on = i === fsSelectedIdx;
+        btn.classList.toggle('is-selected', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        if(on) btn.focus({ preventScroll:true });
+      });
+    }
+    function openFsPrompt(){
+      fsPromptOverlay.classList.add('open');
+      fsPromptOverlay.setAttribute('aria-hidden', 'false');
+      setFsSelection(0);
+    }
+    function closeFsPrompt(){
+      fsPromptOverlay.classList.remove('open');
+      fsPromptOverlay.setAttribute('aria-hidden', 'true');
+    }
+    function maybeFsPrompt(){
+      if(isLikelyFullscreen()) return;
+      openFsPrompt();
+    }
+    /* Safari/WebKit can enter fullscreen then reject requestFullscreen — only
+       show the manual hint when we are still not fullscreen after settle. */
+    function settleFsPromptRequest(manualHint, succeeded){
+      if(succeeded || getFullscreenElement() || isLikelyFullscreen()){
+        closeFsPrompt();
+        return;
+      }
+      requestAnimationFrame(function(){
+        if(getFullscreenElement() || isLikelyFullscreen()){
+          closeFsPrompt();
+          return;
+        }
+        if(fsHint && manualHint) fsHint.textContent = manualHint;
+      });
+    }
+    if(enterBtn){
+      enterBtn.addEventListener('click', function(){
+        var hint = 'Your browser requires a manual step — try F11 (Windows) or the View menu → Enter Full Screen.';
+        requestPresentationFullscreen().then(
+          function(){ settleFsPromptRequest(hint, true); },
+          function(){ settleFsPromptRequest(hint, false); }
+        );
+      });
+      enterBtn.addEventListener('mouseenter', function(){ setFsSelection(0); });
+    }
+    if(dismissBtn){
+      dismissBtn.addEventListener('click', closeFsPrompt);
+      dismissBtn.addEventListener('mouseenter', function(){ setFsSelection(1); });
+    }
+    function onFsChange(){ if(isLikelyFullscreen()) closeFsPrompt(); }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    window.addEventListener('resize', function(){
+      if(fsPromptIsOpen() && isLikelyFullscreen()) closeFsPrompt();
+    });
+    document.addEventListener('keydown', function(e){
+      if(!fsPromptIsOpen()) return;
+      if(e.key === 'Escape'){
+        e.preventDefault();
+        e.stopPropagation();
+        closeFsPrompt();
+      } else if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+        e.preventDefault();
+        e.stopPropagation();
+        setFsSelection(fsSelectedIdx + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if(e.key === 'Enter'){
+        e.preventDefault();
+        e.stopPropagation();
+        var btn = fsActionBtns[fsSelectedIdx];
+        if(btn) btn.click();
+      } else if((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey){
+        e.preventDefault();
+        e.stopPropagation();
+        var hint = 'Full screen may require F11 (Windows) or the View menu — or try ⌃⌘F on Mac.';
+        togglePresentationFullscreen().then(
+          function(){ settleFsPromptRequest(hint, true); },
+          function(){ settleFsPromptRequest(hint, false); }
+        );
+      }
+    }, true);
+    setTimeout(maybeFsPrompt, 0);
+  })();
+
+  /* ============ MODAL (layer two detail) ============ */
+  var modalOverlay = document.getElementById('modalOverlay');
+  var modalIcon = document.getElementById('modalIcon');
+  var modalTag = document.getElementById('modalTag');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalBody = document.getElementById('modalBody');
+  function openModal(tag, title, bodyHtml, iconName){
+    modalIcon.innerHTML = iconName ? iconBadge(iconName) : '';
+    modalIcon.style.display = iconName ? '' : 'none';
+    modalTag.textContent = tag || '';
+    modalTitle.textContent = title || '';
+    modalBody.innerHTML = bodyHtml || '';
+    modalOverlay.classList.add('open');
+  }
+  function closeModal(){ modalOverlay.classList.remove('open'); }
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', function(e){ if(e.target === modalOverlay) closeModal(); });
+
+  /* ============ ICONS (inline SVG, no external assets) ============ */
+  var ICON_PATHS = {
+    build: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+    assemble: '<circle cx="6" cy="6" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="12" cy="18" r="2.6"/><line x1="7.8" y1="8" x2="10.5" y2="15.5"/><line x1="16.2" y1="8" x2="13.5" y2="15.5"/>',
+    buy: '<path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+    outcome: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor" stroke="none"/>',
+    requirements: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9z"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="16" y2="15"/>',
+    design: '<path d="M4 20l1-4 11-11 3 3-11 11-4 1z"/><path d="M13.5 6.5l3 3"/>',
+    develop: '<polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/>',
+    test: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><polyline points="9 12 11 14 15 10"/>',
+    release: '<path d="M12 3c3 1 5 4 5 8 0 2-1 4-2 5l-3 3-3-3c-1-1-2-3-2-5 0-4 2-7 5-8z"/><circle cx="12" cy="10" r="1.6"/><path d="M9.5 16.5l-2 4 4-1"/><path d="M14.5 16.5l2 4-4-1"/>',
+    deploy: '<path d="M7 18a4 4 0 0 1-1-7.9A5 5 0 0 1 16 8a4.5 4.5 0 0 1 1 8.9"/><polyline points="9 13 12 10 15 13"/><line x1="12" y1="10" x2="12" y2="18"/>',
+    maintain: '<polyline points="4 4 4 9 9 9"/><polyline points="20 20 20 15 15 15"/><path d="M5.6 15A8 8 0 0 0 20 12"/><path d="M18.4 9A8 8 0 0 0 4 12"/>',
+    layers: '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+    shield: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><polyline points="9 12 11 14.2 15.5 9.5"/>',
+    terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><polyline points="7 9 10 12 7 15"/><line x1="12" y1="15" x2="16" y2="15"/>',
+    database: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    cicd: '<circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M6 8.2V15.8"/><path d="M8.2 6h5.3A4.5 4.5 0 0 1 18 10.5"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    docs: '<path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 0-2 2V5z"/><path d="M20 5a2 2 0 0 0-2-2h-5v18h5a2 2 0 0 1 2 2V5z"/>',
+    idea: '<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3z"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><polygon points="15 9 13 13 9 15 11 11 15 9"/>',
+    network: '<circle cx="7" cy="8" r="2.3"/><circle cx="17" cy="8" r="2.3"/><circle cx="12" cy="17" r="2.3"/><line x1="8.7" y1="9.7" x2="10.5" y2="15.3"/><line x1="15.3" y1="9.7" x2="13.5" y2="15.3"/><line x1="9.3" y1="8" x2="14.7" y2="8"/>',
+    foundation: '<path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/>',
+    link: '<path d="M8 16a4 4 0 0 1 0-5.7l2-2a4 4 0 0 1 5.7 5.7l-1 1"/><path d="M16 8a4 4 0 0 1 0 5.7l-2 2a4 4 0 0 1-5.7-5.7l1-1"/>',
+    flag: '<line x1="5" y1="21" x2="5" y2="4"/><path d="M5 5h13l-3 4 3 4H5"/>',
+    question: '<circle cx="12" cy="12" r="9"/><path d="M9.3 9.3a2.7 2.7 0 1 1 3.9 2.4c-.9.5-1.5 1-1.5 2.1"/><circle cx="12" cy="17.2" r=".2" fill="currentColor" stroke="none"/>',
+    human: '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/>',
+    robot: '<rect x="5" y="8" width="14" height="10" rx="2"/><line x1="12" y1="4" x2="12" y2="8"/><circle cx="12" cy="3" r="1"/><circle cx="9" cy="13" r="1.2"/><circle cx="15" cy="13" r="1.2"/><line x1="9" y1="17" x2="15" y2="17"/>',
+    check: '<polyline points="4 12.5 9.5 18 20 5"/>'
+  };
+  function svgIcon(name){
+    return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICON_PATHS[name]||'')+'</svg>';
+  }
+  function iconBadge(name, size){
+    return '<span class="icon-badge'+(size ? ' '+size : '')+'">'+svgIcon(name)+'</span>';
+  }
+  function inlineIcon(name){
+    return '<svg class="icon inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICON_PATHS[name]||'')+'</svg>';
+  }
+
+  /* ============ COMMON:CORE — SLIDE STEP CURSOR ============
+     Shell owns in-slide step index. Slides declare stepCount, landingStep, setStep(i),
+     and optional activateStep(). Undeclared count/landing = 0.
+     When Remember last step is on, landSlideSteps restores slideStepIndex[key] if set;
+     otherwise (or with forceLanding) it applies landingStep. In-session positions are
+     memory-only; the *current* slide’s step is also mirrored in ?step= for reload. */
+  var slideStepIndex = {};
+  function moduleStepCount(mod){
+    if(!mod) return 0;
+    var n = mod.stepCount;
+    if(typeof n === 'function') n = n();
+    n = parseInt(n, 10);
+    return (isNaN(n) || n < 0) ? 0 : n;
+  }
+  function moduleLandingStep(mod){
+    if(!mod) return 0;
+    var n = mod.landingStep;
+    if(typeof n === 'function') n = n();
+    n = parseInt(n, 10);
+    if(isNaN(n) || n < 0) return 0;
+    var count = moduleStepCount(mod);
+    if(count <= 0) return 0;
+    return Math.min(n, count - 1);
+  }
+  function applySlideStep(key, idx){
+    var mod = slideModules[key];
+    if(!mod) return;
+    var count = moduleStepCount(mod);
+    if(count <= 0){
+      slideStepIndex[key] = 0;
+      if(key === keyAt(current)) syncSlideToUrl();
+      return;
+    }
+    idx = Math.max(0, Math.min(count - 1, idx));
+    slideStepIndex[key] = idx;
+    if(typeof mod.setStep === 'function'){
+      try{ mod.setStep(idx); }catch(err){ console.error('[deck] setStep failed for slide:', key, err); }
+    }
+    if(key === keyAt(current)) syncSlideToUrl();
+  }
+  function activateSlideStep(){
+    var mod = moduleAt(current);
+    if(mod && typeof mod.activateStep === 'function'){
+      try{ mod.activateStep(); }catch(err){ console.error('[deck] activateStep failed for slide:', keyAt(current), err); }
+    }
+  }
+  function landSlideSteps(key, opts){
+    opts = opts || {};
+    var mod = slideModules[key];
+    var idx;
+    if(!opts.forceLanding && rememberSlideStepEnabled && typeof slideStepIndex[key] === 'number'){
+      idx = slideStepIndex[key];
+    } else {
+      idx = moduleLandingStep(mod);
+    }
+    applySlideStep(key, idx);
+  }
+  /* Returns true if the step index moved; false if at a boundary (or no steps).
+     wrap=true (normal mode) cycles within the slide; wrap=false (clicker) stops at ends. */
+  function moveStep(delta, wrap){
+    var key = keyAt(current);
+    var mod = moduleAt(current);
+    var n = moduleStepCount(mod);
+    if(n <= 0) return false;
+    var idx = typeof slideStepIndex[key] === 'number' ? slideStepIndex[key] : moduleLandingStep(mod);
+    var next = idx + delta;
+    if(wrap){
+      next = ((next % n) + n) % n;
+    } else if(next < 0 || next >= n){
+      return false;
+    }
+    if(next === idx) return false;
+    applySlideStep(key, next);
+    return true;
+  }
+  function clickerNavStep(delta){
+    if(moveStep(delta, false)){
+      if(modalOverlay.classList.contains('open')) activateSlideStep();
+      return true;
+    }
+    if(modalOverlay.classList.contains('open')) closeModal();
+    stepVisible(delta);
+    return false;
+  }
+
+  /* ============ COMMON:CORE — SLIDE REGISTRY ============
+     Key-based slide modules. Slide ORDER is read from DOM: each .slide’s data-slide attribute,
+     in document order inside #slides. Reorder or remove slides by moving/deleting the matching
+     SLIDE:<key> co-located blocks (style + section + script); no separate manifest array to edit.
+     A module may define:
+       boot(Deck)        render / wire DOM (runs once when the engine starts)
+       onEnter(prevKey)  run when the slide becomes active (navigation)
+       onLeave(nextKey)  run when the slide is navigated away from
+       onKey(e)          slide-specific keys; return true to CONSUME the key
+       stepCount         in-slide steps (default 0); shell owns ←/→ scrub
+       landingStep       index applied on enter (default 0)
+       setStep(i)        paint view / highlight for step i
+       activateStep()    optional; Enter / modal activate for current step
+       onReset()         reset interactive state (print mode and deck reset)
+       redraw()          optional; invoked before native print layout (charts/canvas). */
+  var slidesEls = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  slidesEls.forEach(function(el, idx){ el.id = 'slide-' + idx; });
+  var SLIDE_MANIFEST = slidesEls.map(function(el, idx){
+    var k = el.getAttribute('data-slide');
+    if(!k) console.warn('[deck] .slide at index', idx, 'is missing data-slide');
+    return k || ('unnamed-' + idx);
+  });
+  (function(){
+    var seen = {};
+    SLIDE_MANIFEST.forEach(function(k, idx){
+      if(seen[k]) console.error('[deck] duplicate data-slide:', k, 'at indices', seen[k], 'and', idx);
+      else seen[k] = idx;
+    });
+  })();
+  var slideModules = {};
+  function commitSlideModule(key, mod){ slideModules[key] = mod || {}; }
+  function keyAt(idx){ return SLIDE_MANIFEST[idx]; }
+  function moduleAt(idx){ return slideModules[SLIDE_MANIFEST[idx]]; }
+
+  function invokeSlideModuleRedraw(){
+    Object.keys(slideModules).forEach(function(key){
+      var m = slideModules[key];
+      if(m && typeof m.redraw === 'function'){
+        try { m.redraw(); } catch(_err){ console.error('[deck] redraw failed for slide:', key, _err); }
+      }
+    });
+  }
+
+  /* ============ COMMON:CORE — public engine surface (window.Deck) ============
+     Co-located slide modules receive this object as boot(Deck) and use it for all shared
+     behavior, so a slide block never reaches into engine internals directly.
+     Defined (and the registration queue drained) BEFORE the agenda is built, so the agenda
+     can read each slide's title/icon straight from the registry. */
+  function goToKey(key){
+    var i = SLIDE_MANIFEST.indexOf(key);
+    if(i >= 0) goTo(i);
+    else console.warn('[deck] goToKey: no slide with data-slide=', key);
+  }
+  window.Deck = {
+    manifest: SLIDE_MANIFEST,
+    currentKey: function(){ return keyAt(current); },
+    cssVar: deckCssVar, cssVarList: deckCssVarList,
+    icon: svgIcon, iconBadge: iconBadge, inlineIcon: inlineIcon, iconPaths: ICON_PATHS,
+    openModal: openModal, closeModal: closeModal,
+    clickerMode: isClickerMode,
+    rememberSlideStep: isRememberSlideStep,
+    moveStep: function(delta){ return moveStep(delta, !isClickerMode()); },
+    stepIndex: function(key){ return slideStepIndex[key]; },
+    setStep: function(key, idx){ applySlideStep(key, idx); },
+    onThemeRefresh: window.registerDeckThemeRefresh,
+    get: function(key){ return slideModules[key]; }, keyAt: keyAt,
+    goTo: goTo, goToKey: goToKey
+  };
+  /* Drain co-located slide registrations: render each (boot) then wire its hooks. */
+  var manifestKeySet = {};
+  SLIDE_MANIFEST.forEach(function(k){ manifestKeySet[k] = true; });
+  var queuedSlideKeys = {};
+  (window.__deckSlideQueue || []).forEach(function(entry){
+    var key = entry[0], mod = entry[1] || {};
+    if(queuedSlideKeys[key]){
+      console.error('[deck] duplicate registerSlide() for data-slide key:', key);
+    } else {
+      queuedSlideKeys[key] = true;
+    }
+    if(!manifestKeySet[key]){
+      console.error('[deck] registerSlide("' + key + '") has no matching .slide[data-slide="' + key + '"] in #slides');
+    }
+    try { if(typeof mod.boot === 'function') mod.boot(window.Deck); }
+    catch(err){ console.error('[deck] boot failed for slide:', key, err); }
+    commitSlideModule(key, mod);
+  });
+  SLIDE_MANIFEST.forEach(function(k, idx){
+    if(idx === 0) return;
+    if(!slideModules[k]){
+      console.warn('[deck] missing registerSlide() for .slide[data-slide="' + k + '"] — using fallback agenda label');
+    }
+  });
+
+  /* ============ RENDER: agenda entries (home page and drawer) — titles/icons from the slide registry ============ */
+  var slideTitles = SLIDE_MANIFEST.slice(1).map(function(k){
+    var m = slideModules[k] || {};
+    return {
+      title: m.title || k,
+      agendaTitle: m.agendaTitle || m.title || k,
+      icon: m.icon || 'compass',
+      agendaSection: m.agendaSection || '',
+      showOnTitleAgenda: m.showOnTitleAgenda !== false
+    };
+  });
+
+  /* ============ NAVIGATION ============ */
+  var total = slidesEls.length;
+  var current = 0;
+  var navDots = document.getElementById('navDots');
+  var progressBar = document.getElementById('progressBar');
+  var curNum = document.getElementById('curNum');
+  var totalNum = document.getElementById('totalNum');
+  var slideCounterEl = document.getElementById('slideCounter');
+
+  /* Hidden slides (Settings → Slides). Stored per browser; the agenda slide (index 0) is never hidden. */
+  var hiddenSlideKeys = {};
+  (function(){
+    var arr = [];
+    try{ arr = JSON.parse(deckStore.getItem(LS_HIDDEN_SLIDES) || '[]'); }catch(_e){ arr = []; }
+    if(Array.isArray(arr)) arr.forEach(function(k){ hiddenSlideKeys[k] = true; });
+  })();
+  function isSlideHidden(idx){ return idx !== 0 && !!hiddenSlideKeys[keyAt(idx)]; }
+  function visibleContentIndices(){
+    var out = [];
+    for(var i = 1; i < total; i++){ if(!isSlideHidden(i)) out.push(i); }
+    return out;
+  }
+  function stepVisible(delta){
+    var i = current + delta;
+    while(i > 0 && i < total && isSlideHidden(i)) i += delta;
+    if(i < 0 || i >= total) return;
+    goTo(i);
+  }
+  function lastVisibleIndex(){
+    var vis = visibleContentIndices();
+    return vis.length ? vis[vis.length - 1] : 0;
+  }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  for(var i=0;i<total;i++){
+    (function(idx){
+      var b = document.createElement('button');
+      b.addEventListener('click', function(){ goTo(idx); });
+      navDots.appendChild(b);
+    })(i);
+  }
+
+  function update(){
+    slidesEls.forEach(function(s,idx){
+      s.classList.toggle('active', idx===current);
+      s.classList.toggle('is-hidden-slide', isSlideHidden(idx));
+    });
+    Array.prototype.forEach.call(navDots.children, function(d,idx){
+      d.classList.toggle('active', idx===current);
+      d.hidden = isSlideHidden(idx);
+    });
+    document.documentElement.classList.toggle('is-deck-home', current === 0);
+    syncThemeSwitchControl();
+    var vis = visibleContentIndices();
+    var pos = vis.indexOf(current) + 1;
+    totalNum.textContent = pad2(vis.length);
+    progressBar.style.width = (current === 0 || !vis.length ? 0 : (Math.max(pos, 0) / vis.length * 100)) + '%';
+    if(slideCounterEl){
+      slideCounterEl.classList.toggle('is-agenda-hidden', current === 0);
+    }
+    if(current === 0) curNum.textContent = '00';
+    else curNum.textContent = pos > 0 ? pad2(pos) : '—';
+  }
+  /* ?slide=<data-slide key>; a bare number is read as the Nth visible content slide.
+     ?step=<zero-based index> for the *current* slide only; omitted when 0 / no steps. */
+  function slideIndexFromUrl(){
+    var raw = new URLSearchParams(window.location.search).get('slide');
+    if(raw === null || raw === '') return null;
+    var byKey = SLIDE_MANIFEST.indexOf(raw);
+    if(byKey >= 0) return byKey;
+    var n = parseInt(raw, 10);
+    if(isNaN(n)) return null;
+    if(n === 0) return 0;
+    var vis = visibleContentIndices();
+    return (n >= 1 && n <= vis.length) ? vis[n - 1] : null;
+  }
+  function stepIndexFromUrl(){
+    var raw = new URLSearchParams(window.location.search).get('step');
+    if(raw === null || raw === '') return null;
+    var n = parseInt(raw, 10);
+    return isNaN(n) ? null : n;
+  }
+  /* Stay off until after boot reads ?slide=/?step= — early home landSlideSteps
+     must not wipe the query via replaceState before that. */
+  var navUrlReady = false;
+  function syncSlideToUrl(){
+    if(!navUrlReady) return;
+    try{
+      var url = new URL(window.location.href);
+      if(current === 0){
+        url.searchParams.delete('slide');
+        url.searchParams.delete('step');
+      } else {
+        url.searchParams.set('slide', keyAt(current));
+        var key = keyAt(current);
+        var count = moduleStepCount(moduleAt(current));
+        var step = typeof slideStepIndex[key] === 'number' ? slideStepIndex[key] : 0;
+        if(count <= 0 || step <= 0) url.searchParams.delete('step');
+        else url.searchParams.set('step', String(step));
+      }
+      window.history.replaceState({ slide: current }, '', url.pathname + url.search + url.hash);
+    }catch(_err){
+      /* Some embeds reject replaceState on opaque origins. */
+    }
+  }
+  function goTo(idx){
+    var prev = current;
+    current = Math.max(0, Math.min(total-1, idx));
+    update();
+    if(navDrawerIsOpen()) applyNavDrawerFocus();
+    if(current !== prev){
+      var leaving = moduleAt(prev);
+      if(leaving && leaving.onLeave) leaving.onLeave(keyAt(current));
+      landSlideSteps(keyAt(current));
+      var entering = moduleAt(current);
+      if(entering && entering.onEnter) entering.onEnter(keyAt(prev));
+    } else {
+      landSlideSteps(keyAt(current));
+    }
+    syncSlideToUrl();
+  }
+
+  /* ============ AGENDA DRAWER (all slides) ============ */
+  var navDrawer = document.getElementById('navDrawer');
+  var navDrawerList = document.getElementById('navDrawerList');
+  var navMenuBtn = document.getElementById('navMenuBtn');
+  var navDrawerClose = document.getElementById('navDrawerClose');
+  var navDrawerBackdrop = document.getElementById('navDrawerBackdrop');
+  var navKbdIndex = 0;
+
+  function slideMetaForIndex(idx){
+    if(idx === 0) return { title:'Overview', icon:'compass' };
+    return slideTitles[idx - 1];
+  }
+  function createSlideNavButton(slideIndex, labelOverride){
+    var t = slideMetaForIndex(slideIndex);
+    var label = labelOverride || t.title;
+    var b = document.createElement('button');
+    b.className = 'toc-item box nav-slide-item' + (slideIndex === 0 ? ' toc-item--agenda' : '');
+    b.type = 'button';
+    b.dataset.slideIndex = String(slideIndex);
+    b.innerHTML = iconBadge(t.icon,'sm') + '<span class="toc-label">'+label+'</span>';
+    b.addEventListener('click', function(){
+      goTo(slideIndex);
+      closeNavDrawer();
+    });
+    return b;
+  }
+  function navDrawerIsOpen(){
+    return !!(navDrawer && (navDrawer.classList.contains('open') || navDrawer.classList.contains('is-closing')));
+  }
+  function navDrawerItems(){
+    return navDrawerList ? navDrawerList.querySelectorAll('.nav-slide-item') : [];
+  }
+  function navDrawerIndexForSlide(slideIndex){
+    var items = navDrawerItems();
+    for(var i = 0; i < items.length; i++){
+      if(parseInt(items[i].dataset.slideIndex, 10) === slideIndex) return i;
+    }
+    return 0;
+  }
+  function applyNavDrawerFocus(){
+    if(!navDrawerList) return;
+    var items = navDrawerItems();
+    items.forEach(function(el, i){
+      var si = parseInt(el.dataset.slideIndex, 10);
+      el.classList.toggle('highlight', i === navKbdIndex);
+      el.classList.toggle('is-current', si === current);
+    });
+    if(items[navKbdIndex]) items[navKbdIndex].scrollIntoView({ block:'nearest' });
+  }
+  var navDrawerPanel = navDrawer ? navDrawer.querySelector('.nav-drawer-panel') : null;
+  function openNavDrawer(){
+    if(!navDrawer) return;
+    navDrawer.classList.remove('is-closing');
+    navKbdIndex = navDrawerIndexForSlide(current);
+    navDrawer.classList.add('open');
+    navDrawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('nav-drawer-open');
+    if(navMenuBtn) navMenuBtn.setAttribute('aria-expanded', 'true');
+    applyNavDrawerFocus();
+    if(navDrawerClose) navDrawerClose.focus();
+  }
+  function finalizeNavDrawerClose(){
+    if(!navDrawer) return;
+    navDrawer.classList.remove('is-closing');
+    navDrawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('nav-drawer-open');
+    if(navDrawerList){
+      navDrawerList.querySelectorAll('.toc-item.highlight').forEach(function(el){ el.classList.remove('highlight'); });
+    }
+    if(navMenuBtn) navMenuBtn.focus();
+  }
+  function closeNavDrawer(){
+    if(!navDrawer || !navDrawer.classList.contains('open') || navDrawer.classList.contains('is-closing')) return;
+    navDrawer.classList.remove('open');
+    navDrawer.classList.add('is-closing');
+    if(navMenuBtn) navMenuBtn.setAttribute('aria-expanded', 'false');
+    if(!navDrawerPanel){
+      finalizeNavDrawerClose();
+      return;
+    }
+    var closed = false;
+    function done(){
+      if(closed) return;
+      closed = true;
+      navDrawerPanel.removeEventListener('transitionend', onPanelTransitionEnd);
+      finalizeNavDrawerClose();
+    }
+    function onPanelTransitionEnd(e){
+      if(e.target !== navDrawerPanel || e.propertyName !== 'transform') return;
+      done();
+    }
+    navDrawerPanel.addEventListener('transitionend', onPanelTransitionEnd);
+    setTimeout(done, 420);
+  }
+  function toggleNavDrawer(showAll){
+    var wantAll = !!showAll;
+    if(navDrawer && navDrawer.classList.contains('open') && navDrawerShowsAll === wantAll){
+      closeNavDrawer();
+      return;
+    }
+    navDrawerShowsAll = wantAll;
+    buildNavDrawerList();
+    if(navDrawer && navDrawer.classList.contains('open')){
+      navKbdIndex = navDrawerIndexForSlide(current);
+      applyNavDrawerFocus();
+      return;
+    }
+    openNavDrawer();
+  }
+  function fillCuratedAgenda(container, opts){
+    if(!container) return;
+    opts = opts || {};
+    container.innerHTML = '';
+    var sectionOpen = null;
+    var tileRow = null;
+    function beginSection(sectionName){
+      sectionOpen = sectionName;
+      var head = document.createElement('div');
+      head.className = 'toc-section-label';
+      head.textContent = sectionName;
+      if(opts.tileGroups){
+        var block = document.createElement('div');
+        block.className = 'toc-section-block';
+        block.appendChild(head);
+        tileRow = document.createElement('div');
+        tileRow.className = 'toc-section-tiles';
+        block.appendChild(tileRow);
+        container.appendChild(block);
+      } else {
+        container.appendChild(head);
+        tileRow = null;
+      }
+    }
+    slideTitles.forEach(function(t, i){
+      var hidden = isSlideHidden(i + 1);
+      if(!opts.includeHidden && (t.showOnTitleAgenda === false || hidden)) return;
+      if(t.agendaSection && t.agendaSection !== sectionOpen){
+        beginSection(t.agendaSection);
+      }
+      var btn = createSlideNavButton(i + 1, t.agendaTitle);
+      if(opts.includeHidden && hidden) btn.classList.add('is-concealed');
+      if(tileRow) tileRow.appendChild(btn);
+      else container.appendChild(btn);
+    });
+  }
+  var navDrawerShowsAll = false;
+  function buildNavDrawerList(){
+    fillCuratedAgenda(navDrawerList, { includeHidden: navDrawerShowsAll });
+    var title = document.getElementById('navDrawerTitle');
+    if(title) title.textContent = navDrawerShowsAll ? 'All slides' : 'Agenda';
+  }
+  buildNavDrawerList();
+  if(navMenuBtn) navMenuBtn.addEventListener('click', function(){
+    if(navDrawer && navDrawer.classList.contains('open')) closeNavDrawer();
+    else toggleNavDrawer(false);
+  });
+  if(navDrawerClose) navDrawerClose.addEventListener('click', closeNavDrawer);
+  if(navDrawerBackdrop) navDrawerBackdrop.addEventListener('click', closeNavDrawer);
+
+  var deckUpdate = update;
+  update = function(){
+    deckUpdate();
+    if(navMenuBtn){
+      var hideAgendaMenu = current === 0;
+      navMenuBtn.classList.toggle('is-agenda-hidden', hideAgendaMenu);
+      navMenuBtn.setAttribute('aria-hidden', hideAgendaMenu ? 'true' : 'false');
+      if(hideAgendaMenu && navDrawerIsOpen()) closeNavDrawer();
+    }
+    if(deckSettingsBtn){
+      deckSettingsBtn.classList.toggle('is-not-agenda', current !== 0);
+      deckSettingsBtn.setAttribute('aria-hidden', current === 0 ? 'false' : 'true');
+    }
+    if(navDrawerIsOpen()) applyNavDrawerFocus();
+  };
+
+  /* ============ HOME PAGE (index 0, shell-owned) — agenda tiles are its steps ============ */
+  var HOME_KEY = 'agenda';
+  var homeSection = slidesEls[0] && slidesEls[0].getAttribute('data-slide') === HOME_KEY ? slidesEls[0] : null;
+  var tocGrid = homeSection ? homeSection.querySelector('#tocGrid') : null;
+  var agendaShown = deckStore.getItem(LS_SHOW_AGENDA) !== '0';
+  var homeMod = slideModules[HOME_KEY] = { title:'Overview', icon:'compass', landingStep:0 };
+  function bindHomeSteps(){
+    var tiles = (tocGrid && agendaShown) ? Array.prototype.slice.call(tocGrid.querySelectorAll('.toc-item')) : [];
+    homeMod.stepCount = tiles.length;
+    homeMod.setStep = function(i){
+      tiles.forEach(function(el, idx){ el.classList.toggle('highlight', idx === i); });
+    };
+    homeMod.activateStep = function(){
+      var i = slideStepIndex[HOME_KEY];
+      if(typeof i === 'number' && tiles[i]) tiles[i].click();
+    };
+  }
+  function buildTitleAgenda(){
+    if(homeSection) homeSection.classList.toggle('is-agenda-off', !agendaShown);
+    if(tocGrid){
+      if(agendaShown) fillCuratedAgenda(tocGrid, { tileGroups: true });
+      else tocGrid.innerHTML = '';
+    }
+    bindHomeSteps();
+    if(keyAt(current) === HOME_KEY) landSlideSteps(HOME_KEY);
+  }
+  buildTitleAgenda();
+
+  /* ============ SETTINGS → SLIDES (hide / show) ============ */
+  var tcSlideList = document.getElementById('tcSlideList');
+  function storeAgendaShown(on){
+    agendaShown = !!on;
+    if(agendaShown) deckStore.removeItem(LS_SHOW_AGENDA);
+    else deckStore.setItem(LS_SHOW_AGENDA, '0');
+  }
+  /* opts.showAgenda: also set the home page agenda on/off (Show all, deck reset). */
+  function setHiddenSlideKeys(keys, opts){
+    hiddenSlideKeys = {};
+    keys.forEach(function(k){ if(SLIDE_MANIFEST.indexOf(k) > 0) hiddenSlideKeys[k] = true; });
+    var stored = Object.keys(hiddenSlideKeys);
+    if(stored.length) deckStore.setItem(LS_HIDDEN_SLIDES, JSON.stringify(stored));
+    else deckStore.removeItem(LS_HIDDEN_SLIDES);
+    if(opts && typeof opts.showAgenda === 'boolean') storeAgendaShown(opts.showAgenda);
+    buildTitleAgenda();
+    buildNavDrawerList();
+    renderSlideVisibilityList();
+    update();
+  }
+  /* Slides without an agendaSection join the group of the slide before them (DOM order). */
+  function slideVisibilityGroups(){
+    var groups = [];
+    var group = null;
+    slideTitles.forEach(function(t, i){
+      var name = t.agendaSection || (group ? group.name : 'Slides');
+      if(!group || group.name !== name){
+        group = { name:name, items:[] };
+        groups.push(group);
+      }
+      group.items.push({ key:keyAt(i + 1), title:t.agendaTitle });
+    });
+    return groups;
+  }
+  function setSlidesShown(keys, shown){
+    var next = Object.keys(hiddenSlideKeys).filter(function(k){ return keys.indexOf(k) < 0; });
+    if(!shown) next = next.concat(keys);
+    setHiddenSlideKeys(next);
+  }
+  function slideVisibilityRow(label, className, checked, indeterminate, onChange){
+    var row = document.createElement('label');
+    row.className = 'tc-check-row ' + className + (checked || indeterminate ? '' : ' is-off');
+    var box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = checked;
+    box.indeterminate = indeterminate;
+    box.addEventListener('change', function(){ onChange(box.checked); });
+    var text = document.createElement('span');
+    text.textContent = label;
+    row.appendChild(box);
+    row.appendChild(text);
+    return row;
+  }
+  function renderSlideVisibilityList(){
+    if(!tcSlideList) return;
+    tcSlideList.innerHTML = '';
+    var agendaBlock = document.createElement('div');
+    agendaBlock.className = 'tc-slide-group tc-slide-group--agenda';
+    agendaBlock.appendChild(slideVisibilityRow('Agenda', 'tc-slide-group-row tc-agenda-row', agendaShown, false,
+      function(on){ setHiddenSlideKeys(Object.keys(hiddenSlideKeys), { showAgenda:on }); }));
+    tcSlideList.appendChild(agendaBlock);
+    slideVisibilityGroups().forEach(function(g){
+      var keys = g.items.map(function(it){ return it.key; });
+      var shownCount = keys.filter(function(k){ return !hiddenSlideKeys[k]; }).length;
+      var block = document.createElement('div');
+      block.className = 'tc-slide-group';
+      block.appendChild(slideVisibilityRow(g.name, 'tc-slide-group-row',
+        shownCount === keys.length, shownCount > 0 && shownCount < keys.length,
+        function(on){ setSlidesShown(keys, on); }));
+      g.items.forEach(function(it){
+        block.appendChild(slideVisibilityRow(it.title, 'tc-slide-item', !hiddenSlideKeys[it.key], false,
+          function(on){ setSlidesShown([it.key], on); }));
+      });
+      tcSlideList.appendChild(block);
+    });
+  }
+  renderSlideVisibilityList();
+  var tcShowAllSlidesBtn = document.getElementById('tcShowAllSlidesBtn');
+  if(tcShowAllSlidesBtn) tcShowAllSlidesBtn.addEventListener('click', function(){ setHiddenSlideKeys([], { showAgenda:true }); });
+
+  document.getElementById('nextBtn').addEventListener('click', function(){ stepVisible(1); });
+  document.getElementById('prevBtn').addEventListener('click', function(){ stepVisible(-1); });
+
+  /* Normal: Up/Down/Page/Space change slides; Left/Right scrub steps (wrap).
+     Clicker: Left/Right/Up/Down/Page scrub steps then change slide at boundaries.
+     Enter activates the current step (activateStep). Modal uses the same step path. */
+  function isClickerNavKey(key){
+    return key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' ||
+      key === 'PageUp' || key === 'PageDown';
+  }
+  function clickerNavDelta(key){
+    if(key === 'ArrowRight' || key === 'ArrowDown' || key === 'PageDown') return 1;
+    if(key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return -1;
+    return 0;
+  }
+  window.addEventListener('keydown', function(e){
+    if(fsPromptIsOpen()){ return; }
+    if(themeCustomizerIsOpen()){
+      if(e.key === 'Escape'){ e.preventDefault(); closeThemeCustomizer(); }
+      return;
+    }
+    if((e.key === 'c' || e.key === 'C') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(isSettingsShortcutEnabled() && !isKeyboardTypingTarget(document.activeElement)){
+        e.preventDefault();
+        openThemeCustomizer();
+        return;
+      }
+    }
+    if((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      e.preventDefault();
+      togglePresentationFullscreen().catch(function(){});
+      return;
+    }
+    if((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(!isThemeSwitchDisabled() && !isKeyboardTypingTarget(document.activeElement)){
+        e.preventDefault();
+        togglePresentationTheme();
+      }
+      return;
+    }
+    if((e.key === 'h' || e.key === 'H') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(!isKeyboardTypingTarget(document.activeElement)){
+        e.preventDefault();
+        if(navDrawerIsOpen()) closeNavDrawer();
+        if(current !== 0) goTo(0);
+        return;
+      }
+    }
+    if(navDrawerIsOpen()){
+      if((e.key === 'm' || e.key === 'M') && !e.metaKey && !e.ctrlKey && !e.altKey){
+        e.preventDefault(); toggleNavDrawer(e.shiftKey); return;
+      }
+      if(e.key === 'Escape'){ e.preventDefault(); closeNavDrawer(); return; }
+      var navItems = navDrawerItems();
+      var navItemCount = navItems.length;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); navKbdIndex = Math.min(navKbdIndex + 1, Math.max(0, navItemCount - 1)); applyNavDrawerFocus(); return; }
+      if(e.key === 'ArrowUp'){ e.preventDefault(); navKbdIndex = Math.max(navKbdIndex - 1, 0); applyNavDrawerFocus(); return; }
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        var pick = navItems[navKbdIndex];
+        if(pick) goTo(parseInt(pick.dataset.slideIndex, 10));
+        closeNavDrawer();
+        return;
+      }
+      return;
+    }
+    if((e.key === 'm' || e.key === 'M') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(!isKeyboardTypingTarget(document.activeElement) && (e.shiftKey || current !== 0)){
+        e.preventDefault();
+        toggleNavDrawer(e.shiftKey);
+      }
+      return;
+    }
+    if(modalOverlay.classList.contains('open')){
+      if(e.key === 'Escape'){ closeModal(); return; }
+      if(isClickerMode() && isClickerNavKey(e.key)){
+        e.preventDefault();
+        clickerNavStep(clickerNavDelta(e.key));
+        return;
+      }
+      if(e.key==='ArrowRight'){ e.preventDefault(); if(moveStep(1, true)) activateSlideStep(); return; }
+      if(e.key==='ArrowLeft'){ e.preventDefault(); if(moveStep(-1, true)) activateSlideStep(); return; }
+      return;
+    }
+    if(isClickerMode() && isClickerNavKey(e.key)){
+      e.preventDefault();
+      clickerNavStep(clickerNavDelta(e.key));
+      return;
+    }
+    if(e.key==='ArrowDown' || e.key==='PageDown'){ e.preventDefault(); stepVisible(1); }
+    else if(e.key==='ArrowUp' || e.key==='PageUp'){ e.preventDefault(); stepVisible(-1); }
+    else if(e.key===' '){ e.preventDefault(); stepVisible(1); }
+    else if(moduleAt(current) && moduleAt(current).onKey && moduleAt(current).onKey(e)){ /* consumed by the active slide module */ }
+    else if(e.key==='ArrowRight'){ e.preventDefault(); moveStep(1, true); }
+    else if(e.key==='ArrowLeft'){ e.preventDefault(); moveStep(-1, true); }
+    else if(e.key==='Enter'){ e.preventDefault(); activateSlideStep(); }
+    else if(e.key==='Home'){ goTo(0); }
+    else if(e.key==='End'){ goTo(lastVisibleIndex()); }
+  });
+
+  /* touch swipe */
+  var touchStartX = null;
+  window.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, {passive:true});
+  window.addEventListener('touchend', function(e){
+    if(touchStartX===null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 60){ stepVisible(dx < 0 ? 1 : -1); }
+    touchStartX = null;
+  }, {passive:true});
+
+  /* wheel navigation (throttled) */
+  var wheelLock = false;
+  window.addEventListener('wheel', function(e){
+    var activeSlide = slidesEls[current];
+    if(activeSlide.scrollHeight > activeSlide.clientHeight + 4) return; // allow inner scroll
+    if(wheelLock) return;
+    if(Math.abs(e.deltaY) < 30) return;
+    wheelLock = true;
+    stepVisible(e.deltaY > 0 ? 1 : -1);
+    setTimeout(function(){ wheelLock = false; }, 700);
+  }, {passive:true});
+
+  var initialSlide = slideIndexFromUrl();
+  var initialStep = stepIndexFromUrl();
+  navUrlReady = true;
+  goTo(initialSlide !== null ? initialSlide : 0);
+  /* URL step wins over landing for the first paint; omitted step with ?slide= means 0. */
+  if(initialStep !== null) applySlideStep(keyAt(current), initialStep);
+  else if(initialSlide !== null) applySlideStep(keyAt(current), 0);
+
+  function revealPresentation(){
+    document.documentElement.classList.remove('is-loading');
+    var loader = document.getElementById('appLoader');
+    if(!loader) return;
+    loader.setAttribute('aria-busy', 'false');
+    loader.classList.add('is-done');
+    setTimeout(function(){
+      if(loader.parentNode) loader.parentNode.removeChild(loader);
+    }, 480);
+  }
+  function schedulePresentationReveal(){
+    var run = function(){
+      requestAnimationFrame(function(){ requestAnimationFrame(revealPresentation); });
+    };
+    if(document.readyState === 'complete') run();
+    else window.addEventListener('load', run, { once: true });
+  }
+  var DECK_REF_W = 1710;
+  var DECK_REF_H = 1107;
+  var deckCanvasEl = document.getElementById('deckCanvas');
+  function fitDeckToViewport(){
+    if(!deckCanvasEl) return;
+    if(document.documentElement.classList.contains('deck-print-mode')) return;
+    if(window.matchMedia && window.matchMedia('print').matches) return;
+    var scale = Math.min(window.innerWidth / DECK_REF_W, window.innerHeight / DECK_REF_H, 1);
+    deckCanvasEl.style.transform = 'scale(' + scale + ')';
+  }
+
+  var printWrapApplied = false;
+  var printThemeRestore = null;
+  function clearPrintLayoutInline(slide){
+    slide.style.transform = '';
+    slide.style.zoom = '';
+    var fit = slide.querySelector('.slide-print-fit');
+    if(fit){
+      fit.style.transform = '';
+      fit.style.zoom = '';
+    }
+  }
+  function applyNativePrintLayout(){
+    if(!printWrapApplied) return;
+    slidesEls.forEach(clearPrintLayoutInline);
+    invokeSlideModuleRedraw();
+  }
+  function wrapSlidesForPrint(){
+    if(printWrapApplied) return;
+    slidesEls.forEach(function(slide){
+      if(slide.querySelector(':scope > .slide-print-fit')) return;
+      var fit = document.createElement('div');
+      fit.className = 'slide-print-fit';
+      while(slide.firstChild) fit.appendChild(slide.firstChild);
+      slide.appendChild(fit);
+      slide.classList.add('slide-print-frame');
+    });
+    printWrapApplied = true;
+  }
+  function unwrapSlidesForPrint(){
+    if(!printWrapApplied) return;
+    slidesEls.forEach(function(slide){
+      var fit = slide.querySelector(':scope > .slide-print-fit');
+      if(fit){
+        while(fit.firstChild) slide.insertBefore(fit.firstChild, fit);
+        fit.remove();
+      }
+      clearPrintLayoutInline(slide);
+      slide.classList.remove('slide-print-frame');
+    });
+    printWrapApplied = false;
+  }
+  function resetSlidesToDefaultView(){
+    if(modalOverlay && modalOverlay.classList.contains('open')) closeModal();
+    closeNavDrawer();
+    Object.keys(slideModules).forEach(function(key){
+      var m = slideModules[key];
+      if(m && typeof m.onReset === 'function'){ try { m.onReset(); } catch(_e){} }
+      landSlideSteps(key, { forceLanding: true });
+    });
+  }
+  function enterDeckPrintMode(){
+    if(printThemeRestore === null){
+      printThemeRestore = document.documentElement.getAttribute('data-theme') === 'light';
+    }
+    setPresentationTheme(true, { persist: false });
+    resetSlidesToDefaultView();
+    wrapSlidesForPrint();
+    document.documentElement.classList.add('deck-print-mode');
+    if(deckCanvasEl) deckCanvasEl.style.transform = 'none';
+    applyNativePrintLayout();
+  }
+  function exitDeckPrintMode(){
+    document.documentElement.classList.remove('deck-print-mode');
+    unwrapSlidesForPrint();
+    if(printThemeRestore !== null){
+      setPresentationTheme(printThemeRestore, { persist: false });
+      printThemeRestore = null;
+    }
+    fitDeckToViewport();
+  }
+  window.addEventListener('beforeprint', function(){
+    enterDeckPrintMode();
+    applyNativePrintLayout();
+  });
+  window.addEventListener('afterprint', exitDeckPrintMode);
+  if(window.matchMedia){
+    var printMq = window.matchMedia('print');
+    var onPrintMediaChange = function(ev){
+      if(ev.matches) applyNativePrintLayout();
+    };
+    if(printMq.addEventListener) printMq.addEventListener('change', onPrintMediaChange);
+    else if(printMq.addListener) printMq.addListener(onPrintMediaChange);
+  }
+
+  window.addEventListener('resize', fitDeckToViewport);
+  document.addEventListener('fullscreenchange', fitDeckToViewport);
+  document.addEventListener('webkitfullscreenchange', fitDeckToViewport);
+  fitDeckToViewport();
+  window.addEventListener('load', function(){ requestAnimationFrame(fitDeckToViewport); }, { once: true });
+
+  schedulePresentationReveal();
+})();
+</script>
+</body>
+</html>

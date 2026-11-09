@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stepper</title>
+<!--
+  Template: stepper — process steps revealed by the shell's step navigation (←/→).
+  Edit the steps in the JSON data block at the bottom of the body.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+  .st-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 520px 1fr; gap: 34px; }
+
+  .st-rail { display: flex; flex-direction: column; gap: 12px; }
+  .st-step {
+    display: flex; align-items: center; gap: 18px;
+    padding: 18px 22px; border-radius: 14px; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line);
+    opacity: .45; transition: opacity .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+  }
+  .st-step.is-done { opacity: .8; }
+  .st-step.is-current { opacity: 1; border-color: var(--brand); background: rgba(var(--brand-rgb), .07); }
+  .st-num {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; color: var(--brand);
+    border: 2px solid var(--brand);
+  }
+  .st-step.is-done .st-num, .st-step.is-current .st-num { background: var(--brand); color: var(--on-brand); }
+  .st-label { font-size: 21px; font-weight: 700; color: var(--text-strong); }
+
+  .st-panel {
+    padding: 40px 46px; border-radius: 20px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .st-panel.is-in { animation: stepperPanelIn .45s var(--ease) both; }
+  .st-kicker { font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--brand); }
+  .st-panel h3 { margin: 0; font-size: 38px; line-height: 1.2; color: var(--text-strong); }
+  .st-panel p { margin: 0; font-size: 21px; line-height: 1.6; color: var(--text-dim); max-width: 860px; }
+  .st-points { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .st-points li { display: flex; gap: 12px; align-items: baseline; font-size: 19px; color: var(--text); }
+  .st-points li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex-shrink: 0; transform: translateY(-2px); }
+
+  @keyframes stepperPanelIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+</style>
+<script>
+  var steps = [];
+
+  function paint(i) {
+    document.querySelectorAll('.st-step').forEach(function (el, idx) {
+      el.classList.toggle('is-done', idx < i);
+      el.classList.toggle('is-current', idx === i);
+    });
+    var step = steps[i];
+    if (!step) return;
+    var panel = document.getElementById('stPanel');
+    panel.innerHTML = '<div class="st-kicker">Step ' + (i + 1) + ' of ' + steps.length + '</div>' +
+      '<h3>' + step.title + '</h3><p>' + step.text + '</p>' +
+      '<ul class="st-points">' + step.points.map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>';
+    /* Restart the entrance animation by toggling its class. */
+    panel.classList.remove('is-in');
+    void panel.offsetWidth;
+    panel.classList.add('is-in');
+  }
+
+  window.registerSlide({
+    title: 'Stepper',
+    icon: 'cicd',
+    boot: function (D) {
+      steps = JSON.parse(document.getElementById('stData').textContent);
+      var rail = document.getElementById('stRail');
+      steps.forEach(function (step, i) {
+        var el = document.createElement('div');
+        el.className = 'st-step';
+        el.innerHTML = '<span class="st-num">' + (i + 1) + '</span><span class="st-label">' + step.label + '</span>';
+        el.addEventListener('click', function () { D.setStep(D.currentKey(), i); });
+        rail.appendChild(el);
+      });
+      this.stepCount = steps.length;
+      paint(0);
+    },
+    stepCount: 0,
+    landingStep: 0,
+    setStep: paint,
+    onReset: function () { paint(0); }
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Process</div>
+  <h1 class="slide-title">Walk through a process one step at a time</h1>
+  <p class="slide-sub">Press → to reveal the next step and ← to go back. Click a step to jump to it.</p>
+  <div class="st-body">
+    <div class="st-rail" id="stRail"></div>
+    <div class="st-panel" id="stPanel"></div>
+  </div>
+
+  <script type="application/json" id="stData">
+    [
+      { "label": "Discover", "title": "Discover the problem",
+        "text": "Frame the outcome, the users, and the constraints before choosing a solution.",
+        "points": ["Who is affected and how", "What success looks like", "Known constraints and risks"] },
+      { "label": "Specify", "title": "Specify the behavior",
+        "text": "Write acceptance criteria that a person and a machine can both check.",
+        "points": ["Examples over prose", "One behavior per criterion", "Agreed with the business owner"] },
+      { "label": "Build", "title": "Build in thin slices",
+        "text": "Deliver the smallest end-to-end slice, then widen it.",
+        "points": ["Each slice is releasable", "Tests come with the code", "Review before merge"] },
+      { "label": "Prove", "title": "Prove it works",
+        "text": "Run the acceptance criteria as automated checks in the pipeline.",
+        "points": ["Green checks gate release", "Failures point at a criterion", "Evidence kept with the build"] },
+      { "label": "Release", "title": "Release and learn",
+        "text": "Ship, observe, and feed what you learn back into the next cycle.",
+        "points": ["Progressive rollout", "Watch the agreed signals", "Retire what does not pay off"] }
+    ]
+  </script>
+</body>
+</html>

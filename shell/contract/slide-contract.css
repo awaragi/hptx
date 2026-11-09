@@ -1,0 +1,201 @@
+/* Slide contract stylesheet — theme tokens and the shared classes slides may use.
+   Source of truth: inlined into the shell's <style id="deck-theme"> at assemble time.
+   Slides may link this file for reference; assemble strips the link. See SLIDE-CONTRACT.md. */
+  /*
+   * THEMING
+   * • Bake a theme — append CSS after the defaults between DECK THEME START/END (cascade; :root; dual-theme adds html[data-theme="dark"] inside the same block), or set deck.json `theme`. Unspecified tokens keep shell defaults.
+   * • Override (preview / present) — shortcut C injects CSS into <style id="hptxCustomThemeStyle"> on top of defaults + bake (browser only; not written into the build).
+   *   If a theme hides the gear, keyboard C still opens Settings.
+   * • Default look — :root uses light surfaces; <html data-theme="dark"> overrides for dark mode.
+   * • Toggle default — <html data-theme="light"> (same as omitting dark); preference saved in localStorage when the browser allows it.
+   * • Lock to one look — set --deck-theme-toggle-display: none in :root (hides switch; T disabled). When allowed, the shell shows the switch on the home page only; T still works on content slides.
+   * • Settings gear — --deck-settings-gear-display: none to hide header gear button.
+   * • Agenda T/C hints — --deck-agenda-theme-hint-display / --deck-agenda-settings-hint-display: none (use grid|none, not flex).
+   * • C shortcut — opens Settings. --deck-settings-shortcut-enabled: 0 disables it only while the gear is visible; a hidden gear does not lock C out.
+   */
+  /* Layout tokens — outside the theme region so a baked theme that omits them keeps them; a theme may still override them. */
+  :root{
+    --radius:14px;
+    --shadow: 0 10px 40px rgba(var(--ink-rgb),.12);
+    --ease: cubic-bezier(.65,.05,.36,1);
+  }
+  html[data-theme="dark"]{ --shadow: 0 10px 40px rgba(var(--ink-rgb),.45); }
+  /* DECK THEME — START */
+  /* Default: Bootstrap 5.3 default palette (light + dark). Deck themes come from deck.json `theme` or Settings. */
+  :root{
+    --deck-theme-toggle-display:flex;
+    --deck-settings-gear-display:flex;
+    --deck-agenda-theme-hint-display:grid;
+    --deck-agenda-settings-hint-display:grid;
+    --deck-settings-shortcut-enabled:1;
+    --brand:#0d6efd;
+    --brand-strong:#0a58ca;
+    --brand-deep:#052c65;
+    --bg:#f8f9fa;
+    --bg-deep:#e9ecef;
+    --surface:#ffffff;
+    --panel:#ffffff;
+    --panel-2:#f8f9fa;
+    --line:#dee2e6;
+    --text:#212529;
+    --text-dim:#6c757d;
+    --text-strong:#000000;
+    --danger:#dc3545;
+    --danger-soft:#ea868f;
+    --accent-warm:#997404;
+    --accent-warm-deep:#664d03;
+    --accent:#6f42c1;
+    --accent-soft:#a98eda;
+    --accent-warn:#fd7e14;
+    --accent-info:#0aa2c0;
+    --accent-info-soft:#6edff6;
+    --accent-alt:#20c997;
+    --accent-highlight:#ffc107;
+    --accent-highlight-soft:#ffda6a;
+    --neutral-hover:#495057;
+    --neutral-mid:#6c757d;
+    --neutral-divider:#343a40;
+    --on-brand:#ffffff;
+    --ink:#000000;
+    --paper:#ffffff;
+    --donut-1:#9ec5fe;
+    --donut-2:#6ea8fe;
+    --donut-3:var(--brand);
+    --donut-4:#3d8bfd;
+    --donut-5:var(--brand-strong);
+    --donut-6:#084298;
+    --donut-7:var(--brand-deep);
+    --gauge-tint-1:#cfe2ff;
+    --gauge-tint-2:#9ec5fe;
+    --gauge-tint-1-light:#e7f1ff;
+    --gauge-tint-2-light:#cfe2ff;
+    --ai-grad-top:#3d8bfd;
+    --ai-grad-bottom:#0a58ca;
+    --brand-rgb:13,110,253;
+    --brand-deep-rgb:5,44,101;
+    --accent-rgb:111,66,193;
+    --accent-warn-rgb:253,126,20;
+    --accent-info-rgb:10,162,192;
+    --danger-rgb:220,53,69;
+    --accent-warm-rgb:153,116,4;
+    --accent-highlight-rgb:255,193,7;
+    --paper-rgb:255,255,255;
+    --ink-rgb:0,0,0;
+  }
+  /* Dual-theme only — dark surface overrides (omit this block for a single light theme). */
+  html[data-theme="dark"]{
+    --bg:#212529;
+    --bg-deep:#1a1d20;
+    --surface:#2b3035;
+    --panel:#2b3035;
+    --panel-2:#343a40;
+    --line:#495057;
+    --text:#dee2e6;
+    --text-dim:#adb5bd;
+    --text-strong:#ffffff;
+  }
+  /* DECK THEME — END */
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%; max-width:100vw;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Helvetica Neue",Helvetica,Arial,"Segoe UI",sans-serif;
+    overflow:hidden;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--brand); color:var(--paper); }
+  html[data-theme="dark"] ::selection{ background:var(--brand); color:var(--ink); }
+  /* ---------- modal (layer two detail) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+    background:rgba(var(--ink-rgb),.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    opacity:0; visibility:hidden; transition:opacity .3s var(--ease), visibility .3s; padding:40px;
+  }
+  .modal-overlay.open{ opacity:1; visibility:visible; }
+  .modal-card{
+    position:relative; background:var(--panel); border:1px solid var(--brand); border-radius:var(--radius);
+    max-width:920px; width:100%; max-height:88vh; overflow-y:auto; padding:46px 52px;
+    box-shadow:0 20px 60px rgba(var(--ink-rgb),.5); transform:scale(.94) translateY(10px); transition:transform .3s var(--ease);
+  }
+  .modal-overlay.open .modal-card{ transform:scale(1) translateY(0); }
+  .modal-head{ display:flex; align-items:center; gap:24px; margin-bottom:10px; }
+  .modal-head .icon-badge{ width:74px; height:74px; border-radius:18px; background:rgba(var(--brand-rgb),.14); border-color:var(--brand); color:var(--brand); flex-shrink:0; }
+  .modal-head .icon-badge .icon{ width:36px; height:36px; }
+  .modal-head-text{ min-width:0; }
+  .modal-card h3{ margin:0; font-size:36px; color:var(--text-strong); }
+  .modal-tag{ font-size:15px; letter-spacing:1.5px; text-transform:uppercase; color:var(--brand); font-weight:700; margin-bottom:6px; display:block; }
+  .modal-body p{ font-size:19px; line-height:1.65; color:var(--text-dim); margin:0 0 18px 0; }
+  .modal-body p:last-child{ margin-bottom:0; }
+  .modal-fields{ display:grid; grid-template-columns:1fr 1fr; gap:24px 34px; margin-top:14px; }
+  .modal-fields h4{ margin:0 0 7px 0; font-size:14px; letter-spacing:1.2px; text-transform:uppercase; color:var(--accent-soft); }
+  .modal-fields p{ margin:0; font-size:18px; color:var(--text); line-height:1.55; }
+  .modal-close{
+    position:absolute; top:22px; right:24px; width:40px; height:40px; border-radius:50%;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text); cursor:pointer;
+    font-size:19px; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{ background:var(--brand); color:var(--ink); border-color:var(--brand); }
+  /* ---------- keyboard-highlightable boxes ---------- */
+  .box{ cursor:pointer; }
+  .detail-box{ position:relative; }
+  .detail-box::before{
+    content:"+"; position:absolute; top:12px; right:14px; width:22px; height:22px; border-radius:50%;
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:14px;
+    color:var(--text-dim); transition:all .2s var(--ease); pointer-events:none;
+  }
+  .detail-box:hover::before, .detail-box.highlight::before{ border-color:var(--brand); color:var(--brand); }
+  .box-hint{ font-size:12.5px; color:var(--text-dim); opacity:.75; margin-top:10px; }
+  /* ---------- icons ---------- */
+  .icon{ width:20px; height:20px; display:block; }
+  .icon-badge{
+    width:38px; height:38px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--brand); transition:all .2s var(--ease);
+  }
+  .icon-badge.sm{ width:30px; height:30px; border-radius:8px; }
+  .icon-badge.sm .icon{ width:16px; height:16px; }
+  .icon-badge.lg{ width:50px; height:50px; border-radius:12px; }
+  .icon-badge.lg .icon{ width:25px; height:25px; }
+  .inline-icon{ width:16px; height:16px; flex-shrink:0; color:var(--brand); }
+  .link-btn{
+    appearance:none; font:inherit; background:none; border:none; color:var(--brand); font-weight:600;
+    font-size:16px; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:3px;
+  }
+  .link-btn:hover{ color:var(--brand-strong); }
+  /* Slides are authored at 1710×1107 and scaled by .deck-canvas.
+     Do not add viewport @media or vw/vh inside slide CSS — that reflows the canvas. */
+  /* ---------- slides ---------- */
+  .slides{ position:relative; height:100vh; width:100vw; }
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:flex-start;
+    padding:76px 70px 56px 70px;
+    opacity:0; visibility:hidden;
+    transform:translateY(28px) scale(.98);
+    transition: opacity .55s var(--ease), transform .6s var(--ease), visibility .55s;
+    overflow-x:hidden; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+  .slide::-webkit-scrollbar{ width:6px; }
+  .slide::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; align-self:flex-start;
+    font-size:14px; letter-spacing:2.5px; text-transform:uppercase; color:var(--brand);
+    font-weight:700; margin-bottom:16px; flex-shrink:0;
+  }
+  .eyebrow::before{ content:""; width:24px; height:2px; background:var(--brand); display:inline-block; }
+  h1.slide-title{ font-size:50px; font-weight:700; margin:0 0 12px 0; color:var(--text-strong); line-height:1.16; letter-spacing:-.5px; flex-shrink:0; }
+  p.slide-sub{ font-size:19px; color:var(--text-dim); max-width:1000px; margin:0 0 26px 0; line-height:1.6; flex-shrink:0; }
+  .content-area{ flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+  /* ---------- cover (deck.json `cover`, home page title block) ---------- */
+  .title-logo{ display:flex; align-items:center; gap:14px; margin-bottom:38px; }
+  .title-logo .mark{ width:16px; height:16px; border-radius:50%; background:var(--brand); box-shadow:0 0 24px var(--brand); }
+  .title-logo .word{ font-size:24px; font-weight:700; letter-spacing:.5px; }
+  .title-main{ font-size:84px; font-weight:800; line-height:1.02; letter-spacing:-2px; margin:0; }
+  .title-main span{ color:var(--brand); }
+  .title-desc{ font-size:21px; color:var(--text-dim); margin-top:22px; line-height:1.6; }
+  .title-tags{ display:flex; gap:12px; margin-top:40px; flex-wrap:wrap; }
+  .title-tags span{
+    border:1px solid var(--line); padding:10px 20px; border-radius:30px; font-size:15px;
+    color:var(--text-dim); letter-spacing:.5px;
+  }
