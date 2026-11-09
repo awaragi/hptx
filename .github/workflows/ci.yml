@@ -26,5 +26,5 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build -- templates
-      - run: npm run build -- fixtures/tiny-deck
+      - run: npm run build -- --cwd templates
+      - run: npm run build -- --cwd fixtures/tiny-deck
