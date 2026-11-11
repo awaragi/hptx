@@ -25,7 +25,7 @@ The about deck cover MUST present hptx as an alternative to static PowerPoint-st
 - **THEN** the cover title block communicates leaving static slides behind and agent-authored interactive HTML decks
 
 ### Requirement: Escape slide contrasts PPTX with hptx capabilities
-The about deck MUST include a content slide (key `escape`) that contrasts leaving static PPTX with what hptx provides, and MUST show a static capability strip covering at least: graphs/charts, animation, clicker support, viewport scaling, modern themed look, and fully custom slides. Capability detail MUST be explorable via shell steps.
+The about deck MUST include a content slide (key `escape`) that contrasts leaving static PPTX with what hptx provides, and MUST show a static capability strip covering at least: graphs/charts, animation, clicker support, viewport scaling, modern themed look, fully custom slides, and baked local images. Capability detail MUST be explorable via shell steps.
 
 #### Scenario: Escape slide is navigable from the agenda
 - **WHEN** the presenter opens the about deck and selects the Escape slide from the agenda or navigation

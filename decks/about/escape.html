@@ -42,17 +42,18 @@
   }
 
   .esc-steps {
-    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; flex-shrink: 0;
+    display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; flex-shrink: 0;
   }
   .esc-step {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 12px 16px; border-radius: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 11px; border-radius: 10px; cursor: pointer;
     background: var(--panel); border: 1px solid var(--line);
-    font-size: 17px; font-weight: 650; color: var(--text-dim);
+    font-size: 14px; font-weight: 650; color: var(--text-dim);
+    white-space: nowrap; flex: 0 0 auto;
     opacity: .7; transition: opacity .25s var(--ease), border-color .25s var(--ease),
       background .25s var(--ease), color .25s var(--ease);
   }
-  .esc-step .icon-badge { width: 26px; height: 26px; flex-shrink: 0; }
+  .esc-step .icon-badge { width: 22px; height: 22px; flex-shrink: 0; }
   .esc-step.is-current {
     opacity: 1; color: var(--text-strong);
     border-color: var(--brand); background: rgba(var(--brand-rgb), .08);
@@ -419,6 +420,37 @@
   .viz-model.chart .bars i:nth-child(3) { height: 85%; }
   .viz-model.chart .bars i:nth-child(4) { height: 55%; }
 
+  /* Local images — bake demo (paths relative to this slide) */
+  .viz-photos {
+    display: grid; grid-template-rows: 1fr auto; gap: 12px; height: 100%; min-height: 0;
+  }
+  .viz-photos-grid {
+    display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 12px; min-height: 0; height: 100%;
+  }
+  .viz-photos-hero,
+  .viz-photos-tile {
+    border-radius: 12px; border: 1px solid var(--line); overflow: hidden;
+    background: var(--panel) center / cover no-repeat;
+    position: relative; min-height: 0;
+  }
+  .viz-photos-hero { background-image: url(assets/scene-b.jpg); }
+  .viz-photos-tile.is-a { background-image: url(assets/scene-a.jpg); }
+  .viz-photos-tile.is-c { background-image: url(assets/scene-c.jpg); }
+  .viz-photos-hero span,
+  .viz-photos-tile span {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 10px 12px; font-size: 12px; font-weight: 700; color: var(--text-strong);
+    background: linear-gradient(transparent, var(--panel));
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .viz-photos-note {
+    justify-self: center; width: max-content; max-width: 100%;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid rgba(var(--brand-rgb), .35); background: rgba(var(--brand-rgb), .1);
+    font-size: 14px; font-weight: 650; color: var(--text); line-height: 1.35;
+  }
+  .viz-photos-note b { color: var(--brand); font-weight: 750; }
+
   .esc-foot {
     margin: 14px 0 0; font-size: 18px; line-height: 1.5; color: var(--text-dim); max-width: 1300px; flex-shrink: 0;
   }
@@ -565,45 +597,52 @@
     [
       {
         "icon": "database",
-        "label": "Graphs & charts",
+        "label": "Charts",
         "title": "Real data, real charts",
         "text": "Drop in D3 or any CDN library from deck.json. Theme tokens keep series colors on-brand as you step through data.",
         "viz": "<div class=\"viz-chart\" aria-hidden=\"true\"><div class=\"viz-chart-head\"><span>Quarterly series</span><div class=\"viz-chart-legend\"><span><i></i>Actual</span><span><i></i>Plan</span></div></div><div class=\"viz-bars\"><div><b></b><em>Q1</em></div><div><b></b><em>Q2</em></div><div><b></b><em>Q3</em></div><div><b></b><em>Q4</em></div><div><b></b><em>Q5</em></div><div><b></b><em>Q6</em></div></div><div class=\"viz-chart-foot\">Stepped highlight · themed fills</div></div>"
       },
       {
         "icon": "idea",
-        "label": "Animation & motion",
+        "label": "Motion",
         "title": "Motion that carries the story",
         "text": "CSS fireworks, shooting stars, and pulses live in the slide. Build checks catch missing keyframes so agents ship polished motion safely.",
         "viz": "<div class=\"viz-motion\" aria-hidden=\"true\"><span class=\"viz-star s1\"></span><span class=\"viz-star s2\"></span><span class=\"viz-star s3\"></span><span class=\"viz-star s4\"></span><span class=\"viz-star s5\"></span><span class=\"viz-star s6\"></span><span class=\"viz-star s7\"></span><span class=\"viz-star s8\"></span><span class=\"viz-star s9\"></span><span class=\"viz-shoot a\"></span><span class=\"viz-shoot b\"></span><span class=\"viz-shoot c\"></span><span class=\"viz-rocket r1\"></span><span class=\"viz-rocket r2\"></span><span class=\"viz-rocket r3\"></span><span class=\"viz-rocket r4\"></span><span class=\"viz-rocket r5\"></span><span class=\"viz-burst b1\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class=\"viz-burst b2\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class=\"viz-burst b3\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class=\"viz-burst b4\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class=\"viz-burst b5\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>"
       },
       {
         "icon": "link",
-        "label": "Clicker mode",
+        "label": "Clicker",
         "title": "Two buttons. Whole deck.",
         "text": "Turn on clicker mode in Settings and a presentation remote walks every step, then every slide — no juggling keys on stage.",
         "viz": "<div class=\"viz-clicker\" aria-hidden=\"true\"><svg class=\"viz-clicker-svg\" viewBox=\"0 0 560 150\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><line class=\"beam\" x1=\"4\" y1=\"68\" x2=\"42\" y2=\"68\"/><circle class=\"laser\" cx=\"54\" cy=\"68\" r=\"12\"/><rect class=\"shell\" x=\"84\" y=\"22\" width=\"34\" height=\"92\" rx=\"8\"/><rect class=\"shell-mid\" x=\"110\" y=\"14\" width=\"330\" height=\"108\" rx=\"34\"/><ellipse class=\"btn-back\" cx=\"210\" cy=\"68\" rx=\"44\" ry=\"38\"/><ellipse class=\"btn-next\" cx=\"320\" cy=\"68\" rx=\"44\" ry=\"38\"/><path class=\"arrow\" d=\"M192 68 L226 44 L226 92 Z\"/><path class=\"arrow-hot\" d=\"M340 68 L306 44 L306 92 Z\"/><path class=\"grip\" d=\"M390 36 V100 M406 36 V100 M422 36 V100\"/><rect class=\"dongle\" x=\"490\" y=\"42\" width=\"36\" height=\"56\" rx=\"8\"/><rect class=\"accent\" x=\"498\" y=\"32\" width=\"20\" height=\"12\" rx=\"2\"/><text class=\"label\" x=\"210\" y=\"142\" text-anchor=\"middle\">BACK</text><text class=\"label\" x=\"320\" y=\"142\" text-anchor=\"middle\">NEXT</text><text class=\"label\" x=\"508\" y=\"142\" text-anchor=\"middle\">USB</text></svg><div class=\"viz-click-copy\"><div class=\"row\"><span>Steps</span><div class=\"track\"><i></i></div></div><div class=\"row\"><span>Slides</span><div class=\"track\"><i></i></div></div></div></div>"
       },
       {
         "icon": "layers",
-        "label": "Scales to any screen",
+        "label": "Any screen",
         "title": "Design once. Fit anywhere.",
         "text": "Slides are authored on a fixed 1710×1107 canvas. The shell scales the whole deck to the viewport — laptop, projector, or ultrawide. Single-file HTML is SharePoint preview compatible: no hosting or download required.",
         "viz": "<div class=\"viz-scale\" aria-hidden=\"true\"><div class=\"viz-scale-devices\"><div class=\"viz-device desk\"><div class=\"canvas\">1710×1107</div><div class=\"tag\">Desktop</div></div><div class=\"viz-device lap\"><div class=\"canvas\">FIT</div><div class=\"tag\">Laptop</div></div><div class=\"viz-device phone\"><div class=\"canvas\">FIT</div><div class=\"tag\">Phone</div></div></div><div class=\"viz-sp\"><div class=\"viz-sp-badge\">SharePoint</div><span><b>Preview-compatible</b> single file — no hosting, no download.</span></div></div>"
       },
       {
         "icon": "design",
-        "label": "Modern themed look",
+        "label": "Themed look",
         "title": "Tokens, not one-off colors",
         "text": "Light and dark shells, token colors, bake into the build, or reuse the same HTML with an override theme at show time. Generate theme CSS from the built-in Settings prompt for your AI.",
         "viz": "<div class=\"viz-theme\" aria-hidden=\"true\"><div class=\"viz-theme-modes\"><div class=\"viz-mode-card is-light\"><div class=\"chrome\"><span>Light</span><span>T</span></div><div class=\"viz-mode-body\"><div class=\"line a\"></div><div class=\"line b\"></div><div class=\"line c\"></div><div class=\"grid3\"><i></i><i></i><i></i></div></div></div><div class=\"viz-mode-card is-dark\"><div class=\"chrome\"><span>Dark</span><span>T</span></div><div class=\"viz-mode-body\"><div class=\"line a\"></div><div class=\"line b\"></div><div class=\"line c\"></div><div class=\"grid3\"><i></i><i></i><i></i></div></div></div></div><div class=\"viz-swatch-row\"><span>brand</span><span>accent</span><span>panel</span><span>ink</span><span>bg</span><span>tint</span></div><div class=\"viz-theme-paths\"><div class=\"path\"><strong>Bake</strong><span>Lock the look into the build for that audience.</span><em>theme: \"./brand.css\"</em></div><div class=\"path\"><strong>Reusable / override</strong><span>Same HTML, new brand via Settings → Apply theme.</span><em>Generate theme → paste to AI</em></div></div></div>"
       },
       {
         "icon": "build",
-        "label": "Fully custom slides",
+        "label": "Custom slides",
         "title": "Any layout you can describe",
         "text": "Every slide is plain HTML. Agents invent compositions from scratch — not a fixed slide master.",
         "viz": "<div class=\"viz-models\" aria-hidden=\"true\"><div class=\"viz-model hero\"><strong>Hero</strong><div class=\"viz-model-frame\"><div class=\"hero-block\"></div><div class=\"h\"></div><div class=\"s\"></div></div></div><div class=\"viz-model split\"><strong>Split</strong><div class=\"viz-model-frame\"><div class=\"h\"></div><div class=\"col on\"></div><div class=\"col\"></div></div></div><div class=\"viz-model cards\"><strong>Cards</strong><div class=\"viz-model-frame\"><div class=\"h\"></div><div class=\"card on\"></div><div class=\"card\"></div><div class=\"card\"></div><div class=\"card\"></div></div></div><div class=\"viz-model rail\"><strong>Rail</strong><div class=\"viz-model-frame\"><div class=\"rail\"><i class=\"on\"></i><i></i><i></i><i></i></div><div class=\"pane\"></div></div></div><div class=\"viz-model chart\"><strong>Chart</strong><div class=\"viz-model-frame\"><div class=\"h\"></div><div class=\"bars\"><i></i><i></i><i></i><i></i></div></div></div></div>"
+      },
+      {
+        "icon": "eye",
+        "label": "Local images",
+        "title": "Photos that ship in one file",
+        "text": "Keep images next to the slide HTML. Assemble dedupes them into a shared registry, rewrites CSS url() and img src, and the single-file deck still opens via file:// — no sidecar assets folder.",
+        "viz": "<div class=\"viz-photos\" aria-hidden=\"true\"><div class=\"viz-photos-grid\"><div class=\"viz-photos-hero\" role=\"img\" aria-label=\"Hero landscape\"><span>url(assets/scene-b.jpg)</span></div><div class=\"viz-photos-tile is-a\" role=\"img\" aria-label=\"Coastal landscape\"><span>url(assets/scene-a.jpg)</span></div><div class=\"viz-photos-tile is-c\" role=\"img\" aria-label=\"Open hills\"><span>url(assets/scene-c.jpg)</span></div></div><div class=\"viz-photos-note\"><b>Smart bake</b> · paths relative to this slide · deduped into one HTML file</div></div>"
       }
     ]
   </script>
@@ -619,6 +658,7 @@
       <li><b>Scale:</b> one 1710×1107 canvas fits laptop, projector, or ultrawide; a single file previews in place.</li>
       <li><b>Theme:</b> bake a look into the build, or override it at show time.</li>
       <li><b>Custom:</b> every slide is plain HTML, no slide master.</li>
+      <li><b>Images:</b> files beside the slide; assemble bakes and dedupes them into the single HTML file.</li>
     </ul>
     <p><b>Close:</b> need PPTX? Screenshot and paste. Then move on to how the agent builds it.</p>
   </aside>
