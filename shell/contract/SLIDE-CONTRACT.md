@@ -141,6 +141,33 @@ The title block is filled from the deck's **cover**, an HTML file named in
 - The home page layout, agenda tiles, and hints are shell chrome; do not style
   them from a cover or slide.
 
+## Speaker notes
+
+Write notes for a slide in its body as one or more `<aside class="notes">`
+elements. They are hidden on the canvas and shown, in file order, in the
+speaker notes window.
+
+```html
+<aside class="notes">
+  <p>Open with the <b>goal</b>, then walk the three steps.</p>
+  <ul><li>Mention the <span style="color: var(--brand)">pilot</span> results.</li></ul>
+</aside>
+```
+
+- **Content**: basic HTML formatting (`p`, `b`, `em`, `ul`, `ol`, `code`, …)
+  and inline `style` attributes. Colors in inline styles follow the token rule
+  (`var(--brand)`, not hex). Scripts and `<style>` blocks inside notes are not
+  run or applied in the notes window.
+- **Styling**: the shell styles the notes window with the deck's theme. Slide
+  CSS does not reach it.
+- **Scope**: one set of notes per slide; notes cannot change per step yet. The
+  home page has no notes.
+- **Presenting**: `N` opens the notes window, brings it forward, or reconnects
+  it after the deck reloads; `⇧N` closes it. Keys pressed in the notes window
+  act on the deck. Its toolbar has previous slide / previous step, the
+  progress (`Slide n / N` and step), next step / next slide, the deck's
+  Light / Dark switch, and full screen for the notes window.
+
 ## `document` inside a slide
 
 Inside slide scripts — including `boot`, event handlers, and timers — the name

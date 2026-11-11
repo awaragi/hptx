@@ -99,7 +99,7 @@ Settings → Slides MUST show an **Agenda** checkbox above all slide groups. Unc
 - **THEN** the agenda drawer opens with the visible slides
 
 ### Requirement: Shell chrome behavior
-The shell MUST provide this user-visible chrome behavior: keyboard navigation and shortcuts (arrows, Page Up/Down, `M`, `⇧M`, `H`, `F`, `T`, `C`), a light/dark theme toggle control on the home page (hidden on content slides; `T` still works when not theme-locked), print mode, hidden slides (Settings → Slides, stored per browser), clicker mode, remember-slide-step, and the Settings modal including Generate theme.
+The shell MUST provide this user-visible chrome behavior: keyboard navigation and shortcuts (arrows, Page Up/Down, `M`, `⇧M`, `H`, `F`, `T`, `C`, `N`, `⇧N`), a light/dark theme toggle control on the home page (hidden on content slides; `T` still works when not theme-locked), print mode, hidden slides (Settings → Slides, stored per browser), clicker mode, remember-slide-step, the speaker notes window (`N` opens, focuses, or reconnects it; `⇧N` closes it), and the Settings modal including Generate theme. The home page keyboard hints MUST list `N`.
 
 #### Scenario: Home shortcut
 - **WHEN** the presenter presses `H` on any content slide
@@ -109,6 +109,9 @@ The shell MUST provide this user-visible chrome behavior: keyboard navigation an
 - **WHEN** a slide is hidden in Settings → Slides
 - **THEN** forward navigation skips it and the agenda omits it
 
+#### Scenario: Notes hint on home
+- **WHEN** the presenter is on the home page
+- **THEN** the keyboard hints include `N` for the speaker notes window
 ### Requirement: Theme toggle visible on home only
 The shell’s light/dark theme toggle control MUST be visible only while the home page (`agenda`) is the current slide, and only when `--deck-theme-toggle-display` is not `none`. On content slides the control MUST be hidden. Keyboard `T` MUST still toggle the theme on every slide when the token is not `none`. When the token is `none`, the control MUST stay hidden (including on home) and `T` MUST be disabled.
 

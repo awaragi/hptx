@@ -582,6 +582,9 @@
   }
   .tc-slide-list .tc-check-row.tc-slide-group-row.is-off span{ color:var(--text-dim); }
   .tc-slide-list .tc-slide-item{ padding-left:42px; }
+
+  /* Speaker notes are read in the notes window (N), never on the canvas. */
+  .slide aside.notes{ display:none !important; }
 </style>
 <style id="hptxCustomThemeStyle">
 /* Preview overlay only (shortcut C). Paste :root / theme CSS here to test before baking a theme into the build. */
@@ -704,6 +707,7 @@
             <p class="title-kbd-hint"><span class="key">⇧M</span><span class="kbd-desc">agenda of every slide, including hidden ones</span></p>
             <p class="title-kbd-hint"><span class="key">H</span><span class="kbd-desc">return to this overview from anywhere</span></p>
             <p class="title-kbd-hint"><span class="key">F</span><span class="kbd-desc">toggle full screen</span></p>
+            <p class="title-kbd-hint"><span class="key">N</span><span class="kbd-desc">open speaker notes window (⇧N closes)</span></p>
             <p class="title-kbd-hint title-kbd-hint-theme"><span class="key">T</span><span class="kbd-desc">toggle dark / light theme</span></p>
             <p class="title-kbd-hint title-kbd-hint-settings"><span class="key">C</span><span class="kbd-desc">open settings (theme)</span></p>
           </div>
@@ -886,6 +890,7 @@
     document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
     if(persist) deckStore.setItem('hptx-theme', light ? 'light' : 'dark');
     if(themeCheckbox) themeCheckbox.checked = !light;
+    syncNotesTheme();
   }
   function togglePresentationTheme(){
     if(isThemeSwitchDisabled() || !themeCheckbox) return;
@@ -923,6 +928,7 @@
       try{ fn(); }catch(_err){}
     });
     syncThemeSwitchControl();
+    syncNotesTheme();
   };
   var BRAND_TOKEN_NAMES = [
     '--brand','--brand-strong','--brand-deep','--danger','--danger-soft',
@@ -1980,6 +1986,7 @@
      must not wipe the query via replaceState before that. */
   var navUrlReady = false;
   function syncSlideToUrl(){
+    renderNotes();
     if(!navUrlReady) return;
     try{
       var url = new URL(window.location.href);
@@ -2015,6 +2022,238 @@
     }
     syncSlideToUrl();
   }
+
+  /* ============ SPEAKER NOTES WINDOW (N opens / focuses / reconnects, ⇧N closes) ============
+     A blank popup that this page writes into. It shares this page's origin, so the shell
+     fills it directly. Its only script forwards keys and toolbar clicks back through
+     window.opener.__hptxNotesHost, which still resolves after this page reloads; the token
+     tells a reloaded page that the window is not its own yet (press N to reconnect). */
+  var NOTES_WINDOW_NAME = 'hptx-notes';
+  var NOTES_WINDOW_FEATURES = 'popup,width=960,height=720';
+  var notesToken = Math.random().toString(36).slice(2);
+  var notesWin = null;
+  var NOTES_WINDOW_CSS =
+    'html,body{ height:auto; min-height:100%; overflow:auto; }' +
+    'body{ font-size:20px; line-height:1.55; }' +
+    '.nw-bar{ position:sticky; top:0; z-index:1; display:flex; align-items:center; gap:8px; flex-wrap:wrap;' +
+      ' padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); }' +
+    '.nw-btn{ font:inherit; font-size:14px; line-height:1.2; padding:7px 12px; border-radius:8px; cursor:pointer;' +
+      ' border:1px solid var(--line); background:var(--surface); color:var(--text-strong); }' +
+    '.nw-btn:hover:not(:disabled){ border-color:var(--brand); color:var(--brand); }' +
+    '.nw-btn:disabled{ opacity:.4; cursor:default; }' +
+    '.nw-btn.is-icon{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:34px; padding:0; }' +
+    '.nw-btn.is-icon svg{ width:18px; height:18px; fill:currentColor; }' +
+    '.nw-nav{ display:flex; align-items:center; gap:6px; }' +
+    '.nw-progress{ display:flex; flex-direction:column; align-items:center; min-width:120px; padding:0 10px;' +
+      ' font-variant-numeric:tabular-nums; white-space:nowrap; line-height:1.2; }' +
+    '.nw-progress b{ font-size:15px; color:var(--text-strong); }' +
+    '.nw-progress span{ font-size:12px; color:var(--text-dim); }' +
+    '.nw-progress span:empty{ display:none; }' +
+    '.nw-spacer{ flex:1; }' +
+    /* Same look as the deck's .theme-toggle / .switch chrome. */
+    '.theme-toggle{ display:var(--deck-theme-toggle-display, flex); align-items:center; gap:8px; margin-right:6px; cursor:pointer; }' +
+    '.theme-toggle span{ font-size:11px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }' +
+    '.switch{ position:relative; width:40px; height:22px; display:inline-block; }' +
+    '.switch input{ opacity:0; width:0; height:0; position:absolute; }' +
+    '.switch .slider{ position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:24px;' +
+      ' cursor:pointer; transition:all .25s var(--ease); }' +
+    '.switch .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:var(--brand);' +
+      ' border-radius:50%; transition:transform .25s var(--ease); }' +
+    '.switch input:checked + .slider::before{ transform:translateX(18px); }' +
+    '.switch input:disabled + .slider{ opacity:.4; cursor:default; }' +
+    '.nw-main{ padding:24px 32px 48px; max-width:1100px; }' +
+    '.nw-title{ margin:0 0 20px; font-size:30px; line-height:1.2; color:var(--text-strong); }' +
+    '.nw-notes p{ margin:0 0 12px; }' +
+    '.nw-notes ul,.nw-notes ol{ margin:0 0 12px; padding-left:28px; }' +
+    '.nw-notes code{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em;' +
+      ' background:var(--panel-2); padding:1px 5px; border-radius:4px; }' +
+    '.nw-notes .notes-block + .notes-block{ margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }' +
+    '.nw-empty{ color:var(--text-dim); font-style:italic; }' +
+    '.nw-banner{ display:none; padding:12px 16px; font-size:15px; color:var(--danger);' +
+      ' background:rgba(var(--danger-rgb),.12); border-bottom:1px solid var(--line); }' +
+    'html.is-disconnected .nw-banner{ display:block; }';
+
+  /* Runs inside the notes window: must not use anything from this scope. */
+  function notesWindowMain(){
+    var root = document.documentElement;
+    function host(){
+      try{
+        var o = window.opener;
+        var h = o && !o.closed && o.__hptxNotesHost;
+        return h && h.isAttached(root.getAttribute('data-token')) ? h : null;
+      }catch(_e){ return null; }
+    }
+    function poll(){ root.classList.toggle('is-disconnected', !host()); }
+    function toggleFullscreen(){
+      var d = document;
+      if(d.fullscreenElement || d.webkitFullscreenElement){
+        (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+        return;
+      }
+      var fn = root.requestFullscreen || root.webkitRequestFullscreen;
+      var ret = fn ? fn.call(root) : null;
+      if(ret && ret.catch) ret.catch(function(){});
+    }
+    document.addEventListener('keydown', function(e){
+      var h = host();
+      if(h) h.key(e);
+    });
+    /* Keep focus off the controls so Space / Enter go to the deck, not to a control. */
+    document.addEventListener('mousedown', function(e){
+      if(e.target.closest && e.target.closest('button, .theme-toggle')) e.preventDefault();
+    });
+    document.addEventListener('change', function(e){
+      if(e.target.id !== 'nwThemeCheckbox') return;
+      var h = host();
+      /* The deck sets the switch back to its real mode on sync. */
+      if(h) h.action('theme');
+      else e.target.checked = !e.target.checked;
+      e.target.blur();
+    });
+    document.addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-act]') : null;
+      if(!b || b.disabled) return;
+      var act = b.getAttribute('data-act');
+      if(act === 'fullscreen'){ toggleFullscreen(); return; }
+      var h = host();
+      if(h) h.action(act);
+    });
+    if(window.__hptxNotesPoll) clearInterval(window.__hptxNotesPoll);
+    window.__hptxNotesPoll = setInterval(poll, 1000);
+    poll();
+  }
+
+  function notesDocumentHtml(){
+    function btn(act, label, title){
+      return '<button type="button" class="nw-btn" data-act="' + act + '" title="' + title + '">' + label + '</button>';
+    }
+    function iconBtn(act, path, title){
+      return '<button type="button" class="nw-btn is-icon" data-act="' + act + '" title="' + title + '" aria-label="' + title + '">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + path + '"/></svg></button>';
+    }
+    return '<!DOCTYPE html><html lang="en" data-token="' + notesToken + '"><head><meta charset="UTF-8">' +
+      '<title>Speaker notes</title><style id="nwTheme"></style><style id="nwCustomTheme"></style>' +
+      '<style>' + NOTES_WINDOW_CSS + '</style></head><body>' +
+      '<div class="nw-banner" role="status">Disconnected from the deck. Press N in the deck window to reconnect.</div>' +
+      '<div class="nw-bar">' +
+        '<div class="nw-nav">' +
+          iconBtn('prevSlide', 'M5 5h2.5v14H5z M19.5 5v14L9 12z', 'Previous slide') +
+          iconBtn('prevStep', 'M11.5 5v14L3 12z M21 5v14l-8.5-7z', 'Previous step') +
+          '<div class="nw-progress" aria-live="polite"><b id="nwSlidePos"></b><span id="nwStepPos"></span></div>' +
+          iconBtn('nextStep', 'M3 5v14l8.5-7z M12.5 5v14l8.5-7z', 'Next step') +
+          iconBtn('nextSlide', 'M4.5 5v14L15 12z M16.5 5H19v14h-2.5z', 'Next slide') +
+        '</div>' +
+        '<span class="nw-spacer"></span>' +
+        '<label class="theme-toggle" title="Toggle theme (T)"><span>Light</span><span class="switch">' +
+          '<input type="checkbox" id="nwThemeCheckbox" tabindex="-1" aria-label="Dark mode"><span class="slider"></span>' +
+        '</span><span>Dark</span></label>' +
+        btn('fullscreen', 'Full screen', 'Toggle full screen for this window') +
+      '</div>' +
+      '<main class="nw-main"><h1 class="nw-title" id="nwTitle"></h1><div class="nw-notes" id="nwNotes"></div></main>' +
+      '<script>(' + notesWindowMain.toString() + ')();<\/script></body></html>';
+  }
+  function canReachWindow(w){
+    try{ return !!w.document.documentElement; }catch(_e){ return false; }
+  }
+  function notesWinReady(){
+    try{
+      return !!notesWin && !notesWin.closed &&
+        notesWin.document.documentElement.getAttribute('data-token') === notesToken;
+    }catch(_e){ return false; }
+  }
+  /* Notes for a slide at a step. Step notes are not supported yet; `step` is reserved for them. */
+  function notesFor(key, step){
+    var idx = SLIDE_MANIFEST.indexOf(key);
+    if(idx <= 0) return '';
+    return Array.prototype.map.call(slidesEls[idx].querySelectorAll('aside.notes'), function(a){
+      return '<div class="notes-block">' + a.innerHTML + '</div>';
+    }).join('');
+  }
+  function syncNotesTheme(){
+    if(!notesWinReady()) return;
+    var d = notesWin.document;
+    var baked = document.getElementById('deck-theme');
+    var custom = document.getElementById(CUSTOM_THEME_STYLE_ID);
+    d.getElementById('nwTheme').textContent = baked ? baked.textContent : '';
+    d.getElementById('nwCustomTheme').textContent = custom ? custom.textContent : '';
+    var mode = document.documentElement.getAttribute('data-theme') || 'light';
+    d.documentElement.setAttribute('data-theme', mode);
+    var sw = d.getElementById('nwThemeCheckbox');
+    if(sw){
+      sw.checked = mode === 'dark';
+      sw.disabled = isThemeSwitchDisabled();
+    }
+  }
+  function renderNotes(){
+    if(!notesWinReady()) return;
+    var d = notesWin.document;
+    var key = keyAt(current);
+    var mod = slideModules[key] || {};
+    var count = current === 0 ? 0 : moduleStepCount(mod);
+    var step = typeof slideStepIndex[key] === 'number' ? slideStepIndex[key] : 0;
+    var title = current === 0 ? 'Home' : (mod.title || key);
+    var vis = visibleContentIndices();
+    var pos = vis.indexOf(current) + 1;
+    d.title = 'Notes · ' + title;
+    d.getElementById('nwTitle').textContent = title;
+    d.getElementById('nwSlidePos').textContent = current === 0 ? 'Home' : ('Slide ' + (pos > 0 ? pos : '—') + ' / ' + vis.length);
+    d.getElementById('nwStepPos').textContent = count > 0 ? 'Step ' + (step + 1) + ' / ' + count : '';
+    var html = notesFor(key, step);
+    d.getElementById('nwNotes').innerHTML = html || '<p class="nw-empty">No notes</p>';
+    var disabled = {
+      prevSlide: current === 0,
+      nextSlide: current >= lastVisibleIndex(),
+      prevStep: count <= 0 || step <= 0,
+      nextStep: count <= 0 || step >= count - 1
+    };
+    Object.keys(disabled).forEach(function(act){
+      var b = d.querySelector('button[data-act="' + act + '"]');
+      if(b) b.disabled = disabled[act];
+    });
+  }
+  function notesAction(act){
+    if(act === 'prevSlide') stepVisible(-1);
+    else if(act === 'nextSlide') stepVisible(1);
+    else if(act === 'prevStep') moveStep(-1, false);
+    else if(act === 'nextStep') moveStep(1, false);
+    else if(act === 'theme') togglePresentationTheme();
+  }
+  function openNotesWindow(){
+    if(notesWinReady()){
+      renderNotes();
+      notesWin.focus();
+      return;
+    }
+    var w = window.open('', NOTES_WINDOW_NAME, NOTES_WINDOW_FEATURES);
+    if(w && !canReachWindow(w)){
+      /* Left over from an earlier load this page cannot reach (e.g. file:// origins). */
+      try{ w.close(); }catch(_e){}
+      w = window.open('', NOTES_WINDOW_NAME, NOTES_WINDOW_FEATURES);
+    }
+    if(!w || !canReachWindow(w)){
+      console.warn('[deck] the speaker notes window could not be opened (popup blocked?)');
+      return;
+    }
+    notesWin = w;
+    var d = w.document;
+    d.open();
+    d.write(notesDocumentHtml());
+    d.close();
+    syncNotesTheme();
+    renderNotes();
+    w.focus();
+  }
+  function closeNotesWindow(){
+    if(notesWin && !notesWin.closed){
+      try{ notesWin.close(); }catch(_e){}
+    }
+    notesWin = null;
+  }
+  window.__hptxNotesHost = {
+    isAttached: function(token){ return token === notesToken && !!notesWin && !notesWin.closed; },
+    key: function(e){ onDeckKeydown(e); },
+    action: notesAction
+  };
 
   /* ============ AGENDA DRAWER (all slides) ============ */
   var navDrawer = document.getElementById('navDrawer');
@@ -2314,11 +2553,20 @@
     if(key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') return -1;
     return 0;
   }
-  window.addEventListener('keydown', function(e){
+  /* Also receives keys forwarded from the speaker notes window. */
+  function onDeckKeydown(e){
     if(fsPromptIsOpen()){ return; }
     if(themeCustomizerIsOpen()){
       if(e.key === 'Escape'){ e.preventDefault(); closeThemeCustomizer(); }
       return;
+    }
+    if((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(!isKeyboardTypingTarget(document.activeElement)){
+        e.preventDefault();
+        if(e.shiftKey) closeNotesWindow();
+        else openNotesWindow();
+        return;
+      }
     }
     if((e.key === 'c' || e.key === 'C') && !e.metaKey && !e.ctrlKey && !e.altKey){
       if(isSettingsShortcutEnabled() && !isKeyboardTypingTarget(document.activeElement)){
@@ -2397,7 +2645,8 @@
     else if(e.key==='Enter'){ e.preventDefault(); activateSlideStep(); }
     else if(e.key==='Home'){ goTo(0); }
     else if(e.key==='End'){ goTo(lastVisibleIndex()); }
-  });
+  }
+  window.addEventListener('keydown', onDeckKeydown);
 
   /* touch swipe */
   var touchStartX = null;

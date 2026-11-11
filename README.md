@@ -1,4 +1,4 @@
-# hptx
+# HPTX - HTML Presentation Framework
 
 An HTML presentation platform built for authoring slides with AI coding agents.
 
@@ -20,6 +20,20 @@ mistakes are caught early.
 - **Shell included**: home page with agenda tiles, keyboard navigation, step-through slides, and settings.
 
 The design canvas is **1710×1107**. The shell scales it to fit the viewport.
+
+## Contents
+
+- [Requirements](#requirements)
+- [Getting started](#getting-started)
+- [Navigation](#navigation) ([speaker notes](#speaker-notes))
+- [Commands](#commands)
+- [Deck configuration](#deck-configuration)
+- [Themes](#themes)
+- [Authoring with AI](#authoring-with-ai)
+- [Slide templates](#slide-templates)
+- [Writing slides](#writing-slides)
+- [Project layout](#project-layout)
+- [License](#license)
 
 ## Requirements
 
@@ -137,9 +151,22 @@ This setting works in both modes.
 | `F` | Toggle full screen |
 | `T` | Toggle dark / light theme |
 | `C` | Open settings (theme, slide visibility, navigation) |
+| `N` | Open the speaker notes window, bring it forward, or reconnect it after a reload |
+| `⇧N` | Close the speaker notes window |
 
 You can also swipe left or right on touch screens, or scroll the mouse wheel,
 to change slides.
+
+### Speaker notes
+
+Write notes in a slide's body as `<aside class="notes">…</aside>`. They are
+hidden on the slide and shown in a separate notes window: press `N`, then drag
+that window to your own screen. It shows the current slide's notes. Its
+toolbar has media-style controls (`|<` previous slide, `<<` previous step,
+`>>` next step, `>|` next slide) around the progress (`Slide n / N` and the
+step), the same Light / Dark switch as the deck, and a full screen button for
+the notes window. Every shortcut pressed in the notes window acts on the deck,
+so you can present from either window.
 
 ## Commands
 
