@@ -114,12 +114,48 @@
   /* Visible on the home page only; content slides hide the control to reduce distraction. T still works when the theme token allows it. */
   #themeToggleWrap{ display:none; }
   html.is-deck-home #themeToggleWrap{ display:var(--deck-theme-toggle-display); }
-  .theme-toggle span{ font-size:11px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
+  /* Speak-timer switch: home only, beside theme (no extra chrome box). */
+  #timerToggleWrap{ display:none; margin-left:14px; opacity:.55; }
+  html.is-deck-home #timerToggleWrap{ display:flex; }
+  #timerToggleWrap.is-on{ opacity:1; }
+  #timerToggleWrap.is-on .toggle-icon{ color:var(--text-strong); }
+  #timerToggleWrap .switch .slider::before{ background:var(--text-dim); }
+  #timerToggleWrap.is-on .switch .slider{
+    background:rgba(var(--brand-rgb), .18);
+    border-color:rgba(var(--brand-rgb), .4);
+  }
+  #timerToggleWrap.is-on .switch .slider::before{ background:var(--brand); }
+  .theme-toggle .toggle-icon{
+    display:inline-flex; width:16px; height:16px; color:var(--text-dim); flex-shrink:0;
+  }
+  .theme-toggle .toggle-icon svg{ width:100%; height:100%; display:block; }
   .switch{ position:relative; width:40px; height:22px; display:inline-block; }
   .switch input{ opacity:0; width:0; height:0; position:absolute; }
   .switch .slider{ position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:24px; cursor:pointer; transition:all .25s var(--ease); }
-  .switch .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:var(--brand); border-radius:50%; transition:transform .25s var(--ease); }
+  .switch .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:var(--brand); border-radius:50%; transition:transform .25s var(--ease), background .25s var(--ease); }
   .switch input:checked + .slider::before{ transform:translateX(18px); }
+  /* Speak-timer cue on the slide canvas (inside #deckCanvas so it frames the deck). */
+  #deckTimerFlash{
+    position:absolute; inset:0; z-index:40; pointer-events:none; box-sizing:border-box;
+    border:2px solid rgba(var(--danger-rgb), .5);
+    opacity:0;
+  }
+  #deckTimerFlash.is-locked{ opacity:1; }
+  #deckTimerFlash.is-flash-start{ animation: deckTimerFlashStart 1.2s ease-out forwards; }
+  #deckTimerFlash.is-flash-end{ animation: deckTimerFlashEnd 1.2s ease-out forwards; }
+  @keyframes deckTimerFlashStart{
+    /* Fade in, hold, then snap off. */
+    0%{ opacity:0; }
+    45%{ opacity:1; }
+    85%{ opacity:1; }
+    85.01%, 100%{ opacity:0; }
+  }
+  @keyframes deckTimerFlashEnd{
+    /* Snap on, hold, then fade out. */
+    0%{ opacity:1; }
+    35%{ opacity:1; }
+    100%{ opacity:0; }
+  }
   /* ---------- full screen prompt ---------- */
   #fsPrompt{ z-index:250; }
   #fsPrompt .fs-prompt-card{ max-width:540px; text-align:center; padding:40px 44px 36px; }
@@ -651,6 +687,7 @@
 
 <div class="deck deck-viewport-fit" id="deckViewportFit">
   <div class="deck-canvas" id="deckCanvas">
+<div id="deckTimerFlash" aria-hidden="true"></div>
 <div class="progress" id="progressBar" style="width:12.5%"></div>
 
 <div class="nav-drawer" id="navDrawer" aria-hidden="true">
@@ -679,7 +716,15 @@
   <div style="display:flex;align-items:center;gap:24px;">
     <div class="deck-title">Presentation</div>
     <div class="chrome-theme-tools">
-      <label class="theme-toggle" id="themeToggleWrap" title="Toggle theme (T)"><span>Light</span><span class="switch"><input type="checkbox" id="themeCheckbox" aria-label="Dark mode"><span class="slider"></span></span><span>Dark</span></label>
+      <label class="theme-toggle" id="themeToggleWrap" title="Toggle theme (T)">
+        <span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
+        <span class="switch"><input type="checkbox" id="themeCheckbox" aria-label="Dark mode"><span class="slider"></span></span>
+        <span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg></span>
+      </label>
+      <label class="theme-toggle" id="timerToggleWrap" title="Speak timer (S)">
+        <span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg></span>
+        <span class="switch"><input type="checkbox" id="timerCheckbox" aria-label="Speak timer"><span class="slider"></span></span>
+      </label>
       <button type="button" class="deck-settings-btn" id="deckSettingsBtn" title="Settings" aria-label="Open settings">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -709,6 +754,7 @@
             <p class="title-kbd-hint"><span class="key">H</span><span class="kbd-desc">return to this overview from anywhere</span></p>
             <p class="title-kbd-hint"><span class="key">F</span><span class="kbd-desc">toggle full screen</span></p>
             <p class="title-kbd-hint"><span class="key">N</span><span class="kbd-desc">open speaker notes window (⇧N closes)</span></p>
+            <p class="title-kbd-hint"><span class="key">S</span><span class="kbd-desc">speak timer on/off (⇧S resets this slide)</span></p>
             <p class="title-kbd-hint title-kbd-hint-theme"><span class="key">T</span><span class="kbd-desc">toggle dark / light theme</span></p>
             <p class="title-kbd-hint title-kbd-hint-settings"><span class="key">C</span><span class="kbd-desc">open settings (theme)</span></p>
           </div>
@@ -1045,7 +1091,8 @@
   var LS_CLICKER_MODE = 'hptx-clicker-mode';
   var LS_REMEMBER_SLIDE_STEP = 'hptx-remember-slide-step';
   var LS_SHOW_AGENDA = 'hptx-show-agenda';
-  var DECK_LS_KEYS = ['hptx-theme', LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA];
+  var LS_TIMER = 'hptx-timer';
+  var DECK_LS_KEYS = ['hptx-theme', LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA, LS_TIMER];
   var clickerModeEnabled = deckStore.getItem(LS_CLICKER_MODE) === '1';
   var rememberSlideStepEnabled = deckStore.getItem(LS_REMEMBER_SLIDE_STEP) === '1';
   function isClickerMode(){ return !!clickerModeEnabled; }
@@ -1136,6 +1183,7 @@
     setHiddenSlideKeys([], { showAgenda:true });
     setClickerMode(false, { persist:false });
     setRememberSlideStep(false, { persist:false });
+    if(typeof setSpeakTimerMode === 'function') setSpeakTimerMode(false, { persist:false });
   }
   function readDeliveryThemeRootDeclMap(){
     var map = {};
@@ -2022,7 +2070,238 @@
       landSlideSteps(keyAt(current));
     }
     syncSlideToUrl();
+    onSpeakTimerNavigate();
   }
+
+  /* ============ SPEAK TIMER (S toggles, ⇧S resets; persisted as hptx-timer) ============ */
+  var timerCheckbox = document.getElementById('timerCheckbox');
+  var timerModeOn = deckStore.getItem(LS_TIMER) === '1';
+  var timerClock = null;
+  var timerTickId = null;
+  var timerFlashTimers = [];
+  var timerFakeNow = null;
+  function timerNow(){
+    if(timerFakeNow != null) return timerFakeNow;
+    return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  }
+  function clearTimerFlashTimers(){
+    timerFlashTimers.forEach(function(id){ clearTimeout(id); });
+    timerFlashTimers = [];
+  }
+  function timerFlashEl(){
+    return document.getElementById('deckTimerFlash');
+  }
+  function clearTimerFlashClasses(){
+    var el = timerFlashEl();
+    if(!el) return;
+    el.classList.remove('is-locked', 'is-flash-start', 'is-flash-end');
+  }
+  function setTimerBorderLocked(on){
+    var el = timerFlashEl();
+    if(!el) return;
+    if(on){
+      el.classList.remove('is-flash-start', 'is-flash-end');
+      el.classList.add('is-locked');
+    } else {
+      el.classList.remove('is-locked');
+    }
+  }
+  function playTimerFlash(kind, times){
+    var el = timerFlashEl();
+    if(!el) return;
+    times = times || 1;
+    var cls = kind === 'start' ? 'is-flash-start' : 'is-flash-end';
+    var dur = 1200;
+    var gap = 200;
+    var keepLocked = el.classList.contains('is-locked');
+    var i = 0;
+    function one(){
+      if(!el) return;
+      el.classList.remove('is-locked', 'is-flash-start', 'is-flash-end');
+      void el.offsetWidth;
+      el.classList.add(cls);
+      var tid = setTimeout(function(){
+        el.classList.remove(cls);
+        i++;
+        if(i < times){
+          var tid2 = setTimeout(one, gap);
+          timerFlashTimers.push(tid2);
+        } else if(keepLocked){
+          el.classList.add('is-locked');
+        }
+      }, dur);
+      timerFlashTimers.push(tid);
+    }
+    clearTimerFlashTimers();
+    one();
+  }
+  function formatTimerMs(ms, withPlus){
+    var sec = Math.max(0, Math.floor(ms / 1000));
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    var body = m + ':' + (s < 10 ? '0' : '') + s;
+    return withPlus ? ('+' + body) : body;
+  }
+  function estimatedMinutesFromMod(mod){
+    var n = mod && mod.estimatedMinutes;
+    if(typeof n !== 'number' || !isFinite(n) || n <= 0) return 0;
+    return n;
+  }
+  function stopTimerTick(){
+    if(timerTickId != null){
+      clearInterval(timerTickId);
+      timerTickId = null;
+    }
+  }
+  function clearSpeakTimerClock(opts){
+    opts = opts || {};
+    stopTimerTick();
+    timerClock = null;
+    if(opts.keepFlash){
+      setTimerBorderLocked(false);
+    } else {
+      clearTimerFlashTimers();
+      clearTimerFlashClasses();
+    }
+    syncSpeakTimerUi();
+  }
+  function speakTimerSnapshot(){
+    if(!timerModeOn || !timerClock || current === 0){
+      return { mode: timerModeOn, live: '', locked: false };
+    }
+    var elapsed = timerNow() - timerClock.startedAt;
+    if(timerClock.kind === 'countdown'){
+      var rem = timerClock.durationMs - elapsed;
+      if(rem > 0) return { mode: true, live: formatTimerMs(rem, false), locked: false };
+      return { mode: true, live: formatTimerMs(-rem, true), locked: true };
+    }
+    return { mode: true, live: formatTimerMs(elapsed, true), locked: false };
+  }
+  function syncSpeakTimerUi(){
+    if(timerCheckbox) timerCheckbox.checked = !!timerModeOn;
+    var wrap = document.getElementById('timerToggleWrap');
+    if(wrap) wrap.classList.toggle('is-on', !!timerModeOn);
+    var snap = speakTimerSnapshot();
+    if(snap.locked) setTimerBorderLocked(true);
+    else if(!timerClock || timerClock.kind !== 'countdown' || !(timerClock.locked)) setTimerBorderLocked(false);
+    if(typeof syncNotesTimer === 'function') syncNotesTimer(snap);
+  }
+  function tickSpeakTimer(){
+    if(!timerModeOn || !timerClock || current === 0) return;
+    var elapsed = timerNow() - timerClock.startedAt;
+    if(timerClock.kind === 'countdown'){
+      var rem = timerClock.durationMs - elapsed;
+      if(rem <= 0){
+        timerClock.warned60 = true;
+        timerClock.warned30 = true;
+        if(!timerClock.locked){
+          timerClock.locked = true;
+          clearTimerFlashTimers();
+          setTimerBorderLocked(true);
+        }
+      } else if(rem <= 30000){
+        if(!timerClock.warned30){
+          timerClock.warned30 = true;
+          timerClock.warned60 = true;
+          playTimerFlash('end', 2);
+        }
+      } else if(rem <= 60000){
+        if(!timerClock.warned60){
+          timerClock.warned60 = true;
+          playTimerFlash('end', 1);
+        }
+      }
+    }
+    syncSpeakTimerUi();
+  }
+  function startSpeakTimerForCurrent(opts){
+    opts = opts || {};
+    stopTimerTick();
+    timerClock = null;
+    if(!opts.keepFlash){
+      clearTimerFlashTimers();
+      clearTimerFlashClasses();
+    } else {
+      var flash = timerFlashEl();
+      if(flash) flash.classList.remove('is-locked');
+    }
+    if(!timerModeOn || current === 0){
+      syncSpeakTimerUi();
+      return;
+    }
+    var mod = slideModules[keyAt(current)] || {};
+    var mins = estimatedMinutesFromMod(mod);
+    if(mins > 0){
+      timerClock = {
+        kind: 'countdown',
+        startedAt: timerNow(),
+        durationMs: mins * 60 * 1000,
+        warned60: false,
+        warned30: false,
+        locked: false
+      };
+    } else {
+      timerClock = { kind: 'countup', startedAt: timerNow() };
+    }
+    timerTickId = setInterval(tickSpeakTimer, 250);
+    tickSpeakTimer();
+  }
+  function onSpeakTimerNavigate(){
+    if(!timerModeOn){
+      clearSpeakTimerClock();
+      return;
+    }
+    startSpeakTimerForCurrent();
+  }
+  function setSpeakTimerMode(on, opts){
+    opts = opts || {};
+    var next = !!on;
+    var was = timerModeOn;
+    timerModeOn = next;
+    if(opts.persist !== false){
+      if(timerModeOn) deckStore.setItem(LS_TIMER, '1');
+      else deckStore.removeItem(LS_TIMER);
+    }
+    if(timerCheckbox) timerCheckbox.checked = timerModeOn;
+    if(!timerModeOn){
+      playTimerFlash('end', 1);
+      clearSpeakTimerClock({ keepFlash: true });
+      return;
+    }
+    if(!was){
+      playTimerFlash('start', 1);
+      startSpeakTimerForCurrent({ keepFlash: true });
+    } else {
+      syncSpeakTimerUi();
+    }
+  }
+  function toggleSpeakTimerMode(){
+    setSpeakTimerMode(!timerModeOn);
+  }
+  function resetSpeakTimerSlide(){
+    if(!timerModeOn) return;
+    startSpeakTimerForCurrent();
+  }
+  if(timerCheckbox){
+    timerCheckbox.checked = timerModeOn;
+    timerCheckbox.addEventListener('change', function(){
+      setSpeakTimerMode(timerCheckbox.checked);
+    });
+  }
+  syncSpeakTimerUi();
+  window.__hptxSpeakTimer = {
+    isOn: function(){ return !!timerModeOn; },
+    setMode: function(on){ setSpeakTimerMode(!!on); },
+    resetSlide: function(){ resetSpeakTimerSlide(); },
+    useFakeNow: function(ms){ timerFakeNow = typeof ms === 'number' ? ms : 0; },
+    advanceMs: function(ms){
+      if(timerFakeNow == null) timerFakeNow = timerNow();
+      timerFakeNow += ms;
+      tickSpeakTimer();
+    },
+    snapshot: function(){ return speakTimerSnapshot(); },
+    clock: function(){ return timerClock ? { kind: timerClock.kind, locked: !!timerClock.locked, warned60: !!timerClock.warned60, warned30: !!timerClock.warned30 } : null; }
+  };
 
   /* ============ SPEAKER NOTES WINDOW (N opens / focuses / reconnects, ⇧N closes) ============
      A blank popup that this page writes into. It shares this page's origin, so the shell
@@ -2053,13 +2332,21 @@
     '.nw-spacer{ flex:1; }' +
     /* Same look as the deck's .theme-toggle / .switch chrome. */
     '.theme-toggle{ display:var(--deck-theme-toggle-display, flex); align-items:center; gap:8px; margin-right:6px; cursor:pointer; }' +
-    '.theme-toggle span{ font-size:11px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }' +
+    '.theme-toggle.nw-timer-toggle{ display:flex; margin-left:14px; opacity:.55; }' +
+    '.theme-toggle.nw-timer-toggle.is-on{ opacity:1; }' +
+    '.theme-toggle.nw-timer-toggle.is-on .toggle-icon{ color:var(--text-strong); }' +
+    '.theme-toggle.nw-timer-toggle .switch .slider::before{ background:var(--text-dim); }' +
+    '.theme-toggle.nw-timer-toggle.is-on .switch .slider{' +
+      ' background:rgba(var(--brand-rgb), .18); border-color:rgba(var(--brand-rgb), .4); }' +
+    '.theme-toggle.nw-timer-toggle.is-on .switch .slider::before{ background:var(--brand); }' +
+    '.theme-toggle .toggle-icon{ display:inline-flex; width:16px; height:16px; color:var(--text-dim); flex-shrink:0; }' +
+    '.theme-toggle .toggle-icon svg{ width:100%; height:100%; display:block; }' +
     '.switch{ position:relative; width:40px; height:22px; display:inline-block; }' +
     '.switch input{ opacity:0; width:0; height:0; position:absolute; }' +
     '.switch .slider{ position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:24px;' +
       ' cursor:pointer; transition:all .25s var(--ease); }' +
     '.switch .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:var(--brand);' +
-      ' border-radius:50%; transition:transform .25s var(--ease); }' +
+      ' border-radius:50%; transition:transform .25s var(--ease), background .25s var(--ease); }' +
     '.switch input:checked + .slider::before{ transform:translateX(18px); }' +
     '.switch input:disabled + .slider{ opacity:.4; cursor:default; }' +
     '.nw-main{ padding:24px 32px 48px; max-width:1100px; }' +
@@ -2068,6 +2355,10 @@
     '.nw-est{ font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-dim);' +
       ' white-space:nowrap; }' +
     '.nw-est:empty{ display:none; }' +
+    '.nw-live{ font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-strong);' +
+      ' white-space:nowrap; }' +
+    '.nw-live:empty{ display:none; }' +
+    '.nw-live.is-over{ color:var(--danger); }' +
     '.nw-notes p{ margin:0 0 12px; }' +
     '.nw-notes ul,.nw-notes ol{ margin:0 0 12px; padding-left:28px; }' +
     '.nw-notes code{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em;' +
@@ -2108,10 +2399,11 @@
       if(e.target.closest && e.target.closest('button, .theme-toggle')) e.preventDefault();
     });
     document.addEventListener('change', function(e){
-      if(e.target.id !== 'nwThemeCheckbox') return;
+      var id = e.target.id;
+      if(id !== 'nwThemeCheckbox' && id !== 'nwTimerCheckbox') return;
       var h = host();
       /* The deck sets the switch back to its real mode on sync. */
-      if(h) h.action('theme');
+      if(h) h.action(id === 'nwTimerCheckbox' ? 'timer' : 'theme');
       else e.target.checked = !e.target.checked;
       e.target.blur();
     });
@@ -2149,13 +2441,20 @@
           iconBtn('nextSlide', 'M4.5 5v14L15 12z M16.5 5H19v14h-2.5z', 'Next slide') +
         '</div>' +
         '<span class="nw-spacer"></span>' +
-        '<label class="theme-toggle" title="Toggle theme (T)"><span>Light</span><span class="switch">' +
-          '<input type="checkbox" id="nwThemeCheckbox" tabindex="-1" aria-label="Dark mode"><span class="slider"></span>' +
-        '</span><span>Dark</span></label>' +
+        '<label class="theme-toggle" title="Toggle theme (T)">' +
+          '<span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>' +
+          '<span class="switch"><input type="checkbox" id="nwThemeCheckbox" tabindex="-1" aria-label="Dark mode"><span class="slider"></span></span>' +
+          '<span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg></span>' +
+        '</label>' +
+        '<label class="theme-toggle nw-timer-toggle" title="Speak timer (S)">' +
+          '<span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg></span>' +
+          '<span class="switch"><input type="checkbox" id="nwTimerCheckbox" tabindex="-1" aria-label="Speak timer"><span class="slider"></span></span>' +
+        '</label>' +
         btn('fullscreen', 'Full screen', 'Toggle full screen for this window') +
       '</div>' +
       '<main class="nw-main"><div class="nw-heading"><h1 class="nw-title" id="nwTitle"></h1>' +
-        '<span class="nw-est" id="nwEst" aria-label="Estimated speaking time"></span></div>' +
+        '<span class="nw-est" id="nwEst" aria-label="Estimated speaking time"></span>' +
+        '<span class="nw-live" id="nwLive" aria-label="Speak timer"></span></div>' +
         '<div class="nw-notes" id="nwNotes"></div></main>' +
       '<script>(' + notesWindowMain.toString() + ')();<\/script></body></html>';
   }
@@ -2192,9 +2491,13 @@
     }
   }
   function estimatedMinutesLabel(mod){
-    var n = mod && mod.estimatedMinutes;
-    if(typeof n !== 'number' || !isFinite(n) || n !== Math.floor(n) || n < 1) return '';
-    return n + ' min';
+    var n = estimatedMinutesFromMod(mod);
+    if(!n) return '';
+    if(n === Math.floor(n)) return n + ' min';
+    var sec = Math.round(n * 60);
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
   }
   function renderNotes(){
     if(!notesWinReady()) return;
@@ -2211,6 +2514,7 @@
     d.getElementById('nwEst').textContent = current === 0 ? '' : estimatedMinutesLabel(mod);
     d.getElementById('nwSlidePos').textContent = current === 0 ? 'Home' : ('Slide ' + (pos > 0 ? pos : '—') + ' / ' + vis.length);
     d.getElementById('nwStepPos').textContent = count > 0 ? 'Step ' + (step + 1) + ' / ' + count : '';
+    syncNotesTimer(speakTimerSnapshot());
     var html = notesFor(key, step);
     d.getElementById('nwNotes').innerHTML = html || '<p class="nw-empty">No notes</p>';
     var disabled = {
@@ -2224,12 +2528,27 @@
       if(b) b.disabled = disabled[act];
     });
   }
+  function syncNotesTimer(snap){
+    if(!notesWinReady()) return;
+    var d = notesWin.document;
+    var live = d.getElementById('nwLive');
+    var sw = d.getElementById('nwTimerCheckbox');
+    var on = !!(snap && snap.mode);
+    if(sw) sw.checked = on;
+    var label = sw && sw.closest ? sw.closest('.nw-timer-toggle') : null;
+    if(label) label.classList.toggle('is-on', on);
+    if(!live) return;
+    var text = (on && current !== 0) ? (snap.live || '') : '';
+    live.textContent = text;
+    live.classList.toggle('is-over', !!(text && text.charAt(0) === '+'));
+  }
   function notesAction(act){
     if(act === 'prevSlide') stepVisible(-1);
     else if(act === 'nextSlide') stepVisible(1);
     else if(act === 'prevStep') moveStep(-1, false);
     else if(act === 'nextStep') moveStep(1, false);
     else if(act === 'theme') togglePresentationTheme();
+    else if(act === 'timer') toggleSpeakTimerMode();
   }
   function openNotesWindow(){
     if(notesWinReady()){
@@ -2597,6 +2916,14 @@
       if(!isThemeSwitchDisabled() && !isKeyboardTypingTarget(document.activeElement)){
         e.preventDefault();
         togglePresentationTheme();
+      }
+      return;
+    }
+    if((e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if(!isKeyboardTypingTarget(document.activeElement)){
+        e.preventDefault();
+        if(e.shiftKey) resetSpeakTimerSlide();
+        else toggleSpeakTimerMode();
       }
       return;
     }

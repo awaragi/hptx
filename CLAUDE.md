@@ -156,8 +156,9 @@ writing a slide; start from a template (`npx hptx new`), not from scratch.
 - Speaker notes: `<aside class="notes">` in the slide body (basic HTML, inline
   styles with theme tokens). Hidden on the canvas; `N` opens the shell-styled
   notes window, `⇧N` closes it. Optional `estimatedMinutes` on `registerSlide`
-  shows a static `N min` label in that window (no timer). One set of notes per
-  slide (no step notes yet).
+  shows a static `N min` label. Speak timer (`S` / Timer switch, `hptx-timer`)
+  adds a live countdown or `+` count-up in notes with subtle canvas flashes;
+  `⇧S` resets the current slide. One set of notes per slide (no step notes yet).
 - Local images: paths relative to the slide (or cover) HTML file; assemble bakes
   them into the single-file output via a shared registry (see `SLIDE-CONTRACT.md`).
 - Size type for the **1710×1107 canvas**. Prefer rail + detail explorers for

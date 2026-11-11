@@ -185,10 +185,18 @@ speaker notes window.
   (`var(--brand)`, not hex). Scripts and `<style>` blocks inside notes are not
   run or applied in the notes window.
 - **Estimated time**: optional `estimatedMinutes` on `registerSlide` (whole
-  minutes). The notes window shows a static `N min` label near the title — no
-  timer. Omit it (or pass a non-positive / non-integer value) to hide the
-  label. Head `<meta>` stays ignored; put the estimate on the module, not in
+  minutes). The notes window shows a static `N min` label near the title.
+  Omit it (or pass a non-positive / non-integer value) to hide the label.
+  Head `<meta>` stays ignored; put the estimate on the module, not in
   `<head>`.
+- **Speak timer**: optional presenter mode (`S` or the Timer switch beside
+  theme on the home page / notes toolbar; stored as `hptx-timer`). When on,
+  each content slide starts a clock — countdown from `estimatedMinutes`, or
+  count-up as `+m:ss` when there is no estimate. Notes show the live readout;
+  the deck canvas uses a subtle 1px border flash (start: fade-in then snap
+  off; warnings at 60s/30s: snap on then fade out; lock on at overtime).
+  `⇧S` restarts the current slide’s clock; `S` again turns mode off and
+  clears visuals.
 - **Styling**: the shell styles the notes window with the deck's theme. Slide
   CSS does not reach it.
 - **Scope**: one set of notes per slide; notes cannot change per step yet. The

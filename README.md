@@ -153,6 +153,8 @@ This setting works in both modes.
 | `C` | Open settings (theme, slide visibility, navigation) |
 | `N` | Open the speaker notes window, bring it forward, or reconnect it after a reload |
 | `⇧N` | Close the speaker notes window |
+| `S` | Toggle speak timer (persisted as `hptx-timer`; subtle canvas flash when enabling) |
+| `⇧S` | Restart the current slide’s speak timer without turning mode off |
 
 You can also swipe left or right on touch screens, or scroll the mouse wheel,
 to change slides.
@@ -163,12 +165,15 @@ Write notes in a slide's body as `<aside class="notes">…</aside>`. They are
 hidden on the slide and shown in a separate notes window: press `N`, then drag
 that window to your own screen. It shows the current slide's notes. Optional
 `estimatedMinutes` on `registerSlide` (whole minutes) appears as a static
-`N min` label in that window — display only, no timer. Its toolbar has
-media-style controls (`|<` previous slide, `<<` previous step, `>>` next step,
-`>|` next slide) around the progress (`Slide n / N` and the step), the same
-Light / Dark switch as the deck, and a full screen button for the notes
-window. Every shortcut pressed in the notes window acts on the deck, so you
-can present from either window.
+`N min` label. Turn on speak timer with `S` or the Timer switch (home chrome
+and notes toolbar; stored as `hptx-timer`) for a live countdown — or `+`
+elapsed when a slide has no estimate — plus subtle canvas border flashes at
+enable / 60s / 30s and a locked border in overtime. `⇧S` restarts the current
+slide’s clock. Its toolbar has media-style controls (`|<` previous slide,
+`<<` previous step, `>>` next step, `>|` next slide) around the progress
+(`Slide n / N` and the step), the Light / Dark and Timer switches, and a full
+screen button for the notes window. Every shortcut pressed in the notes
+window acts on the deck, so you can present from either window.
 
 ## Commands
 
