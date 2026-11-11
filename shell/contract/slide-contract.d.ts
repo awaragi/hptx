@@ -30,6 +30,12 @@ interface SlideModule {
   agendaSection?: string;
   /** Set to false to leave the slide off the agenda (home page and `M` drawer; `⇧M` still lists it). Defaults to true. */
   showOnTitleAgenda?: boolean;
+  /**
+   * Optional estimated speaking time in whole minutes. Shown as a static
+   * `N min` label in the speaker notes window (no timer). Omit or leave
+   * invalid to hide the label.
+   */
+  estimatedMinutes?: number;
 
   /** Render and wire DOM. Runs once, after the deck is parsed and CDN scripts load. */
   boot?(deck: Deck): void;

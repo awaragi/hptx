@@ -2063,7 +2063,11 @@
     '.switch input:checked + .slider::before{ transform:translateX(18px); }' +
     '.switch input:disabled + .slider{ opacity:.4; cursor:default; }' +
     '.nw-main{ padding:24px 32px 48px; max-width:1100px; }' +
-    '.nw-title{ margin:0 0 20px; font-size:30px; line-height:1.2; color:var(--text-strong); }' +
+    '.nw-heading{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin:0 0 20px; }' +
+    '.nw-title{ margin:0; font-size:30px; line-height:1.2; color:var(--text-strong); }' +
+    '.nw-est{ font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-dim);' +
+      ' white-space:nowrap; }' +
+    '.nw-est:empty{ display:none; }' +
     '.nw-notes p{ margin:0 0 12px; }' +
     '.nw-notes ul,.nw-notes ol{ margin:0 0 12px; padding-left:28px; }' +
     '.nw-notes code{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em;' +
@@ -2150,7 +2154,9 @@
         '</span><span>Dark</span></label>' +
         btn('fullscreen', 'Full screen', 'Toggle full screen for this window') +
       '</div>' +
-      '<main class="nw-main"><h1 class="nw-title" id="nwTitle"></h1><div class="nw-notes" id="nwNotes"></div></main>' +
+      '<main class="nw-main"><div class="nw-heading"><h1 class="nw-title" id="nwTitle"></h1>' +
+        '<span class="nw-est" id="nwEst" aria-label="Estimated speaking time"></span></div>' +
+        '<div class="nw-notes" id="nwNotes"></div></main>' +
       '<script>(' + notesWindowMain.toString() + ')();<\/script></body></html>';
   }
   function canReachWindow(w){
@@ -2185,6 +2191,11 @@
       sw.disabled = isThemeSwitchDisabled();
     }
   }
+  function estimatedMinutesLabel(mod){
+    var n = mod && mod.estimatedMinutes;
+    if(typeof n !== 'number' || !isFinite(n) || n !== Math.floor(n) || n < 1) return '';
+    return n + ' min';
+  }
   function renderNotes(){
     if(!notesWinReady()) return;
     var d = notesWin.document;
@@ -2197,6 +2208,7 @@
     var pos = vis.indexOf(current) + 1;
     d.title = 'Notes · ' + title;
     d.getElementById('nwTitle').textContent = title;
+    d.getElementById('nwEst').textContent = current === 0 ? '' : estimatedMinutesLabel(mod);
     d.getElementById('nwSlidePos').textContent = current === 0 ? 'Home' : ('Slide ' + (pos > 0 ? pos : '—') + ' / ' + vis.length);
     d.getElementById('nwStepPos').textContent = count > 0 ? 'Step ' + (step + 1) + ' / ' + count : '';
     var html = notesFor(key, step);

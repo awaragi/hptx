@@ -134,6 +134,26 @@ describe('speaker notes window (jsdom)', () => {
     expect(text('nwNotes')).toBe('No notes');
   });
 
+  it('shows a static estimated-minutes label and clears it when absent or on home', async () => {
+    const files = {
+      'deck.json': JSON.stringify({ output: 'o.html', slides: ['overview.html', 'process.html', 'closing.html'] }),
+      'overview.html': slide('Overview', '<aside class="notes"><p>A</p></aside>', ', estimatedMinutes: 3'),
+      'process.html': slide('Process', '<aside class="notes"><p>B</p></aside>', ', estimatedMinutes: 5' + STEPS),
+      'closing.html': slide('Closing', '', ', estimatedMinutes: 0'),
+    };
+    const { key, Deck, text } = await boot(files);
+    key('n');
+    expect(text('nwEst')).toBe('');
+    Deck.goToKey('overview');
+    expect(text('nwEst')).toBe('3 min');
+    Deck.goToKey('process');
+    expect(text('nwEst')).toBe('5 min');
+    Deck.goToKey('closing');
+    expect(text('nwEst')).toBe('');
+    Deck.goToKey('agenda');
+    expect(text('nwEst')).toBe('');
+  });
+
   it('shows and updates the step position', async () => {
     const { key, Deck, text, btn } = await boot(DECK);
     key('n');

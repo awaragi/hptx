@@ -184,6 +184,11 @@ speaker notes window.
   and inline `style` attributes. Colors in inline styles follow the token rule
   (`var(--brand)`, not hex). Scripts and `<style>` blocks inside notes are not
   run or applied in the notes window.
+- **Estimated time**: optional `estimatedMinutes` on `registerSlide` (whole
+  minutes). The notes window shows a static `N min` label near the title — no
+  timer. Omit it (or pass a non-positive / non-integer value) to hide the
+  label. Head `<meta>` stays ignored; put the estimate on the module, not in
+  `<head>`.
 - **Styling**: the shell styles the notes window with the deck's theme. Slide
   CSS does not reach it.
 - **Scope**: one set of notes per slide; notes cannot change per step yet. The

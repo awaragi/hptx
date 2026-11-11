@@ -161,12 +161,14 @@ to change slides.
 
 Write notes in a slide's body as `<aside class="notes">…</aside>`. They are
 hidden on the slide and shown in a separate notes window: press `N`, then drag
-that window to your own screen. It shows the current slide's notes. Its
-toolbar has media-style controls (`|<` previous slide, `<<` previous step,
-`>>` next step, `>|` next slide) around the progress (`Slide n / N` and the
-step), the same Light / Dark switch as the deck, and a full screen button for
-the notes window. Every shortcut pressed in the notes window acts on the deck,
-so you can present from either window.
+that window to your own screen. It shows the current slide's notes. Optional
+`estimatedMinutes` on `registerSlide` (whole minutes) appears as a static
+`N min` label in that window — display only, no timer. Its toolbar has
+media-style controls (`|<` previous slide, `<<` previous step, `>>` next step,
+`>|` next slide) around the progress (`Slide n / N` and the step), the same
+Light / Dark switch as the deck, and a full screen button for the notes
+window. Every shortcut pressed in the notes window acts on the deck, so you
+can present from either window.
 
 ## Commands
 
