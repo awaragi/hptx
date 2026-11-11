@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Photo strip</title>
+<!--
+  Template: photoStrip — local images beside the slide (paths relative to this file).
+  Assemble bakes them into the single-file output via the shared asset registry.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+  .ps-body {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 20px;
+  }
+  .ps-hero {
+    grid-row: 1 / -1;
+    border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--panel) center / cover no-repeat;
+    background-image: url(assets/scene-b.jpg);
+    position: relative;
+  }
+  .ps-hero-caption {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 22px 26px;
+    background: linear-gradient(transparent, var(--panel));
+    color: var(--text-strong); font-size: 20px; font-weight: 650; line-height: 1.35;
+  }
+  .ps-tile {
+    border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--panel);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .ps-tile img {
+    display: block; width: 100%; flex: 1; min-height: 0;
+    object-fit: cover;
+  }
+  .ps-tile figcaption {
+    margin: 0; padding: 14px 18px;
+    font-size: 15px; color: var(--text-dim); border-top: 1px solid var(--line);
+  }
+</style>
+<script>
+  window.registerSlide({
+    title: 'Photo strip',
+    icon: 'eye',
+    agendaSection: 'Media'
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Local images</div>
+  <h1 class="slide-title">Photos relative to this slide</h1>
+  <p class="slide-sub">Files live in <code>assets/</code> next to the HTML. Assemble bakes them once into the
+    single-file deck — same image used in CSS and markup is not duplicated.</p>
+  <div class="ps-body">
+    <div class="ps-hero" role="img" aria-label="Wide landscape scene">
+      <div class="ps-hero-caption">Hero via CSS <code>url(assets/…)</code></div>
+    </div>
+    <figure class="ps-tile">
+      <img src="assets/scene-a.jpg" alt="Coastal landscape">
+      <figcaption><code>&lt;img src="assets/scene-a.jpg"&gt;</code></figcaption>
+    </figure>
+    <figure class="ps-tile">
+      <img src="assets/scene-c.jpg" alt="Open hills">
+      <figcaption><code>&lt;img src="assets/scene-c.jpg"&gt;</code></figcaption>
+    </figure>
+  </div>
+</body>
+</html>

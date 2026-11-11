@@ -76,6 +76,32 @@ One standalone HTML document per slide. The filename stem is the slide key
   and carry `//# sourceURL=<deck-relative path>`, so stack traces point at the
   slide file.
 
+## Local images
+
+Photos, diagrams, and other raster/vector files may sit next to the slide (or
+cover) HTML and be referenced with **paths relative to that HTML file** — not
+relative to `deck.json`, the working root, or the framework.
+
+```html
+<img src="assets/logo.png" alt="Logo">
+```
+```css
+.hero { background-image: url(assets/hero.jpg); }
+```
+
+Assemble reads those files, content-hashes them into a **shared registry** of
+`data:` URIs in the single-file output (same bytes used on several slides or
+in both CSS and markup appear once), rewrites markup to `data-asset="<id>"`
+and CSS `url(...)` to `var(--asset-<id>)`, then an early script sets the CSS
+variables and fills `img` / `source` `src` from that registry. The built deck
+still opens via `file://` with no sibling assets folder.
+
+- Supported extensions: `.png`, `.jpg` / `.jpeg`, `.gif`, `.webp`, `.svg`,
+  `.ico`, `.bmp`.
+- `https:` (and other non-relative) image URLs are left as network references.
+- A missing local file fails assemble with the slide/cover path and reference.
+- Covers use the same rules relative to the cover HTML file.
+
 ## API
 
 `slide-contract.d.ts` declares `registerSlide`, the `SlideModule` hooks and

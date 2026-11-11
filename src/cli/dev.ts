@@ -45,6 +45,7 @@ export async function runDev(argv: string[]): Promise<void> {
   first.warnings.forEach((w) => console.warn(w));
   const deckRoot = plan.deck.root;
   const configPath = plan.deck.configPath;
+  let bakedImagePaths = first.imagePaths;
 
   const plugin: Plugin = {
     name: 'hptx-assemble',
@@ -58,11 +59,17 @@ export async function runDev(argv: string[]): Promise<void> {
       const theme = plan.deck.theme;
       if (theme?.kind === 'path') watched.push(theme.value);
       server.watcher.add(watched);
+      if (bakedImagePaths.length) server.watcher.add(bakedImagePaths);
 
       const reload = (file: string) => {
         const abs = path.resolve(file);
         const root = deckRoot + path.sep;
-        if (abs.startsWith(root) || abs === configPath || watched.includes(abs)) {
+        if (
+          abs.startsWith(root) ||
+          abs === configPath ||
+          watched.includes(abs) ||
+          bakedImagePaths.includes(abs)
+        ) {
           server.ws.send({ type: 'full-reload' });
         }
       };
@@ -76,8 +83,11 @@ export async function runDev(argv: string[]): Promise<void> {
         try {
           // Re-plan on each request so deck.json / slide edits are picked up.
           plan = planAssemble(opts);
-          const { html, warnings } = await assembleFromPlan(plan);
+          const { html, warnings, imagePaths } = await assembleFromPlan(plan);
           warnings.forEach((w) => console.warn(w));
+          const added = imagePaths.filter((p) => !bakedImagePaths.includes(p));
+          if (added.length) server.watcher.add(added);
+          bakedImagePaths = imagePaths;
           const transformed = await server.transformIndexHtml(req.url ?? '/', html);
           res.statusCode = 200;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');

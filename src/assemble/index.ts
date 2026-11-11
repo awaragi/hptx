@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assembleHtml } from './assembleHtml.ts';
+import { bakeLocalImages } from './bakeLocalImages.ts';
 import { checkSlides } from './checkSlides.ts';
 import { resolveDeckInvocation, type DeckOverrides } from './loadDeckConfig.ts';
 import { parseSlideDocument } from './parseSlide.ts';
@@ -14,6 +15,7 @@ export * from './resolveSlides.ts';
 export * from './parseSlide.ts';
 export * from './scopeCss.ts';
 export * from './bakeTheme.ts';
+export * from './bakeLocalImages.ts';
 export * from './emitCdn.ts';
 export * from './assembleHtml.ts';
 export * from './checkSlides.ts';
@@ -103,6 +105,8 @@ export interface AssembleDeckResult {
   outputPath: string;
   warnings: string[];
   deck: ResolvedDeck;
+  /** Absolute paths of local images baked into this assemble (for dev watching). */
+  imagePaths: string[];
 }
 
 /** Resolve working root + optional deck file + CLI overrides (no assemble). */
@@ -163,6 +167,17 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
   const cover = coverPath
     ? { ...parseSlideDocument(fs.readFileSync(coverPath, 'utf8'), coverPath, { kind: 'cover' }), sourceName: sourceName(coverPath) }
     : undefined;
+  const bakeItems = [
+    ...selected.map((s, i) => ({
+      parsed: parsed[i]!,
+      filePath: s.path,
+      label: sourceName(s.path),
+    })),
+    ...(cover && coverPath
+      ? [{ parsed: cover, filePath: coverPath, label: sourceName(coverPath) }]
+      : []),
+  ];
+  const { registry: assets, imagePaths } = bakeLocalImages(bakeItems);
   const contractCss = readContractCss();
   checkSlides(cover ? [cover, ...parsed] : parsed, contractCss);
   const theme = deck.theme;
@@ -181,6 +196,7 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     slides: parsed,
     ...(cover ? { cover } : {}),
     contractCss,
+    assets,
     ...(themeCss !== undefined ? { themeCss } : {}),
   });
 
@@ -193,6 +209,7 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     outputPath: outputPath ?? path.join(deck.root, 'Deck.html'),
     warnings,
     deck,
+    imagePaths,
   };
 }
 

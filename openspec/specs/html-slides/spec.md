@@ -125,6 +125,13 @@ A slide MUST NOT load external resources. A `<link rel="stylesheet">` whose `hre
 - **WHEN** a slide head contains `<link rel="stylesheet" href="extra.css">`
 - **THEN** assemble fails with an error naming the slide, `extra.css`, and `deck.json` `styles`
 
+### Requirement: Local relative images are rewritten at assemble
+Slide and cover documents MAY reference local image files with relative paths in `<img src>`, `<source src>`, and CSS `url(...)`. Assemble MUST bake those references per `slide-local-images` so the harvested output does not retain filesystem-relative image URLs for those locals.
+
+#### Scenario: Harvested output has no local img src
+- **WHEN** a slide body contains `<img src="photo.png">` and `photo.png` exists beside the slide
+- **THEN** the assembled slide markup uses `data-asset` for that image instead of `src="photo.png"`
+
 ### Requirement: Cover file format
 A cover file MUST be a standalone HTML document harvested like a slide (head styles and scripts, body markup and scripts, data blocks, contract link stripped, external references rejected, classic scripts only). A cover MUST NOT call `registerSlide`; a cover that does MUST fail assemble with an error naming the file.
 

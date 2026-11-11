@@ -40,6 +40,7 @@ export const TEMPLATE = `<!doctype html>
 :root{ --brand:#111; --accent:#222; }
 /* DECK THEME — END */
 </style>
+<!-- DECK_ASSETS -->
 <!-- DECK_CDN_STYLES -->
 </head><body>
 <div class="loader-brand">Shell. <span>Default</span></div>

@@ -12,6 +12,9 @@
     "description": "Themed D3 bar chart that steps through data series and follows theme changes",
     "scripts": ["https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"]
   },
+  "photoStrip": {
+    "description": "Local slide-relative photos baked into the single-file output (CSS url and img src)"
+  },
   "blank": {
     "description": "Minimal skeleton showing every contract piece with comments"
   }

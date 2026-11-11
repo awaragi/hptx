@@ -9,6 +9,7 @@
     "cardGrid.html",
     "stepper.html",
     "d3Chart.html",
+    "photoStrip.html",
     "blank.html"
   ],
   "scripts": [

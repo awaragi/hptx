@@ -65,11 +65,15 @@ Preview MUST accept the same `--slides` semantics as build (key or filename, CLI
 - **THEN** they achieve it via `--slides` without setting a URL query string
 
 ### Requirement: Reload on edits
-While preview is running, saving a selected slide file, the resolved deck JSON file (when one is loaded), or a local theme file MUST trigger a full page reload with the re-assembled deck.
+While preview is running, saving a selected slide file, the resolved deck JSON file (when one is loaded), a local theme file, or a local image file previously discovered for baking from the current assemble set MUST trigger a full page reload with the re-assembled deck.
 
 #### Scenario: Edit slide HTML refreshes preview
 - **WHEN** preview is running for `--slide metrics` and the author saves `metrics.html`
 - **THEN** the preview reloads and reflects the saved content
+
+#### Scenario: Edit baked image refreshes preview
+- **WHEN** preview is running for a slide that baked `assets/logo.png` and the author saves that image file
+- **THEN** the preview reloads with the updated baked asset
 
 ### Requirement: Remote theme cached during preview
 When the effective `theme` is an `https://` URL, preview MUST fetch it once at startup (with a timeout) and reuse the cached CSS for subsequent reloads. Preview MUST refetch it when the resolved deck file changes. A failed or timed-out fetch MUST stop startup with an error identifying the theme URL.

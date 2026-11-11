@@ -154,8 +154,10 @@ writing a slide; start from a template (`npx hptx new`), not from scratch.
   uses. IDs referenced from markup (`for`, `href="#…"`, `aria-*`) must be
   unique across slides. The build fails otherwise.
 - Speaker notes: `<aside class="notes">` in the slide body (basic HTML, inline
- styles with theme tokens). Hidden on the canvas; `N` opens the shell-styled
- notes window, `⇧N` closes it. One set of notes per slide (no step notes yet).
+  styles with theme tokens). Hidden on the canvas; `N` opens the shell-styled
+  notes window, `⇧N` closes it. One set of notes per slide (no step notes yet).
+- Local images: paths relative to the slide (or cover) HTML file; assemble bakes
+  them into the single-file output via a shared registry (see `SLIDE-CONTRACT.md`).
 - Size type for the **1710×1107 canvas**. Prefer rail + detail explorers for
   dense process content (start from `stepper` or `cardGrid`).
 - After visual edits: `npx hptx dev --cwd <deck>` → Playwright screenshot.

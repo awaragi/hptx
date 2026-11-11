@@ -1,4 +1,5 @@
 import { bakeTheme } from './bakeTheme.ts';
+import { emitAssetsHtml, type AssetRegistry } from './bakeLocalImages.ts';
 import { emitCdnTags } from './emitCdn.ts';
 import { scopeCss, scopeSlideCss } from './scopeCss.ts';
 import type { DeckConfig, ParsedSlide } from './types.ts';
@@ -8,6 +9,7 @@ export const CDN_SCRIPTS_PLACEHOLDER = '<!-- DECK_CDN_SCRIPTS -->';
 export const SLIDES_PLACEHOLDER = '<!-- DECK_SLIDES -->';
 export const CONTRACT_CSS_PLACEHOLDER = '/* DECK_CONTRACT_CSS */';
 export const COVER_PLACEHOLDER = '<!-- DECK_COVER -->';
+export const ASSETS_PLACEHOLDER = '<!-- DECK_ASSETS -->';
 /** Attribute on the home page title block; cover CSS and the cover's `document` are scoped to it. */
 export const COVER_SCOPE = '[data-deck-cover]';
 
@@ -20,6 +22,8 @@ export interface AssembleInput {
   themeCss?: string;
   /** Slide contract stylesheet; required when the template has the contract placeholder. */
   contractCss?: string;
+  /** Baked local image registry (id → data URI); omitted or empty skips emission. */
+  assets?: AssetRegistry;
 }
 
 function escapeText(value: string): string {
@@ -118,7 +122,7 @@ function renderCover(cover: ParsedSlide): string {
 
 /** Assemble the shell template with deck config, theme, cover and content slides. */
 export function assembleHtml(input: AssembleInput): { html: string; warnings: string[] } {
-  const { template, config, slides, cover, themeCss, contractCss } = input;
+  const { template, config, slides, cover, themeCss, contractCss, assets } = input;
   const warnings: string[] = [];
   let html = template;
 
@@ -131,6 +135,13 @@ export function assembleHtml(input: AssembleInput): { html: string; warnings: st
   if (config.title !== undefined) html = setDeckTitle(setTitle(html, config.title), config.title);
   if (config.brand !== undefined || config.caption !== undefined) {
     html = setBrand(html, config.brand ?? 'Brand.', config.caption);
+  }
+
+  const assetsHtml = emitAssetsHtml(assets ?? {});
+  if (html.includes(ASSETS_PLACEHOLDER)) {
+    html = replacePlaceholder(html, ASSETS_PLACEHOLDER, assetsHtml);
+  } else if (assetsHtml) {
+    throw new Error(`Template is missing the ${ASSETS_PLACEHOLDER} placeholder needed for baked images`);
   }
 
   const { scriptHtml, linkHtml } = emitCdnTags(config.scripts, config.styles);

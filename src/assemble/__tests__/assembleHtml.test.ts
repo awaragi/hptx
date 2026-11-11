@@ -1,11 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CONTRACT_CSS_PLACEHOLDER, assembleHtml } from '../assembleHtml.ts';
+import { createHash } from 'node:crypto';
+import { ASSETS_PLACEHOLDER, CONTRACT_CSS_PLACEHOLDER, assembleHtml } from '../assembleHtml.ts';
 import { readDefaultThemeTokens } from '../bakeTheme.ts';
 import { assembleDeck, readContractCss } from '../index.ts';
 import { parseSlideDocument } from '../parseSlide.ts';
 import { TEMPLATE, makeDeckDir, slideDoc } from './helpers.ts';
+
+const PNG_B64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const PNG_BUF = Buffer.from(PNG_B64, 'base64');
+const PNG_ID = createHash('sha256').update(PNG_BUF).digest('hex').slice(0, 12);
 
 const slide = (key: string, style?: string) =>
   parseSlideDocument(slideDoc(style ? { style } : {}), `${key}.html`);
@@ -127,6 +133,44 @@ describe('assembleHtml', () => {
       assembleHtml({ template: '<title>x</title>', config: { output: 'o.html' }, slides: [] }),
     ).toThrow(/DECK_CDN_STYLES/);
   });
+
+  it('injects the assets registry before slides and leaves the placeholder empty when unused', () => {
+    const dataUri = `data:image/png;base64,${PNG_B64}`;
+    const withAssets = assembleHtml({
+      template: TEMPLATE,
+      config: { output: 'o.html' },
+      slides: [
+        {
+          ...slide('pic'),
+          styles: [`.hero{background-image:var(--asset-${PNG_ID})}`],
+          markupHtml: `<img data-asset="${PNG_ID}" alt="Logo">`,
+        },
+      ],
+      assets: { [PNG_ID]: dataUri },
+    }).html;
+    expect(withAssets).toContain('id="deck-assets"');
+    expect(withAssets).toContain(dataUri);
+    expect(withAssets.indexOf('id="deck-assets"')).toBeLessThan(withAssets.indexOf('data-slide="pic"'));
+    expect(withAssets).toContain(`var(--asset-${PNG_ID})`);
+    expect(withAssets).toContain(`data-asset="${PNG_ID}"`);
+    expect(withAssets).not.toContain(ASSETS_PLACEHOLDER);
+
+    const empty = assembleHtml({ template: TEMPLATE, config: { output: 'o.html' }, slides: [slide('a')] }).html;
+    expect(empty).not.toContain('deck-assets');
+    expect(empty).not.toContain('DECK_ASSETS');
+  });
+
+  it('fails when baked assets are present but the template has no assets placeholder', () => {
+    const tpl = TEMPLATE.replace('<!-- DECK_ASSETS -->\n', '');
+    expect(() =>
+      assembleHtml({
+        template: tpl,
+        config: { output: 'o.html' },
+        slides: [slide('a')],
+        assets: { abc: 'data:image/png;base64,xx' },
+      }),
+    ).toThrow(/DECK_ASSETS/);
+  });
 });
 
 describe('assembleDeck', () => {
@@ -144,7 +188,29 @@ describe('assembleDeck', () => {
     expect(res.html).toContain('--brand:#abc');
     expect(res.html).toContain('<title>T</title>');
     expect(res.warnings).toEqual([]);
+    expect(res.imagePaths).toEqual([]);
     expect(fs.existsSync(res.outputPath)).toBe(false);
+  });
+
+  it('bakes slide-relative local images into a shared registry', async () => {
+    const dir = makeDeckDir({
+      'deck.json': JSON.stringify({ output: './Out.html', slides: ['pic.html'] }),
+      'pic.html': slideDoc({
+        style: '.hero{background-image:url(assets/logo.png)}',
+        body: `<img src="assets/logo.png" alt="Logo"><script>window.registerSlide({boot(){}});</script>`,
+      }),
+      'shell/tpl.html': TEMPLATE,
+    });
+    fs.mkdirSync(path.join(dir, 'assets'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'assets/logo.png'), PNG_BUF);
+    const res = await assembleDeck(dir, { templatePath: path.join(dir, 'shell', 'tpl.html') });
+    expect(res.imagePaths).toEqual([path.join(dir, 'assets/logo.png')]);
+    expect(res.html).toContain('id="deck-assets"');
+    expect(res.html).toContain(`data:image/png;base64,${PNG_B64}`);
+    expect(res.html).toContain(`data-asset="${PNG_ID}"`);
+    expect(res.html).toContain(`var(--asset-${PNG_ID})`);
+    expect(res.html).not.toContain('src="assets/logo.png"');
+    expect(res.html.indexOf('id="deck-assets"')).toBeLessThan(res.html.indexOf('data-slide="pic"'));
   });
 
   it('keeps the cover in a filtered deck', async () => {

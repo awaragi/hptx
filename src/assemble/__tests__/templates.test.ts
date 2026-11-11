@@ -44,7 +44,7 @@ describe('template library', () => {
 
   it('contains the starter templates, each with a description', () => {
     const catalog = readCatalog();
-    expect(templateKeys()).toEqual(['blank', 'cardGrid', 'd3Chart', 'section', 'stepper']);
+    expect(templateKeys()).toEqual(['blank', 'cardGrid', 'd3Chart', 'photoStrip', 'section', 'stepper']);
     for (const entry of Object.values(catalog)) expect(entry.description.length).toBeGreaterThan(10);
   });
 
