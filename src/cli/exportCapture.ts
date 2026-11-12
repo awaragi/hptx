@@ -13,21 +13,57 @@ export interface SlideStepInfo {
   stepCount: number;
 }
 
-/** Resolve how many frames to capture for a slide (at least one at step 0). */
-export function frameStepIds(stepCount: number): number[] {
-  const n = typeof stepCount === 'number' && stepCount > 0 ? Math.floor(stepCount) : 1;
-  return Array.from({ length: n }, (_, i) => i);
+/** Shell-owned home page: tile highlight steps are not export frames. */
+export const AGENDA_KEY = 'agenda';
+
+/**
+ * Whether this slide exports stepped frames (`key-0.png` …).
+ * Agenda and slides with no `stepCount` use a single unsuffixed `key.png`.
+ */
+export function slideHasExportSteps(slide: Pick<SlideStepInfo, 'key' | 'stepCount'>): boolean {
+  if (slide.key === AGENDA_KEY) return false;
+  return typeof slide.stepCount === 'number' && slide.stepCount > 0;
+}
+
+/**
+ * Resolve which step ids to capture for a slide.
+ * Content slides with steps: `0 .. stepCount-1`. Agenda / no steps: one synthetic frame at `0`.
+ */
+export function frameStepIds(slide: Pick<SlideStepInfo, 'key' | 'stepCount'>): number[] {
+  if (!slideHasExportSteps(slide)) return [0];
+  return Array.from({ length: Math.floor(slide.stepCount) }, (_, i) => i);
 }
 
 /** Ordered list of PNG paths that will be written for the given slides. */
 export function plannedPngPaths(pngDir: string, slides: SlideStepInfo[]): string[] {
   const out: string[] = [];
   for (const s of slides) {
-    for (const step of frameStepIds(s.stepCount)) {
-      out.push(path.join(pngDir, frameFileName(s.key, step)));
+    const withSuffix = slideHasExportSteps(s);
+    for (const step of frameStepIds(s)) {
+      out.push(path.join(pngDir, frameFileName(s.key, step, withSuffix)));
     }
   }
   return out;
+}
+
+/**
+ * Progress line: `(s/S - step/steps) <filename>` when the slide has steps;
+ * `(s/S) <filename>` when it does not.
+ * `s`/`S` = one-based slide index/count; step counters are one-based within the slide.
+ */
+export function formatExportProgressLine(opts: {
+  slideIndex: number;
+  slideCount: number;
+  fileName: string;
+  /** One-based step within the slide; omit when the slide has no export steps. */
+  stepIndex?: number;
+  stepCount?: number;
+}): string {
+  const { slideIndex: s, slideCount: S, fileName, stepIndex, stepCount } = opts;
+  if (stepIndex !== undefined && stepCount !== undefined && stepCount > 0) {
+    return `(${s}/${S} - ${stepIndex}/${stepCount}) ${fileName}`;
+  }
+  return `(${s}/${S}) ${fileName}`;
 }
 
 async function waitForDeck(page: Page): Promise<void> {
@@ -73,19 +109,23 @@ async function capturePngFrames(
   page: Page,
   pngDir: string,
   appearance: AppearanceTheme,
+  onProgress?: (line: string) => void,
 ): Promise<string[]> {
   fs.mkdirSync(pngDir, { recursive: true });
   await preparePresentCapture(page, appearance);
 
   const slides = await readSlideSteps(page);
+  const slideCount = slides.length;
   const written: string[] = [];
 
-  for (const slide of slides) {
+  for (let slideIndex = 0; slideIndex < slides.length; slideIndex++) {
+    const slide = slides[slideIndex]!;
+    const withSuffix = slideHasExportSteps(slide);
     await page.evaluate((key) => {
       (window as unknown as { Deck: { goToKey: (k: string) => void } }).Deck.goToKey(key);
     }, slide.key);
 
-    for (const step of frameStepIds(slide.stepCount)) {
+    for (const step of frameStepIds(slide)) {
       await page.evaluate(
         ({ key, step: stepIdx }) => {
           (window as unknown as { Deck: { setStep: (k: string, i: number) => void } }).Deck.setStep(
@@ -97,10 +137,23 @@ async function capturePngFrames(
       );
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
-      const filePath = path.join(pngDir, frameFileName(slide.key, step));
+      const name = frameFileName(slide.key, step, withSuffix);
+      const filePath = path.join(pngDir, name);
       const canvas = page.locator('#deckCanvas');
       await canvas.screenshot({ path: filePath, type: 'png' });
       written.push(filePath);
+      if (onProgress) {
+        onProgress(
+          formatExportProgressLine({
+            slideIndex: slideIndex + 1,
+            slideCount,
+            fileName: name,
+            ...(withSuffix
+              ? { stepIndex: step + 1, stepCount: Math.floor(slide.stepCount) }
+              : {}),
+          }),
+        );
+      }
     }
   }
   return written;
@@ -133,6 +186,8 @@ export interface CaptureOptions {
   pngDir: string;
   pngPdfPath: string;
   printPdfPath: string;
+  /** When set, called with each PNG progress line (and once for print PDF). */
+  onProgress?: (line: string) => void;
 }
 
 export interface CaptureResult {
@@ -153,12 +208,14 @@ export async function captureExport(opts: CaptureOptions): Promise<CaptureResult
 
     if (opts.format === 'pdf') {
       await capturePrintPdf(page, opts.printPdfPath);
+      if (opts.onProgress) opts.onProgress(`(1/1 - 1/1) ${path.basename(opts.printPdfPath)}`);
       return { pngPaths: [], pdfPath: opts.printPdfPath };
     }
 
-    const pngPaths = await capturePngFrames(page, opts.pngDir, opts.appearance);
+    const pngPaths = await capturePngFrames(page, opts.pngDir, opts.appearance, opts.onProgress);
     if (opts.format === 'png-pdf') {
       await stitchPngsToPdf(pngPaths, opts.pngPdfPath);
+      if (opts.onProgress) opts.onProgress(`wrote ${path.basename(opts.pngPdfPath)}`);
       return { pngPaths, pdfPath: opts.pngPdfPath };
     }
     return { pngPaths };

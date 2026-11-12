@@ -47,15 +47,19 @@ The presentation name MUST be the filename stem of the effective HTML `output` p
 - **THEN** captures use the dark presentation appearance
 
 ### Requirement: PNG frame capture for each slide and step
-For `--format png` and as the raster source for `--format png-pdf`, export MUST navigate every included slide in assembled order (home `agenda` first, then content slides) and, for each slide, every in-slide step index from `0` through `stepCount - 1`. When `stepCount` is `0` or unset, export MUST capture exactly one frame at step `0`. Each frame MUST be a PNG of the design canvas at **1710×1107**, named `<slideKey>-<stepId>.png`, written to `dist/<name>/png/` relative to the working root’s usual `dist` layout beside the HTML output directory conventions (same directory as the HTML output’s parent): specifically `<dirname(output)>/<name>/png/<slideKey>-<stepId>.png` when output is `<dirname>/<name>.html`.
+For `--format png` and as the raster source for `--format png-pdf`, export MUST navigate every included slide in assembled order (home `agenda` first, then content slides). For content slides with `stepCount > 0`, export MUST capture every in-slide step index from `0` through `stepCount - 1` as `<slideKey>-<stepId>.png`. When a content slide has no steps (`stepCount` is `0` or unset), export MUST capture exactly one frame named `<slideKey>.png` (no step suffix). The shell-owned home page (`agenda`) MUST be captured as exactly one unsuffixed frame (`agenda.png`) even when its tile highlight `stepCount` is greater than zero. Each frame MUST be a PNG of the design canvas at **1710×1107**, written under `<dirname(output)>/<name>/png/`.
 
 #### Scenario: Multi-step slide writes multiple PNGs
 - **WHEN** a slide key `agent` has `stepCount` 3 and format is `png`
 - **THEN** export writes `agent-0.png`, `agent-1.png`, and `agent-2.png` under `<name>/png/`
 
-#### Scenario: Zero-step slide still writes step 0
+#### Scenario: Zero-step slide has no step suffix
 - **WHEN** a slide key `blank` has no steps and format is `png`
-- **THEN** export writes `blank-0.png`
+- **THEN** export writes `blank.png`
+
+#### Scenario: Agenda home is a single unsuffixed frame
+- **WHEN** the home page `agenda` has a tile `stepCount` greater than 1 and format is `png`
+- **THEN** export writes only `agenda.png` for that slide (no `agenda-0.png` or further agenda step frames)
 
 ### Requirement: png-pdf concatenates PNG frames
 When `--format png-pdf`, export MUST write the same PNG set as `png`, then write a single PDF at `<dirname(output)>/<name>/png/<name>.pdf` whose pages are those PNGs in capture order (one page per PNG, 1710×1107).
@@ -86,8 +90,23 @@ Export MUST assemble with the same slide resolution, harvesting, CSS scoping, re
 - **THEN** only the home page plus those slides (in CLI order) are captured
 
 ### Requirement: Export help and effective configuration
-`hptx export --help` MUST document `--cwd`, `--deck`, `--slide`, `--output`, `--format`, `--theme` (`light|dark`), and other shared deck field flags that export accepts. Before capturing, export MUST print an effective-configuration style summary including format, appearance theme, presentation name, and output artifact path(s).
+`hptx export --help` MUST document `--cwd`, `--deck`, `--slide`, `--output`, `--format`, `--theme` (`light|dark`), `--progress`, and other shared deck field flags that export accepts. Before capturing, export MUST print an effective-configuration style summary including format, appearance theme, presentation name, and output artifact path(s).
 
 #### Scenario: Help lists format and theme
 - **WHEN** a developer runs `npx hptx export --help`
-- **THEN** the help text names `--format` and `--theme light|dark`
+- **THEN** the help text names `--format`, `--theme light|dark`, and `--progress`
+
+### Requirement: Optional progress logging
+When `--progress` is set and the format writes PNG frames (`png` or `png-pdf`), export MUST print one line per written frame. For a slide with export steps, the line MUST include `(s/S - n/N)` where `s`/`S` are the one-based current and total slide counts and `n`/`N` are the one-based current step and that slide’s `stepCount`, plus the frame filename. For a slide with no export steps (including `agenda`), the line MUST include `(s/S)` and the unsuffixed filename (no `- n/N` step counters). When `--progress` is omitted, export MUST NOT print those per-frame lines. For `--format pdf`, `--progress` MAY print a single line naming the print PDF path.
+
+#### Scenario: Progress shows per-slide step counters
+- **WHEN** export runs with `--progress --format png` and writes the second step of a 5-step slide that is the second of 3 slides
+- **THEN** the log line contains `(2/3 - 2/5)` and that step’s filename
+
+#### Scenario: Progress omits step counters for no-step slides
+- **WHEN** export runs with `--progress` and captures a no-step slide or `agenda`
+- **THEN** the log line is of the form `(s/S) <key>.png` without a `- n/N` segment
+
+#### Scenario: Progress off by default
+- **WHEN** export runs without `--progress`
+- **THEN** it does not print per-frame progress lines

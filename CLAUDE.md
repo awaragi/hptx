@@ -30,19 +30,19 @@ npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--t
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
-npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] ...
+npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] [--progress] ...
 npm test
 ```
 
 Examples: `npx hptx dev --cwd templates`, `npx hptx build --cwd templates --slide cardGrid --slide stepper`,
-`npx hptx export --cwd decks/about --format png`, `npx hptx export --cwd templates --format pdf --theme dark`,
+`npx hptx export --cwd decks/about --format png --progress`, `npx hptx export --cwd templates --format pdf --theme dark`,
 `npx hptx new deck --cwd decks/demo --title "Demo deck" --output ./Demo.html`,
 `npx hptx new slide --cwd decks/demo --key detail --from cardGrid --after overview`.
 Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names only.
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<key>-<step>.png`; `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<key>-<step>.png` for stepped content slides, or `<key>.png` when there are no steps (home `agenda` is `agenda.png`); `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 

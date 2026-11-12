@@ -34,7 +34,10 @@ export function exportArtifactPaths(outputPath: string): ExportArtifactPaths {
   };
 }
 
-/** Frame filename for a slide key and zero-based step id. */
-export function frameFileName(slideKey: string, stepId: number): string {
-  return `${slideKey}-${stepId}.png`;
+/**
+ * Frame filename: `<key>-<stepId>.png` when the slide has export steps;
+ * `<key>.png` when it has none (no step suffix).
+ */
+export function frameFileName(slideKey: string, stepId: number, withStepSuffix: boolean): string {
+  return withStepSuffix ? `${slideKey}-${stepId}.png` : `${slideKey}.png`;
 }

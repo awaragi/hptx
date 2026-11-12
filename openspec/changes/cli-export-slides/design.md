@@ -35,7 +35,7 @@ Reuse `planAssemble` / `assembleFromPlan` with `requireOutput: true`. Serve the 
 
 | Format | Path |
 |--------|------|
-| png | `<dir(output)>/<name>/png/<key>-<step>.png` |
+| png | `<dir(output)>/<name>/png/<key>-<step>.png` (or `<key>.png` with no steps) |
 | png-pdf | same PNGs + `<dir(output)>/<name>/png/<name>.pdf` |
 | pdf | `<dir(output)>/<name>.pdf` |
 
@@ -47,14 +47,18 @@ set data-theme from --theme (light|dark)
 hide shell chrome for clean frames (header, dots, arrows, counter, progress) via evaluate/CSS — slides only
 for key in Deck.manifest / DOM order:
   Deck.goToKey(key)
-  n = max(stepCount, 1)  // 0 steps → one frame at 0
-  for step in 0..n-1:
-    Deck.setStep(key, step)
-    wait for paint / fonts
-    screenshot #deckCanvas → <key>-<step>.png
+  if key == 'agenda' or stepCount == 0:
+    capture once as <key>.png   // no step suffix
+  else:
+    for step in 0..stepCount-1:
+      Deck.setStep(key, step)
+      wait for paint / fonts
+      screenshot #deckCanvas → <key>-<step>.png
 ```
 
 Prefer clipping `#deckCanvas` with viewport locked to 1710×1107 so CSS `scale()` is 1.
+
+**Agenda:** The home page’s `stepCount` only drives tile highlight navigation; export treats it as a static page and writes a single unsuffixed frame.
 
 **Chrome UI:** Hide presentation chrome for PNG export so evaluation targets slide content. Print PDF already hides chrome via print mode.
 
@@ -82,9 +86,20 @@ Do not add full `playwright` or browser download scripts to `prepare`.
 
 Export’s `--theme` MUST mean `light|dark` only. CSS theme bake continues from deck.json / a separate future flag if needed. Implementation: export uses its own Commander program (or overrides) and MUST NOT pass appearance `light|dark` into `resolveThemeSource`. Document the difference in help text: `--theme <light|dark>  presentation appearance (default: light)`.
 
-### 8. Tests
+### 8. `--progress` logging
 
-- Unit: arg parsing (format, theme, name derivation, paths), help/root command registration — no Chrome required.
+Optional boolean. When set during PNG capture, log after each write:
+
+```
+(s/S - n/N) <key>-<step>.png   # slide has steps: n/N = step within that slide
+(s/S) <key>.png                # no steps / agenda
+```
+
+`s`/`S` = one-based slide index / slide count. Off by default so normal export stays quiet aside from the config summary and final count.
+
+### 9. Tests
+
+- Unit: arg parsing (format, theme, progress, name derivation, paths), help/root command registration — no Chrome required.
 - Optional integration marked/skip when Chrome missing; unit tests never require Chrome.
 
 ## Risks / Trade-offs

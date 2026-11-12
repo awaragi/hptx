@@ -20,8 +20,10 @@ describe('exportPaths', () => {
     expect(p.printPdfPath).toBe(path.join('/repo', 'dist', 'about.pdf'));
   });
 
-  it('names frames slideKey-stepId.png', () => {
-    expect(frameFileName('agent', 0)).toBe('agent-0.png');
-    expect(frameFileName('escape', 2)).toBe('escape-2.png');
+  it('names stepped frames with a suffix and no-step frames without', () => {
+    expect(frameFileName('agent', 0, true)).toBe('agent-0.png');
+    expect(frameFileName('escape', 2, true)).toBe('escape-2.png');
+    expect(frameFileName('blank', 0, false)).toBe('blank.png');
+    expect(frameFileName('agenda', 0, false)).toBe('agenda.png');
   });
 });

@@ -110,6 +110,7 @@ export async function runExport(argv: string[]): Promise<void> {
       pngDir: artifacts.pngDir,
       pngPdfPath: artifacts.pngPdfPath,
       printPdfPath: artifacts.printPdfPath,
+      ...(args.progress ? { onProgress: (line) => console.log(line) } : {}),
     });
     if (result.pngPaths.length) {
       console.log(`Wrote ${result.pngPaths.length} PNG(s) under ${artifacts.pngDir}`);

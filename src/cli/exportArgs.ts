@@ -28,6 +28,8 @@ export interface ExportArgs {
   format: ExportFormat;
   /** Shell light/dark appearance; default light. Not a CSS theme file. */
   appearance: AppearanceTheme;
+  /** Log each frame as it is written (`(s/S - n/N) file`). */
+  progress: boolean;
 }
 
 function collect(value: string, prev: string[]): string[] {
@@ -66,6 +68,7 @@ function exportCommand(): Command {
     .option('--output <path>', 'HTML output path (required unless set in the deck file; names export artifacts)')
     .option('--format <fmt>', 'png | png-pdf | pdf (one per run; default: png)')
     .option('--theme <light|dark>', 'presentation appearance light|dark (default: light; not a CSS theme file)')
+    .option('--progress', 'log each frame as (slide/total - step/steps) filename')
     .option('--cover <file>', 'cover HTML file')
     .option('--title <text>', 'document / presentation title')
     .option('--brand <text>', 'primary brand label')
@@ -80,7 +83,7 @@ export function exportHelpText(): string {
 }
 
 export const EXPORT_USAGE =
-  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] [--output path] ...';
+  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] [--progress] [--output path] ...';
 
 /**
  * Parse export flags. `--theme` is appearance (light|dark), not a CSS theme path.
@@ -102,6 +105,7 @@ export function parseExportArgs(argv: string[]): ExportArgs {
     output?: string;
     format?: string;
     theme?: string;
+    progress?: boolean;
     cover?: string;
     title?: string;
     brand?: string;
@@ -133,7 +137,7 @@ export function parseExportArgs(argv: string[]): ExportArgs {
   }
 
   const inv = invocationDir();
-  const result: ExportArgs = { format, appearance };
+  const result: ExportArgs = { format, appearance, progress: opts.progress === true };
 
   if (opts.cwd !== undefined) {
     if (opts.cwd.trim() === '') throw new Error('--cwd requires a path');

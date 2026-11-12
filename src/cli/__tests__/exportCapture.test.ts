@@ -1,7 +1,12 @@
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { CHROME_MISSING_MESSAGE, launchSystemChrome } from '../exportChrome.ts';
-import { frameStepIds, plannedPngPaths } from '../exportCapture.ts';
+import {
+  formatExportProgressLine,
+  frameStepIds,
+  plannedPngPaths,
+  slideHasExportSteps,
+} from '../exportCapture.ts';
 import { stitchPngsToPdf } from '../exportPdf.ts';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -17,22 +22,50 @@ vi.mock('playwright-core', () => ({
 
 describe('frameStepIds / plannedPngPaths', () => {
   it('captures at least step 0 when stepCount is 0', () => {
-    expect(frameStepIds(0)).toEqual([0]);
-    expect(frameStepIds(3)).toEqual([0, 1, 2]);
+    expect(frameStepIds({ key: 'blank', stepCount: 0 })).toEqual([0]);
+    expect(slideHasExportSteps({ key: 'blank', stepCount: 0 })).toBe(false);
+    expect(frameStepIds({ key: 'agent', stepCount: 3 })).toEqual([0, 1, 2]);
+    expect(slideHasExportSteps({ key: 'agent', stepCount: 3 })).toBe(true);
+  });
+
+  it('captures agenda as a single unsuffixed frame even when stepCount > 1', () => {
+    expect(frameStepIds({ key: 'agenda', stepCount: 5 })).toEqual([0]);
+    expect(slideHasExportSteps({ key: 'agenda', stepCount: 5 })).toBe(false);
   });
 
   it('plans png paths in slide then step order', () => {
     const dir = '/tmp/png';
     expect(
       plannedPngPaths(dir, [
-        { key: 'agenda', stepCount: 0 },
+        { key: 'agenda', stepCount: 4 },
+        { key: 'blank', stepCount: 0 },
         { key: 'agent', stepCount: 2 },
       ]),
     ).toEqual([
-      path.join(dir, 'agenda-0.png'),
+      path.join(dir, 'agenda.png'),
+      path.join(dir, 'blank.png'),
       path.join(dir, 'agent-0.png'),
       path.join(dir, 'agent-1.png'),
     ]);
+  });
+
+  it('formats progress with per-slide step counters only when stepped', () => {
+    expect(
+      formatExportProgressLine({
+        slideIndex: 2,
+        slideCount: 3,
+        stepIndex: 2,
+        stepCount: 5,
+        fileName: 'escape-1.png',
+      }),
+    ).toBe('(2/3 - 2/5) escape-1.png');
+    expect(
+      formatExportProgressLine({
+        slideIndex: 1,
+        slideCount: 3,
+        fileName: 'agenda.png',
+      }),
+    ).toBe('(1/3) agenda.png');
   });
 });
 
