@@ -42,10 +42,10 @@ describe('frameStepIds / plannedPngPaths', () => {
         { key: 'agent', stepCount: 2 },
       ]),
     ).toEqual([
-      path.join(dir, 'agenda.png'),
-      path.join(dir, 'blank.png'),
-      path.join(dir, 'agent-0.png'),
-      path.join(dir, 'agent-1.png'),
+      path.join(dir, '0-agenda.png'),
+      path.join(dir, '1-blank.png'),
+      path.join(dir, '2-agent-0.png'),
+      path.join(dir, '2-agent-1.png'),
     ]);
   });
 
@@ -56,16 +56,16 @@ describe('frameStepIds / plannedPngPaths', () => {
         slideCount: 3,
         stepIndex: 2,
         stepCount: 5,
-        fileName: 'escape-1.png',
+        fileName: '1-escape-1.png',
       }),
-    ).toBe('(2/3 - 2/5) escape-1.png');
+    ).toBe('(2/3 - 2/5) 1-escape-1.png');
     expect(
       formatExportProgressLine({
         slideIndex: 1,
         slideCount: 3,
-        fileName: 'agenda.png',
+        fileName: '0-agenda.png',
       }),
-    ).toBe('(1/3) agenda.png');
+    ).toBe('(1/3) 0-agenda.png');
   });
 });
 

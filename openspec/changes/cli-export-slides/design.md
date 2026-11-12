@@ -35,7 +35,7 @@ Reuse `planAssemble` / `assembleFromPlan` with `requireOutput: true`. Serve the 
 
 | Format | Path |
 |--------|------|
-| png | `<dir(output)>/<name>/png/<key>-<step>.png` (or `<key>.png` with no steps) |
+| png | `<dir(output)>/<name>/png/<paddedIndex>-<key>-<step>.png` (or `<paddedIndex>-<key>.png` with no steps; agenda is `0-…`) |
 | png-pdf | same PNGs + `<dir(output)>/<name>/png/<name>.pdf` |
 | pdf | `<dir(output)>/<name>.pdf` |
 
@@ -47,18 +47,19 @@ set data-theme from --theme (light|dark)
 hide shell chrome for clean frames (header, dots, arrows, counter, progress) via evaluate/CSS — slides only
 for key in Deck.manifest / DOM order:
   Deck.goToKey(key)
+  pad = width of (slideCount - 1)   // so 0..N-1 sort lexically
   if key == 'agenda' or stepCount == 0:
-    capture once as <key>.png   // no step suffix
+    capture once as <pad(i)>-<key>.png   // no step suffix; agenda i=0
   else:
     for step in 0..stepCount-1:
       Deck.setStep(key, step)
       wait for paint / fonts
-      screenshot #deckCanvas → <key>-<step>.png
+      screenshot #deckCanvas → <pad(i)>-<key>-<step>.png
 ```
 
 Prefer clipping `#deckCanvas` with viewport locked to 1710×1107 so CSS `scale()` is 1.
 
-**Agenda:** The home page’s `stepCount` only drives tile highlight navigation; export treats it as a static page and writes a single unsuffixed frame.
+**Agenda:** The home page’s `stepCount` only drives tile highlight navigation; export treats it as a static page and writes a single frame prefixed `0-` (padded as needed).
 
 **Chrome UI:** Hide presentation chrome for PNG export so evaluation targets slide content. Print PDF already hides chrome via print mode.
 
@@ -91,8 +92,8 @@ Export’s `--theme` MUST mean `light|dark` only. CSS theme bake continues from 
 Optional boolean. When set during PNG capture, log after each write:
 
 ```
-(s/S - n/N) <key>-<step>.png   # slide has steps: n/N = step within that slide
-(s/S) <key>.png                # no steps / agenda
+(s/S - n/N) <pad>-<key>-<step>.png   # slide has steps: n/N = step within that slide
+(s/S) <pad>-<key>.png                # no steps / agenda
 ```
 
 `s`/`S` = one-based slide index / slide count. Off by default so normal export stays quiet aside from the config summary and final count.

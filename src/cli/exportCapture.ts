@@ -37,10 +37,23 @@ export function frameStepIds(slide: Pick<SlideStepInfo, 'key' | 'stepCount'>): n
 /** Ordered list of PNG paths that will be written for the given slides. */
 export function plannedPngPaths(pngDir: string, slides: SlideStepInfo[]): string[] {
   const out: string[] = [];
-  for (const s of slides) {
+  const slideCount = slides.length;
+  for (let i = 0; i < slides.length; i++) {
+    const s = slides[i]!;
     const withSuffix = slideHasExportSteps(s);
     for (const step of frameStepIds(s)) {
-      out.push(path.join(pngDir, frameFileName(s.key, step, withSuffix)));
+      out.push(
+        path.join(
+          pngDir,
+          frameFileName({
+            slideKey: s.key,
+            stepId: step,
+            withStepSuffix: withSuffix,
+            slideIndex: i,
+            slideCount,
+          }),
+        ),
+      );
     }
   }
   return out;
@@ -137,7 +150,13 @@ async function capturePngFrames(
       );
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
-      const name = frameFileName(slide.key, step, withSuffix);
+      const name = frameFileName({
+        slideKey: slide.key,
+        stepId: step,
+        withStepSuffix: withSuffix,
+        slideIndex,
+        slideCount,
+      });
       const filePath = path.join(pngDir, name);
       const canvas = page.locator('#deckCanvas');
       await canvas.screenshot({ path: filePath, type: 'png' });

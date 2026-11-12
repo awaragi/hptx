@@ -2,8 +2,10 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   exportArtifactPaths,
+  formatSlideIndexPrefix,
   frameFileName,
   presentationNameFromOutput,
+  slideIndexPadWidth,
 } from '../exportPaths.ts';
 
 describe('exportPaths', () => {
@@ -20,10 +22,59 @@ describe('exportPaths', () => {
     expect(p.printPdfPath).toBe(path.join('/repo', 'dist', 'about.pdf'));
   });
 
-  it('names stepped frames with a suffix and no-step frames without', () => {
-    expect(frameFileName('agent', 0, true)).toBe('agent-0.png');
-    expect(frameFileName('escape', 2, true)).toBe('escape-2.png');
-    expect(frameFileName('blank', 0, false)).toBe('blank.png');
-    expect(frameFileName('agenda', 0, false)).toBe('agenda.png');
+  it('pads slide indices so lexical order matches deck order', () => {
+    expect(slideIndexPadWidth(3)).toBe(1);
+    expect(slideIndexPadWidth(10)).toBe(1);
+    expect(slideIndexPadWidth(11)).toBe(2);
+    expect(formatSlideIndexPrefix(0, 11)).toBe('00');
+    expect(formatSlideIndexPrefix(10, 11)).toBe('10');
+  });
+
+  it('prefixes frames with padded slide index', () => {
+    expect(
+      frameFileName({
+        slideKey: 'agent',
+        stepId: 0,
+        withStepSuffix: true,
+        slideIndex: 2,
+        slideCount: 3,
+      }),
+    ).toBe('2-agent-0.png');
+    expect(
+      frameFileName({
+        slideKey: 'escape',
+        stepId: 2,
+        withStepSuffix: true,
+        slideIndex: 1,
+        slideCount: 3,
+      }),
+    ).toBe('1-escape-2.png');
+    expect(
+      frameFileName({
+        slideKey: 'blank',
+        stepId: 0,
+        withStepSuffix: false,
+        slideIndex: 1,
+        slideCount: 3,
+      }),
+    ).toBe('1-blank.png');
+    expect(
+      frameFileName({
+        slideKey: 'agenda',
+        stepId: 0,
+        withStepSuffix: false,
+        slideIndex: 0,
+        slideCount: 3,
+      }),
+    ).toBe('0-agenda.png');
+    expect(
+      frameFileName({
+        slideKey: 'agenda',
+        stepId: 0,
+        withStepSuffix: false,
+        slideIndex: 0,
+        slideCount: 11,
+      }),
+    ).toBe('00-agenda.png');
   });
 });

@@ -47,19 +47,23 @@ The presentation name MUST be the filename stem of the effective HTML `output` p
 - **THEN** captures use the dark presentation appearance
 
 ### Requirement: PNG frame capture for each slide and step
-For `--format png` and as the raster source for `--format png-pdf`, export MUST navigate every included slide in assembled order (home `agenda` first, then content slides). For content slides with `stepCount > 0`, export MUST capture every in-slide step index from `0` through `stepCount - 1` as `<slideKey>-<stepId>.png`. When a content slide has no steps (`stepCount` is `0` or unset), export MUST capture exactly one frame named `<slideKey>.png` (no step suffix). The shell-owned home page (`agenda`) MUST be captured as exactly one unsuffixed frame (`agenda.png`) even when its tile highlight `stepCount` is greater than zero. Each frame MUST be a PNG of the design canvas at **1710×1107**, written under `<dirname(output)>/<name>/png/`.
+For `--format png` and as the raster source for `--format png-pdf`, export MUST navigate every included slide in assembled order (home `agenda` first, then content slides). Each filename MUST begin with a zero-based slide index (agenda is `0`) zero-padded to the digit width of `slideCount - 1` so lexical sort matches deck order, then a hyphen. For content slides with `stepCount > 0`, export MUST capture every in-slide step index from `0` through `stepCount - 1` as `<paddedIndex>-<slideKey>-<stepId>.png`. When a content slide has no steps (`stepCount` is `0` or unset), export MUST capture exactly one frame named `<paddedIndex>-<slideKey>.png` (no step suffix). The shell-owned home page (`agenda`) MUST be captured as exactly one frame (`<paddedIndex>-agenda.png`, with index `0`) even when its tile highlight `stepCount` is greater than zero. Each frame MUST be a PNG of the design canvas at **1710×1107**, written under `<dirname(output)>/<name>/png/`.
 
 #### Scenario: Multi-step slide writes multiple PNGs
-- **WHEN** a slide key `agent` has `stepCount` 3 and format is `png`
-- **THEN** export writes `agent-0.png`, `agent-1.png`, and `agent-2.png` under `<name>/png/`
+- **WHEN** a three-slide deck’s third slide key `agent` has `stepCount` 3 and format is `png`
+- **THEN** export writes `2-agent-0.png`, `2-agent-1.png`, and `2-agent-2.png` under `<name>/png/`
 
 #### Scenario: Zero-step slide has no step suffix
-- **WHEN** a slide key `blank` has no steps and format is `png`
-- **THEN** export writes `blank.png`
+- **WHEN** a three-slide deck’s second slide key `blank` has no steps and format is `png`
+- **THEN** export writes `1-blank.png`
 
-#### Scenario: Agenda home is a single unsuffixed frame
+#### Scenario: Agenda home is a single frame with index 0
 - **WHEN** the home page `agenda` has a tile `stepCount` greater than 1 and format is `png`
-- **THEN** export writes only `agenda.png` for that slide (no `agenda-0.png` or further agenda step frames)
+- **THEN** export writes only `0-agenda.png` for that slide (padded if the deck needs more digits)
+
+#### Scenario: Slide index padding sorts past nine slides
+- **WHEN** a deck has 11 slides (indices 0 through 10) and format is `png`
+- **THEN** filenames use two-digit prefixes such as `00-agenda.png` and `10-<key>….png` so lexical order matches capture order
 
 ### Requirement: png-pdf concatenates PNG frames
 When `--format png-pdf`, export MUST write the same PNG set as `png`, then write a single PDF at `<dirname(output)>/<name>/png/<name>.pdf` whose pages are those PNGs in capture order (one page per PNG, 1710×1107).
@@ -105,7 +109,7 @@ When `--progress` is set and the format writes PNG frames (`png` or `png-pdf`), 
 
 #### Scenario: Progress omits step counters for no-step slides
 - **WHEN** export runs with `--progress` and captures a no-step slide or `agenda`
-- **THEN** the log line is of the form `(s/S) <key>.png` without a `- n/N` segment
+- **THEN** the log line is of the form `(s/S) <paddedIndex>-<key>.png` without a `- n/N` segment
 
 #### Scenario: Progress off by default
 - **WHEN** export runs without `--progress`
