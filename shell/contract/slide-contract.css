@@ -164,6 +164,8 @@
   .link-btn:hover{ color:var(--brand-strong); }
   /* Slides are authored at 1710×1107 and scaled by .deck-canvas.
      Do not add viewport @media or vw/vh inside slide CSS — that reflows the canvas. */
+  /* Speaker notes are for the notes window (N); keep them off the canvas in previews too. */
+  aside.notes{ display:none !important; }
   /* ---------- slides ---------- */
   .slides{ position:relative; height:100vh; width:100vw; }
   .slide{
