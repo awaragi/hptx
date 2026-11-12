@@ -8,7 +8,7 @@ Authors and agents need a repeatable CLI way to capture every slide (and each in
 
 - Add `npx hptx export` that assembles a deck (same rules as build, including required `output`), drives system Chrome via `playwright-core`, and writes artifacts under `dist/` named after the HTML output stem.
 - Support exactly one `--format` per run: `png` (per slide/step PNGs), `png-pdf` (those PNGs plus a concatenated raster PDF), or `pdf` (print-mode PDF).
-- Capture every visible slide and each content-slide step as zero-padded-index-prefixed PNGs (`<ii>-<slideKey>-<stepId>.png`, or `<ii>-<slideKey>.png` with no steps; agenda is index `0`). Appearance via `--theme light|dark` (default `light`).
+- Capture every visible slide and each content-slide step as PNGs with zero-padded slide and step indices (`<ii>-<slideKey>-<ss>.png`, or `<ii>-<slideKey>.png` with no steps; agenda is index `0`). Appearance via `--theme light|dark` (default `light`).
 - Use installed Google Chrome only (no bundled Chromium); fail with a clear message when Chrome or Playwright cannot launch.
 - Extend the `hptx` root CLI surface to list `export` alongside `build` / `dev` / `new`.
 

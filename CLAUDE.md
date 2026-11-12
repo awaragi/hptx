@@ -42,7 +42,7 @@ Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names o
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedIndex>-<key>-<step>.png` for stepped content slides, or `<paddedIndex>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`, index padded so files sort); `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort); `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 

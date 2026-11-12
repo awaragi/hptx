@@ -207,7 +207,7 @@ Presentation name is the HTML `output` stem (e.g. `dist/about.html` → `about`)
 
 | Format | Writes |
 | --- | --- |
-| `png` (default) | `dist/<name>/png/<paddedIndex>-<slideKey>-<stepId>.png` for stepped slides; `<paddedIndex>-<slideKey>.png` with no steps (agenda is `0-agenda.png`, padded to sort) at 1710×1107 |
+| `png` (default) | `dist/<name>/png/<paddedSlide>-<slideKey>-<paddedStep>.png` for stepped slides; `<paddedSlide>-<slideKey>.png` with no steps (agenda is `0-agenda.png`; indices padded to sort) at 1710×1107 |
 | `png-pdf` | those PNGs plus `dist/<name>/png/<name>.pdf` (PNG pages concatenated) |
 | `pdf` | `dist/<name>.pdf` via the shell print layout (not the PNG stack) |
 

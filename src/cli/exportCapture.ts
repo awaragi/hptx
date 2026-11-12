@@ -51,6 +51,7 @@ export function plannedPngPaths(pngDir: string, slides: SlideStepInfo[]): string
             withStepSuffix: withSuffix,
             slideIndex: i,
             slideCount,
+            ...(withSuffix ? { stepCount: Math.floor(s.stepCount) } : {}),
           }),
         ),
       );
@@ -103,19 +104,60 @@ async function readSlideSteps(page: Page): Promise<SlideStepInfo[]> {
   });
 }
 
+/**
+ * Injected during PNG capture: hide chrome and disable slide crossfades so
+ * screenshots never include the previous slide mid-transition (~0.55–0.6s).
+ */
+export const EXPORT_CAPTURE_CSS = `
+  header.chrome, .progress, .navdots, .counter, .arrows, .hint,
+  .nav-drawer, #fsPrompt, #appLoader, #deckTimerFlash { display: none !important; }
+  .slide {
+    transition: none !important;
+  }
+  .slide:not(.active) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: none !important;
+  }
+  .slide.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+`;
+
 async function preparePresentCapture(page: Page, appearance: AppearanceTheme): Promise<void> {
-  await page.evaluate((theme) => {
-    document.documentElement.setAttribute('data-theme', theme);
-    const style = document.createElement('style');
-    style.id = 'hptx-export-hide-chrome';
-    style.textContent = `
-      header.chrome, .progress, .navdots, .counter, .arrows, .hint,
-      .nav-drawer, #fsPrompt, #appLoader, #deckTimerFlash { display: none !important; }
-    `;
-    document.head.appendChild(style);
-    const canvas = document.getElementById('deckCanvas') as HTMLElement | null;
-    if (canvas) canvas.style.transform = 'none';
-  }, appearance);
+  await page.evaluate(
+    ({ theme, css }) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      const style = document.createElement('style');
+      style.id = 'hptx-export-hide-chrome';
+      style.textContent = css;
+      document.head.appendChild(style);
+      const canvas = document.getElementById('deckCanvas') as HTMLElement | null;
+      if (canvas) canvas.style.transform = 'none';
+    },
+    { theme: appearance, css: EXPORT_CAPTURE_CSS },
+  );
+}
+
+/** Wait until the named slide is the only active one and has been painted. */
+async function settleOnSlide(page: Page, key: string): Promise<void> {
+  await page.waitForFunction((slideKey) => {
+    const active = document.querySelector('.slide.active');
+    return !!(active && active.getAttribute('data-slide') === slideKey);
+  }, key);
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+}
+
+/** Wait for step paint after Deck.setStep. */
+async function settleAfterStep(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
 }
 
 async function capturePngFrames(
@@ -137,6 +179,7 @@ async function capturePngFrames(
     await page.evaluate((key) => {
       (window as unknown as { Deck: { goToKey: (k: string) => void } }).Deck.goToKey(key);
     }, slide.key);
+    await settleOnSlide(page, slide.key);
 
     for (const step of frameStepIds(slide)) {
       await page.evaluate(
@@ -148,7 +191,7 @@ async function capturePngFrames(
         },
         { key: slide.key, step },
       );
-      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      await settleAfterStep(page);
 
       const name = frameFileName({
         slideKey: slide.key,
@@ -156,6 +199,7 @@ async function capturePngFrames(
         withStepSuffix: withSuffix,
         slideIndex,
         slideCount,
+        ...(withSuffix ? { stepCount: Math.floor(slide.stepCount) } : {}),
       });
       const filePath = path.join(pngDir, name);
       const canvas = page.locator('#deckCanvas');

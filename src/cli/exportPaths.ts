@@ -34,15 +34,15 @@ export function exportArtifactPaths(outputPath: string): ExportArtifactPaths {
   };
 }
 
-/** Digit width so zero-based indices `0 .. slideCount-1` sort lexicographically. */
-export function slideIndexPadWidth(slideCount: number): number {
-  if (slideCount <= 1) return 1;
-  return String(slideCount - 1).length;
+/** Digit width so zero-based indices `0 .. count-1` sort lexicographically. */
+export function indexPadWidth(count: number): number {
+  if (count <= 1) return 1;
+  return String(count - 1).length;
 }
 
-/** Zero-padded zero-based slide index for filename prefixes. */
-export function formatSlideIndexPrefix(slideIndex: number, slideCount: number): string {
-  return String(slideIndex).padStart(slideIndexPadWidth(slideCount), '0');
+/** Zero-padded zero-based index for filename segments. */
+export function formatPaddedIndex(index: number, count: number): string {
+  return String(index).padStart(indexPadWidth(count), '0');
 }
 
 export interface FrameFileNameOpts {
@@ -52,14 +52,21 @@ export interface FrameFileNameOpts {
   /** Zero-based slide index in capture order (agenda is 0). */
   slideIndex: number;
   slideCount: number;
+  /** Total steps on this slide; required when `withStepSuffix` is true. */
+  stepCount?: number;
 }
 
 /**
- * Frame filename: `<paddedIndex>-<key>-<stepId>.png` when the slide has export steps;
- * `<paddedIndex>-<key>.png` when it has none.
+ * Frame filename: `<paddedSlide>-<key>-<paddedStep>.png` when the slide has export steps;
+ * `<paddedSlide>-<key>.png` when it has none.
  */
 export function frameFileName(opts: FrameFileNameOpts): string {
-  const prefix = formatSlideIndexPrefix(opts.slideIndex, opts.slideCount);
-  const body = opts.withStepSuffix ? `${opts.slideKey}-${opts.stepId}` : opts.slideKey;
-  return `${prefix}-${body}.png`;
+  const prefix = formatPaddedIndex(opts.slideIndex, opts.slideCount);
+  if (!opts.withStepSuffix) return `${prefix}-${opts.slideKey}.png`;
+  const steps = opts.stepCount ?? 0;
+  if (steps <= 0) {
+    throw new Error('frameFileName: stepCount is required when withStepSuffix is true');
+  }
+  const step = formatPaddedIndex(opts.stepId, steps);
+  return `${prefix}-${opts.slideKey}-${step}.png`;
 }

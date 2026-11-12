@@ -2,6 +2,7 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { CHROME_MISSING_MESSAGE, launchSystemChrome } from '../exportChrome.ts';
 import {
+  EXPORT_CAPTURE_CSS,
   formatExportProgressLine,
   frameStepIds,
   plannedPngPaths,
@@ -47,6 +48,11 @@ describe('frameStepIds / plannedPngPaths', () => {
       path.join(dir, '2-agent-0.png'),
       path.join(dir, '2-agent-1.png'),
     ]);
+  });
+
+  it('disables slide transitions during capture CSS', () => {
+    expect(EXPORT_CAPTURE_CSS).toMatch(/\.slide\s*\{[^}]*transition:\s*none/s);
+    expect(EXPORT_CAPTURE_CSS).toMatch(/\.slide:not\(\.active\)/);
   });
 
   it('formats progress with per-slide step counters only when stepped', () => {
