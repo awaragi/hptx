@@ -2,21 +2,23 @@ import { Command } from 'commander';
 import { HelpDisplayedError } from './args.ts';
 import { runBuild } from './build.ts';
 import { runDev } from './dev.ts';
+import { runExport } from './export.ts';
 import { runNewCommand } from './new.ts';
 
-export type RootCommand = 'build' | 'dev' | 'new';
+export type RootCommand = 'build' | 'dev' | 'new' | 'export';
 
 export interface ParsedRoot {
   command: RootCommand;
   args: string[];
 }
 
-const COMMANDS: readonly RootCommand[] = ['build', 'dev', 'new'];
+const COMMANDS: readonly RootCommand[] = ['build', 'dev', 'new', 'export'];
 
 const DESCRIPTIONS: Record<RootCommand, string> = {
   build: 'Write the single-file presentation HTML',
   dev: 'Live-reload preview server',
   new: 'Scaffold a deck or slide (deck | slide | --list)',
+  export: 'Export slide PNGs / PDFs via system Chrome',
 };
 
 function rootProgram(): Command {
@@ -42,7 +44,7 @@ function isRootCommand(value: string): value is RootCommand {
 }
 
 /**
- * Parse top-level `hptx <build|dev|new> …`. Leaf flag parsing stays in each command.
+ * Parse top-level `hptx <build|dev|new|export> …`. Leaf flag parsing stays in each command.
  * Throws {@link HelpDisplayedError} when root help was printed.
  */
 export function parseRootArgs(argv: string[]): ParsedRoot {
@@ -58,7 +60,7 @@ export function parseRootArgs(argv: string[]): ParsedRoot {
   return { command: head, args: rest };
 }
 
-/** Dispatch `argv` (typically `process.argv.slice(2)`) to build / dev / new. */
+/** Dispatch `argv` (typically `process.argv.slice(2)`) to build / dev / new / export. */
 export async function runMain(argv: string[]): Promise<void> {
   let root: ParsedRoot;
   try {
@@ -76,6 +78,10 @@ export async function runMain(argv: string[]): Promise<void> {
   }
   if (root.command === 'dev') {
     await runDev(root.args);
+    return;
+  }
+  if (root.command === 'export') {
+    await runExport(root.args);
     return;
   }
   runNewCommand(root.args);

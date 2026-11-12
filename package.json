@@ -24,6 +24,7 @@
     "dev": "tsx src/cli/main.ts dev",
     "build": "tsx src/cli/main.ts build",
     "new": "tsx src/cli/main.ts new",
+    "export": "tsx src/cli/main.ts export",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -53,5 +54,9 @@
   "allowScripts": {
     "esbuild": false,
     "fsevents": false
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "playwright-core": "^1.65.0"
   }
 }

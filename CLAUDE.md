@@ -30,22 +30,26 @@ npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--t
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
+npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] ...
 npm test
 ```
 
 Examples: `npx hptx dev --cwd templates`, `npx hptx build --cwd templates --slide cardGrid --slide stepper`,
+`npx hptx export --cwd decks/about --format png`, `npx hptx export --cwd templates --format pdf --theme dark`,
 `npx hptx new deck --cwd decks/demo --title "Demo deck" --output ./Demo.html`,
 `npx hptx new slide --cwd decks/demo --key detail --from cardGrid --after overview`.
 Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names only.
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
+**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<key>-<step>.png`; `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+
 ### `deck.json` (optional; cascade with CLI)
 
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `version` | yes (in file) | Schema version; current is `1` |
-| `output` | for build | Single-file HTML path (file and/or `--output`) |
+| `output` | for build / export | Single-file HTML path (file and/or `--output`); also names export artifacts |
 | `slides` | no | Ordered `*.html` filenames; else discover `*.html` (skipping `output` and `cover`) |
 | `cover` | no | HTML file shown as the home page title block (top left, above the keyboard hints); not a slide, not in `slides` |
 | `theme` | no | Local CSS path or `https://` URL — appended after shell defaults in theme markers (cascade) |
@@ -97,8 +101,10 @@ Writes the deck’s `output` (atomic). Open via that file path or a static serve
 
 ## Visual QA with Playwright MCP
 
-Prefer the **Playwright** Cursor plugin / MCP (`@playwright/mcp`) for visual
-checks. Do **not** add a project-local Playwright install unless OpenSpec adds one.
+Prefer the **Playwright** Cursor plugin / MCP (`@playwright/mcp`) for interactive
+visual checks. For batch frames of a whole deck, use `npx hptx export` (project
+`playwright-core` + system Chrome). Do **not** add a full Playwright browser
+download / `npx playwright install` path.
 
 ### Prerequisites
 

@@ -181,8 +181,9 @@ Prefer the local `hptx` binary (`npx hptx …` after `npm install`). Equivalent 
 
 | Command | Purpose |
 | --- | --- |
-| `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
+| `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
 | `npx hptx build --cwd <dir> \| --deck <file> [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file) |
+| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|png-pdf\|pdf` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. |
 | `npx hptx new deck --cwd <dir> [field flags…]` | Scaffold a new deck (`deck.json` with `version: 1`, `cover.html`, `overview.html`) |
 | `npx hptx new slide --cwd <dir> --key <stem> --from <template> […]` | Add a slide from a template |
 | `npx hptx new --list` | List slide templates |
@@ -197,7 +198,20 @@ npx hptx new deck --cwd decks/demo --title "Demo deck" --output ./Demo.html
 npx hptx new slide --cwd decks/demo --key detail --from cardGrid --after overview
 npx hptx dev --cwd decks/demo
 npx hptx build --cwd decks/demo
+npx hptx export --cwd decks/demo --format png
 ```
+
+### Export artifacts
+
+Presentation name is the HTML `output` stem (e.g. `dist/about.html` → `about`). One `--format` per run:
+
+| Format | Writes |
+| --- | --- |
+| `png` (default) | `dist/<name>/png/<slideKey>-<stepId>.png` for every slide and step at 1710×1107 |
+| `png-pdf` | those PNGs plus `dist/<name>/png/<name>.pdf` (PNG pages concatenated) |
+| `pdf` | `dist/<name>.pdf` via the shell print layout (not the PNG stack) |
+
+Requires Google Chrome installed. Export uses `playwright-core` with channel `chrome` and does not download a browser; missing Chrome fails with a clear error.
 
 ## Deck configuration
 
@@ -206,7 +220,7 @@ npx hptx build --cwd decks/demo
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `version` | yes (in file) | Schema version; current is `1` |
-| `output` | for build | Single-file HTML output path (file and/or `--output`) |
+| `output` | for build / export | Single-file HTML output path (file and/or `--output`); also names export artifacts |
 | `slides` | no | Ordered list of `*.html` files. If omitted, hptx discovers `*.html` files (skipping `output` and `cover`) |
 | `cover` | no | HTML file used as the home page title block. It is not a slide |
 | `theme` | no | Local CSS path or `https://` URL, baked into the output |

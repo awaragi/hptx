@@ -3,11 +3,12 @@ import { HelpDisplayedError } from '../args.ts';
 import { parseRootArgs, rootHelpText } from '../main.ts';
 
 describe('parseRootArgs', () => {
-  it('lists build, dev, and new in root help', () => {
+  it('lists build, dev, new, and export in root help', () => {
     const text = rootHelpText();
     expect(text).toMatch(/build/);
     expect(text).toMatch(/dev/);
     expect(text).toMatch(/\bnew\b/);
+    expect(text).toMatch(/export/);
   });
 
   it('throws HelpDisplayedError for --help and empty argv', () => {
@@ -15,7 +16,7 @@ describe('parseRootArgs', () => {
     expect(() => parseRootArgs([])).toThrow(HelpDisplayedError);
   });
 
-  it('routes build/dev/new and passes remaining argv', () => {
+  it('routes build/dev/new/export and passes remaining argv', () => {
     expect(parseRootArgs(['build', '--cwd', 'templates'])).toEqual({
       command: 'build',
       args: ['--cwd', 'templates'],
@@ -27,6 +28,10 @@ describe('parseRootArgs', () => {
     expect(parseRootArgs(['new', '--list'])).toEqual({
       command: 'new',
       args: ['--list'],
+    });
+    expect(parseRootArgs(['export', '--cwd', 'templates', '--format', 'png'])).toEqual({
+      command: 'export',
+      args: ['--cwd', 'templates', '--format', 'png'],
     });
   });
 
