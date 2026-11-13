@@ -1,8 +1,9 @@
 import type { AssembleDeckOptions } from '../assemble/index.ts';
 import { assembleFromPlan, planAssemble } from '../assemble/index.ts';
-import { HelpDisplayedError } from './args.ts';
+import { HelpDisplayedError, invocationDir } from './args.ts';
 import type { ExportArgs } from './exportArgs.ts';
 import { EXPORT_USAGE, exportHelpText, parseExportArgs } from './exportArgs.ts';
+import { formatConsolePath, type ConsolePathContext } from './consolePaths.ts';
 import { launchSystemChrome } from './exportChrome.ts';
 import { captureExport } from './exportCapture.ts';
 import { exportArtifactPaths } from './exportPaths.ts';
@@ -31,14 +32,16 @@ function printExportSummary(opts: {
   appearance: string;
   name: string;
   paths: string[];
+  pathCtx: ConsolePathContext;
 }): void {
+  const show = (p: string) => formatConsolePath(p, opts.pathCtx);
   console.log('Export:');
   console.log(`  format       ${opts.format}`);
   console.log(`  appearance   ${opts.appearance}`);
   console.log(`  name         ${opts.name}`);
-  console.log(`  artifacts    ${opts.paths[0] ?? '(none)'}`);
+  console.log(`  artifacts    ${opts.paths[0] !== undefined ? show(opts.paths[0]) : '(none)'}`);
   for (let i = 1; i < opts.paths.length; i++) {
-    console.log(`               ${opts.paths[i]}`);
+    console.log(`               ${show(opts.paths[i]!)}`);
   }
   console.log('');
 }
@@ -85,6 +88,10 @@ export async function runExport(argv: string[]): Promise<void> {
   for (const w of warnings) console.error(w);
 
   const artifacts = exportArtifactPaths({ outputPath, name: deck.slug });
+  const pathCtx: ConsolePathContext = {
+    cwd: plan.deck.root,
+    invocationDir: invocationDir(),
+  };
   const summaryPaths =
     args.format === 'print'
       ? [artifacts.printPdfPath]
@@ -98,6 +105,7 @@ export async function runExport(argv: string[]): Promise<void> {
     appearance: args.appearance,
     name: artifacts.name,
     paths: summaryPaths,
+    pathCtx,
   });
 
   const server = await serveAssembledHtml(html);
@@ -116,13 +124,15 @@ export async function runExport(argv: string[]): Promise<void> {
       ...(args.progress ? { onProgress: (line) => console.log(line) } : {}),
     });
     if (result.pngPaths.length) {
-      console.log(`Wrote ${result.pngPaths.length} PNG(s) under ${artifacts.pngDir}`);
+      console.log(
+        `Wrote ${result.pngPaths.length} PNG(s) under ${formatConsolePath(artifacts.pngDir, pathCtx)}`,
+      );
     }
     if (result.pdfPath) {
-      console.log(`Wrote ${result.pdfPath}`);
+      console.log(`Wrote ${formatConsolePath(result.pdfPath, pathCtx)}`);
     }
     if (result.pptxPath) {
-      console.log(`Wrote ${result.pptxPath}`);
+      console.log(`Wrote ${formatConsolePath(result.pptxPath, pathCtx)}`);
     }
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));

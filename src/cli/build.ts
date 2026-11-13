@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { assembleFromPlan, planAssemble } from '../assemble/index.ts';
 import type { AssembleDeckOptions } from '../assemble/index.ts';
-import { DECK_USAGE, HelpDisplayedError, parseDeckArgs } from './args.ts';
+import { DECK_USAGE, HelpDisplayedError, invocationDir, parseDeckArgs } from './args.ts';
+import { formatConsolePath } from './consolePaths.ts';
 import { printEffectiveConfig } from './printConfig.ts';
 
 function assembleOptsFromArgs(args: ReturnType<typeof parseDeckArgs>, requireOutput: boolean): AssembleDeckOptions {
@@ -51,5 +52,7 @@ export async function runBuild(argv: string[]): Promise<void> {
     fs.rmSync(tmpPath, { force: true });
     throw err;
   }
-  console.log(`Wrote ${outputPath}`);
+  console.log(
+    `Wrote ${formatConsolePath(outputPath, { cwd: plan.deck.root, invocationDir: invocationDir() })}`,
+  );
 }
