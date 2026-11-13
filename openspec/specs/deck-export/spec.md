@@ -7,7 +7,7 @@ Exports an assembled deck to design-canvas PNG frames and PDF artifacts for auto
 ## Requirements
 
 ### Requirement: Explicit deck root and required output for export
-`hptx export` MUST require `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build. It MUST require an effective `output` path (deck file and/or `--output`) so the presentation name is defined. When the root or output is missing, the command MUST exit non-zero with usage that names those requirements.
+`hptx export` MUST require `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build. It MUST require an effective `output` path (deck file and/or `--output`) so the HTML output path and export artifact parent directory are defined. When the root or output is missing, the command MUST exit non-zero with usage that names those requirements.
 
 #### Scenario: Missing cwd and deck fails
 - **WHEN** a developer runs `npx hptx export` with neither `--cwd` nor `--deck`
@@ -17,12 +17,16 @@ Exports an assembled deck to design-canvas PNG frames and PDF artifacts for auto
 - **WHEN** a developer runs `npx hptx export --cwd <dir>` for a deck that has no `output` and no `--output`
 - **THEN** the command exits non-zero naming that output is required
 
-### Requirement: Presentation name matches HTML output stem
-The presentation name MUST be the filename stem of the effective HTML `output` path (for example `dist/about.html` → `about`). All export artifact paths for that run MUST use this name.
+### Requirement: Presentation name is the title slug
+The presentation name MUST be the title slug of the resolved deck title (see deck-config). All export artifact paths for that run MUST use this slug as `<name>` (for example under `<dirname(output)>/<name>/png/`). The HTML `output` path remains the assembled file location and MUST NOT be renamed solely because the title differs from the output stem.
 
-#### Scenario: Name derived from output
-- **WHEN** the effective output path ends with `about.html`
-- **THEN** export writes under paths that use the presentation name `about`
+#### Scenario: Name derived from title slug
+- **WHEN** the resolved title is `Q3 Review` (slug `q3-review`) and effective output ends with `dist/about.html`
+- **THEN** export writes under paths that use the presentation name `q3-review` (not `about`)
+
+#### Scenario: Title matches output stem
+- **WHEN** neither file nor CLI sets `title` and effective output ends with `about.html`
+- **THEN** the resolved title and presentation slug are `about` and export uses that name
 
 ### Requirement: One format per run
 `hptx export` MUST accept exactly one `--format` value among `png`, `pdf`, `print`, and `pptx`. Omitting `--format` MUST default to `png`. An unknown or repeated format MUST fail.

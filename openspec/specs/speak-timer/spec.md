@@ -7,7 +7,7 @@ Gives presenters an optional speak-timer mode that paces each content slide from
 ## Requirements
 
 ### Requirement: Persisted speak-timer mode
-The shell MUST support a speak-timer mode stored in the deck browser store under `hptx-timer` (on or off), defaulting to off. Turning the mode on or off MUST persist like the light/dark theme preference. Clearing browser deck data MUST remove `hptx-timer` with the other deck preference keys.
+The shell MUST support a speak-timer mode stored in the deck browser store under the slug-scoped timer key (on or off), defaulting to off. Turning the mode on or off MUST persist like the light/dark theme preference. Clearing browser deck data for this slug MUST remove the timer key with the other deck preference keys.
 
 #### Scenario: Mode persists across reload
 - **WHEN** the presenter turns speak-timer mode on and reloads the deck in the same browser
@@ -15,7 +15,7 @@ The shell MUST support a speak-timer mode stored in the deck browser store under
 
 #### Scenario: Reset clears timer preference
 - **WHEN** the presenter uses Reset browser data in Settings
-- **THEN** `hptx-timer` is cleared and speak-timer mode is off
+- **THEN** the slug-scoped timer key is cleared and speak-timer mode is off
 
 ### Requirement: Toggle with S and the timer switch
 Pressing `S` (no modifier) MUST toggle speak-timer mode. Turning mode on MUST play a single start-envelope canvas flash (fade in, then sudden hide) and start the current content slide’s clock when applicable. Turning mode off MUST reset the active clock and hide all timer visuals (border and live readout). A timer switch beside the theme toggle on the deck home chrome and in the notes toolbar MUST mirror the same on/off behavior and stay in sync with `S`.
