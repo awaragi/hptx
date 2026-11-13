@@ -7,10 +7,10 @@ import {
 } from './args.ts';
 import type { CdnEntry } from '../assemble/types.ts';
 
-export type ExportFormat = 'png' | 'png-pdf' | 'pdf';
+export type ExportFormat = 'png' | 'pdf' | 'print';
 export type AppearanceTheme = 'light' | 'dark';
 
-const FORMATS = new Set<ExportFormat>(['png', 'png-pdf', 'pdf']);
+const FORMATS = new Set<ExportFormat>(['png', 'pdf', 'print']);
 const APPEARANCES = new Set<AppearanceTheme>(['light', 'dark']);
 
 export interface ExportArgs {
@@ -58,7 +58,10 @@ function httpsCdnList(flag: string, values: string[] | undefined): CdnEntry[] | 
 function exportCommand(): Command {
   return new Command()
     .name('hptx export')
-    .description('Export slide frames / PDFs via system Chrome (playwright-core)')
+    .description(
+      'Export slide frames / PDFs via system Chrome (playwright-core). ' +
+        'Print-layout PDF: --format print, or Cmd/Ctrl+P on the previewed/built HTML.',
+    )
     .exitOverride()
     .configureHelp({ helpWidth: 100 })
     .allowExcessArguments(false)
@@ -66,7 +69,7 @@ function exportCommand(): Command {
     .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
     .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
     .option('--output <path>', 'HTML output path (required unless set in the deck file; names export artifacts)')
-    .option('--format <fmt>', 'png | png-pdf | pdf (one per run; default: png)')
+    .option('--format <fmt>', 'png | pdf | print (one per run; default: png)')
     .option('--theme <light|dark>', 'presentation appearance light|dark (default: light; not a CSS theme file)')
     .option('--progress', 'log each frame as (slide/total - step/steps) filename')
     .option('--cover <file>', 'cover HTML file')
@@ -83,7 +86,7 @@ export function exportHelpText(): string {
 }
 
 export const EXPORT_USAGE =
-  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] [--progress] [--output path] ...';
+  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print] [--theme light|dark] [--progress] [--output path] ...';
 
 /**
  * Parse export flags. `--theme` is appearance (light|dark), not a CSS theme path.
@@ -122,7 +125,7 @@ export function parseExportArgs(argv: string[]): ExportArgs {
   if (opts.format !== undefined) {
     const f = opts.format.trim() as ExportFormat;
     if (!FORMATS.has(f)) {
-      throw new Error(`--format must be png, png-pdf, or pdf (got '${opts.format}')`);
+      throw new Error(`--format must be png, pdf, or print (got '${opts.format}')`);
     }
     format = f;
   }

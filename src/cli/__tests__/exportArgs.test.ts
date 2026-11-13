@@ -21,14 +21,15 @@ describe('parseExportArgs', () => {
 
   it('accepts each format, dark theme, and progress', () => {
     process.env.INIT_CWD = '/work';
-    expect(parseExportArgs(['--cwd', 'd', '--format', 'png-pdf']).format).toBe('png-pdf');
     expect(parseExportArgs(['--cwd', 'd', '--format', 'pdf']).format).toBe('pdf');
+    expect(parseExportArgs(['--cwd', 'd', '--format', 'print']).format).toBe('print');
     expect(parseExportArgs(['--cwd', 'd', '--theme', 'dark']).appearance).toBe('dark');
     expect(parseExportArgs(['--cwd', 'd', '--progress']).progress).toBe(true);
   });
 
   it('rejects invalid format and theme', () => {
     expect(() => parseExportArgs(['--cwd', 'd', '--format', 'webp'])).toThrow(/--format must be/);
+    expect(() => parseExportArgs(['--cwd', 'd', '--format', 'png-pdf'])).toThrow(/--format must be/);
     expect(() => parseExportArgs(['--cwd', 'd', '--theme', 'blue'])).toThrow(/--theme must be light or dark/);
   });
 
@@ -36,10 +37,12 @@ describe('parseExportArgs', () => {
     expect(() => parseExportArgs([])).toThrow(/--cwd/);
   });
 
-  it('documents format, theme, and progress in help', () => {
+  it('documents format, theme, progress, and HTML print in help', () => {
     const help = exportHelpText();
     expect(help).toMatch(/--format/);
+    expect(help).toMatch(/png \| pdf \| print/);
     expect(help).toMatch(/light\|dark/);
     expect(help).toMatch(/--progress/);
+    expect(help).toMatch(/Cmd\/Ctrl\+P/);
   });
 });

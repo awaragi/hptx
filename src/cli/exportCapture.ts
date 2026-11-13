@@ -253,7 +253,7 @@ export interface CaptureOptions {
   browser: Browser;
   url: string;
   appearance: AppearanceTheme;
-  format: 'png' | 'png-pdf' | 'pdf';
+  format: 'png' | 'pdf' | 'print';
   pngDir: string;
   pngPdfPath: string;
   printPdfPath: string;
@@ -277,14 +277,14 @@ export async function captureExport(opts: CaptureOptions): Promise<CaptureResult
     await page.goto(opts.url, { waitUntil: 'networkidle' });
     await waitForDeck(page);
 
-    if (opts.format === 'pdf') {
+    if (opts.format === 'print') {
       await capturePrintPdf(page, opts.printPdfPath);
       if (opts.onProgress) opts.onProgress(`(1/1 - 1/1) ${path.basename(opts.printPdfPath)}`);
       return { pngPaths: [], pdfPath: opts.printPdfPath };
     }
 
     const pngPaths = await capturePngFrames(page, opts.pngDir, opts.appearance, opts.onProgress);
-    if (opts.format === 'png-pdf') {
+    if (opts.format === 'pdf') {
       await stitchPngsToPdf(pngPaths, opts.pngPdfPath);
       if (opts.onProgress) opts.onProgress(`wrote ${path.basename(opts.pngPdfPath)}`);
       return { pngPaths, pdfPath: opts.pngPdfPath };

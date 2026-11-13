@@ -86,9 +86,9 @@ export async function runExport(argv: string[]): Promise<void> {
 
   const artifacts = exportArtifactPaths(outputPath);
   const summaryPaths =
-    args.format === 'pdf'
+    args.format === 'print'
       ? [artifacts.printPdfPath]
-      : args.format === 'png-pdf'
+      : args.format === 'pdf'
         ? [artifacts.pngDir, artifacts.pngPdfPath]
         : [artifacts.pngDir];
   printExportSummary({

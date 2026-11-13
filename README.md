@@ -183,7 +183,7 @@ Prefer the local `hptx` binary (`npx hptx …` after `npm install`). Equivalent 
 | --- | --- |
 | `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
 | `npx hptx build --cwd <dir> \| --deck <file> [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file) |
-| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|png-pdf\|pdf` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). |
+| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
 | `npx hptx new deck --cwd <dir> [field flags…]` | Scaffold a new deck (`deck.json` with `version: 1`, `cover.html`, `overview.html`) |
 | `npx hptx new slide --cwd <dir> --key <stem> --from <template> […]` | Add a slide from a template |
 | `npx hptx new --list` | List slide templates |
@@ -208,10 +208,10 @@ Presentation name is the HTML `output` stem (e.g. `dist/about.html` → `about`)
 | Format | Writes |
 | --- | --- |
 | `png` (default) | `dist/<name>/png/<paddedSlide>-<slideKey>-<paddedStep>.png` for stepped slides; `<paddedSlide>-<slideKey>.png` with no steps (agenda is `0-agenda.png`; indices padded to sort) at 1710×1107 |
-| `png-pdf` | those PNGs plus `dist/<name>/png/<name>.pdf` (PNG pages concatenated) |
-| `pdf` | `dist/<name>.pdf` via the shell print layout (not the PNG stack) |
+| `pdf` | those PNGs plus `dist/<name>/png/<name>.pdf` (PNG pages concatenated) |
+| `print` | `dist/<name>.pdf` via the shell print layout (not the PNG stack) |
 
-Requires Google Chrome installed. Export uses `playwright-core` with channel `chrome` and does not download a browser; missing Chrome fails with a clear error.
+Requires Google Chrome installed. Export uses `playwright-core` with channel `chrome` and does not download a browser; missing Chrome fails with a clear error. For an interactive print-layout PDF, use Cmd/Ctrl+P on the previewed or built deck HTML.
 
 ## Deck configuration
 

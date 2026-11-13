@@ -30,7 +30,7 @@ npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--t
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
-npx hptx export --cwd <dir> | --deck <file> [--format png|png-pdf|pdf] [--theme light|dark] [--progress] ...
+npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print] [--theme light|dark] [--progress] ...
 npm test
 ```
 
@@ -42,7 +42,7 @@ Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names o
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort); `png-pdf` adds `dist/<name>/png/<name>.pdf`; `pdf` writes print-layout `dist/<name>.pdf`. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 
