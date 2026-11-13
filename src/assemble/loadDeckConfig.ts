@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveDeckTitle } from './deckTitle.ts';
 import type { CdnEntry, DeckConfig, ResolvedDeck, ThemeSource } from './types.ts';
 
 export const DECK_SCHEMA_VERSION = 1;
@@ -156,10 +157,11 @@ export function validateDeckConfig(raw: unknown, label = 'deck.json'): DeckConfi
       if (typeof raw[field] !== 'string') {
         throw new Error(`${label}: "${field}" must be a string`);
       }
-      if (field !== 'title' && (raw[field] as string).trim() === '') {
+      const trimmed = (raw[field] as string).trim();
+      if (trimmed === '') {
         throw new Error(`${label}: "${field}" must be a non-empty string`);
       }
-      config[field] = raw[field] as string;
+      config[field] = trimmed;
     }
   }
 
@@ -221,11 +223,21 @@ export function loadDeckFile(configPath: string, root: string): ResolvedDeck {
 
   const label = path.basename(absConfig);
   const config = absolutizeDeckConfig(absRoot, validateDeckConfig(raw, label));
+  const derived = pathsFromConfig(absRoot, config, label);
+  const titleFromFile = config.title;
+  const { title, slug } = resolveDeckTitle({
+    ...(titleFromFile !== undefined ? { fileTitle: titleFromFile } : {}),
+    outputPath: derived.outputPath,
+    root: absRoot,
+  });
+  config.title = title;
   return {
     root: absRoot,
     configPath: absConfig,
     config,
-    ...pathsFromConfig(absRoot, config, label),
+    slug,
+    ...(titleFromFile !== undefined ? { titleFromFile } : {}),
+    ...derived,
   };
 }
 
@@ -259,15 +271,13 @@ export interface DeckOverrides {
   styles?: CdnEntry[];
 }
 
-const DEFAULTS: Pick<DeckConfig, 'title' | 'brand'> = {
-  title: 'Presentation',
+const DEFAULTS: Pick<DeckConfig, 'brand'> = {
   brand: 'Brand.',
 };
 
 function mergeEffective(file: DeckConfig | undefined, overrides: DeckOverrides): DeckConfig {
   const config: DeckConfig = {
     ...(file?.version !== undefined ? { version: file.version } : {}),
-    title: overrides.title ?? file?.title ?? DEFAULTS.title,
     brand: overrides.brand ?? file?.brand ?? DEFAULTS.brand,
   };
 
@@ -348,11 +358,20 @@ export function resolveDeckInvocation(input: ResolveDeckInvocationInput): Resolv
 
   const effective = absolutizeDeckConfig(root, merged);
   const derived = pathsFromConfig(root, effective, 'deck');
+  const { title, slug } = resolveDeckTitle({
+    ...(overrides.title !== undefined ? { cliTitle: overrides.title } : {}),
+    ...(fileDeck?.titleFromFile !== undefined ? { fileTitle: fileDeck.titleFromFile } : {}),
+    outputPath: derived.outputPath,
+    root,
+  });
+  effective.title = title;
 
   return {
     root,
     ...(configPath !== undefined ? { configPath } : {}),
     config: effective,
+    slug,
+    ...(fileDeck?.titleFromFile !== undefined ? { titleFromFile: fileDeck.titleFromFile } : {}),
     ...derived,
   };
 }

@@ -24,6 +24,8 @@ export interface AssembleInput {
   contractCss?: string;
   /** Baked local image registry (id → data URI); omitted or empty skips emission. */
   assets?: AssetRegistry;
+  /** Presentation slug for browser preference keys (`data-deck-slug`). */
+  slug?: string;
 }
 
 function escapeText(value: string): string {
@@ -77,6 +79,20 @@ function setDeckTitle(html: string, title: string): string {
   return setDivContent(html, 'deck-title', escapeText(title));
 }
 
+/** Set `data-deck-slug` on the root `<html>` element for runtime preference scoping. */
+function setDeckSlug(html: string, slug: string): string {
+  const re = /<html\b([^>]*)>/i;
+  if (!re.test(html)) {
+    throw new Error('Template has no <html> element');
+  }
+  return html.replace(re, (_m, attrs: string) => {
+    if (/\bdata-deck-slug\s*=/.test(attrs)) {
+      return `<html${attrs.replace(/\bdata-deck-slug\s*=\s*(["']).*?\1/i, `data-deck-slug="${escapeAttr(slug)}"`)}>`;
+    }
+    return `<html${attrs} data-deck-slug="${escapeAttr(slug)}">`;
+  });
+}
+
 export const SLIDE_SCOPE_OPEN = '(function (document) {';
 export const SLIDE_SCOPE_CLOSE = '}).call(window, window.__deckSlideDocument(window.document.currentScript));';
 
@@ -122,7 +138,7 @@ function renderCover(cover: ParsedSlide): string {
 
 /** Assemble the shell template with deck config, theme, cover and content slides. */
 export function assembleHtml(input: AssembleInput): { html: string; warnings: string[] } {
-  const { template, config, slides, cover, themeCss, contractCss, assets } = input;
+  const { template, config, slides, cover, themeCss, contractCss, assets, slug } = input;
   const warnings: string[] = [];
   let html = template;
 
@@ -133,6 +149,7 @@ export function assembleHtml(input: AssembleInput): { html: string; warnings: st
   }
 
   if (config.title !== undefined) html = setDeckTitle(setTitle(html, config.title), config.title);
+  if (slug !== undefined) html = setDeckSlug(html, slug);
   if (config.brand !== undefined || config.caption !== undefined) {
     html = setBrand(html, config.brand ?? 'Brand.', config.caption);
   }

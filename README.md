@@ -153,7 +153,7 @@ This setting works in both modes.
 | `C` | Open settings (theme, slide visibility, navigation) |
 | `N` | Open the speaker notes window, bring it forward, or reconnect it after a reload |
 | `⇧N` | Close the speaker notes window |
-| `S` | Toggle speak timer (persisted as `hptx-timer`; subtle canvas flash when enabling) |
+| `S` | Toggle speak timer (persisted per title slug; subtle canvas flash when enabling) |
 | `⇧S` | Restart the current slide’s speak timer without turning mode off |
 
 You can also swipe left or right on touch screens, or scroll the mouse wheel,
@@ -166,7 +166,7 @@ hidden on the slide and shown in a separate notes window: press `N`, then drag
 that window to your own screen. It shows the current slide's notes. Optional
 `estimatedMinutes` on `registerSlide` (whole minutes) appears as a static
 `N min` label. Turn on speak timer with `S` or the Timer switch (home chrome
-and notes toolbar; stored as `hptx-timer`) for a live countdown — or `+`
+and notes toolbar; stored per title slug) for a live countdown — or `+`
 elapsed when a slide has no estimate — plus subtle canvas border flashes at
 enable / 60s / 30s and a locked border in overtime. `⇧S` restarts the current
 slide’s clock. Its toolbar has media-style controls (`|<` previous slide,
@@ -203,7 +203,7 @@ npx hptx export --cwd decks/demo --format png
 
 ### Export artifacts
 
-Presentation name is the HTML `output` stem (e.g. `dist/about.html` → `about`). One `--format` per run:
+Presentation name is the slug of the resolved deck title (CLI `--title` → `deck.json` `title` → output stem → cwd basename; e.g. title `Q3 Review` → `q3-review`). Artifact folders sit next to the HTML `output` path. One `--format` per run:
 
 | Format | Writes |
 | --- | --- |
@@ -221,12 +221,12 @@ Requires Google Chrome installed. Export uses `playwright-core` with channel `ch
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `version` | yes (in file) | Schema version; current is `1` |
-| `output` | for build / export | Single-file HTML output path (file and/or `--output`); also names export artifacts |
+| `output` | for build / export | Single-file HTML output path (file and/or `--output`); parent dir for export artifacts |
 | `slides` | no | Ordered list of `*.html` files. If omitted, hptx discovers `*.html` files (skipping `output` and `cover`) |
 | `cover` | no | HTML file used as the home page title block. It is not a slide |
 | `theme` | no | Local CSS path or `https://` URL, baked into the output |
 | `scripts` / `styles` | no | `https://` CDN URLs (a string or `{ src, integrity?, crossorigin? }`) |
-| `title` | no | Document `<title>` and top-bar deck title (default `Presentation`) |
+| `title` | no | Document `<title>` and top-bar deck title; if omitted, output stem then cwd basename |
 | `brand` | no | Primary shell brand label, shown exactly as written (default `Brand.`) |
 | `caption` | no | Optional secondary line under `brand` in the top bar and loader |
 
@@ -278,10 +278,10 @@ your AI assistant. It asks for your brand colors and returns a complete theme
 block that you can paste back in and apply. The **Instructions** tab explains
 how to bake that theme into a build instead.
 
-Overrides are stored in the browser's local storage, which is shared by origin
-rather than by file. Other hptx presentations opened from the same origin pick
-up the same override. In most browsers, local files all count as one origin.
-**Settings → Reset** clears it.
+Overrides are stored in the browser under keys scoped by the presentation title
+slug (`hptx/<slug>/…`). Same-slug tabs on the same origin stay in sync when
+prefs change. Different titles do not share prefs. **Settings → Reset** clears
+only this slug’s keys.
 
 ## Authoring with AI
 

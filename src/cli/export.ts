@@ -81,10 +81,10 @@ export async function runExport(argv: string[]): Promise<void> {
     return;
   }
 
-  const { html, outputPath, warnings } = assembled;
+  const { html, outputPath, warnings, deck } = assembled;
   for (const w of warnings) console.error(w);
 
-  const artifacts = exportArtifactPaths(outputPath);
+  const artifacts = exportArtifactPaths({ outputPath, name: deck.slug });
   const summaryPaths =
     args.format === 'print'
       ? [artifacts.printPdfPath]

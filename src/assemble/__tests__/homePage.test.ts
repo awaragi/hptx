@@ -118,7 +118,7 @@ describe('agenda toggle (jsdom)', () => {
     expect(home.classList.contains('is-agenda-off')).toBe(true);
     expect(tiles()).toEqual([]);
     expect(Deck.get('agenda')?.stepCount).toBe(0);
-    expect(dom.window.localStorage.getItem('hptx-show-agenda')).toBe('0');
+    expect(dom.window.localStorage.getItem('hptx/o/show-agenda')).toBe('0');
     expect(agendaBox().checked).toBe(false);
     expect(Deck.currentKey()).toBe('agenda');
     key('ArrowRight');
@@ -135,19 +135,19 @@ describe('agenda toggle (jsdom)', () => {
   });
 
   it('restores the stored choice on load', async () => {
-    const { home, tiles, agendaBox } = await boot(DECK, { stored: { 'hptx-show-agenda': '0' } });
+    const { home, tiles, agendaBox } = await boot(DECK, { stored: { 'hptx/o/show-agenda': '0' } });
     expect(home.classList.contains('is-agenda-off')).toBe(true);
     expect(tiles()).toEqual([]);
     expect(agendaBox().checked).toBe(false);
   });
 
   it('turns back on with Show all', async () => {
-    const { dom, home, tiles, doc } = await boot(DECK, { stored: { 'hptx-show-agenda': '0', 'hptx-hidden-slides': '["metrics"]' } });
+    const { dom, home, tiles, doc } = await boot(DECK, { stored: { 'hptx/o/show-agenda': '0', 'hptx/o/hidden-slides': '["metrics"]' } });
     expect(tiles()).toEqual([]);
     (doc.getElementById('tcShowAllSlidesBtn') as HTMLButtonElement).click();
     expect(home.classList.contains('is-agenda-off')).toBe(false);
     expect(tiles()).toEqual(['Process overview', 'Metrics', 'Closing']);
-    expect(dom.window.localStorage.getItem('hptx-show-agenda')).toBeNull();
+    expect(dom.window.localStorage.getItem('hptx/o/show-agenda')).toBeNull();
   });
 });
 
@@ -172,7 +172,7 @@ describe('theme toggle chrome (jsdom)', () => {
 
   it('disables T when the theme locks the toggle token', async () => {
     const { doc, key } = await boot(DECK, {
-      stored: { 'hptx-custom-theme-css': ':root { --brand: #654321; --deck-theme-toggle-display: none; }' },
+      stored: { 'hptx/o/custom-theme-css': ':root { --brand: #654321; --deck-theme-toggle-display: none; }' },
     });
     const before = doc.documentElement.getAttribute('data-theme');
     key('t');
@@ -185,9 +185,9 @@ describe('Settings theme (jsdom)', () => {
   const OTHER_NAMES = ':root { --primary: #123456; }';
 
   it('applies a stored theme as written', async () => {
-    const { doc, dom } = await boot(DECK, { stored: { 'hptx-custom-theme-css': `${OTHER_NAMES} :root { --brand: #654321; }` } });
+    const { doc, dom } = await boot(DECK, { stored: { 'hptx/o/custom-theme-css': `${OTHER_NAMES} :root { --brand: #654321; }` } });
     expect(doc.getElementById('hptxCustomThemeStyle')?.textContent).toContain('--primary: #123456');
-    expect(dom.window.localStorage.getItem('hptx-custom-theme-css')).toContain('--primary');
+    expect(dom.window.localStorage.getItem('hptx/o/custom-theme-css')).toContain('--primary');
   });
 
   it('rejects a pasted theme that uses other token names instead of --brand', async () => {
@@ -226,5 +226,25 @@ describe('Settings theme (jsdom)', () => {
     const baseline = prompt.slice(prompt.indexOf('Current :root baseline'));
     expect(baseline).toMatch(/--brand:\s*#16a34a/);
     expect(baseline).not.toMatch(/--brand:\s*#0d6efd/);
+  });
+
+  it('ignores legacy flat preference keys', async () => {
+    const { doc } = await boot(DECK, { stored: { 'hptx-theme': 'dark' } });
+    expect(doc.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('re-applies slug-scoped prefs from a storage event', async () => {
+    const { doc, dom } = await boot(DECK);
+    expect(doc.documentElement.getAttribute('data-theme')).toBe('light');
+    const StorageEvent = dom.window.StorageEvent;
+    dom.window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'hptx/o/theme',
+        newValue: 'dark',
+        oldValue: 'light',
+        storageArea: dom.window.localStorage,
+      }),
+    );
+    expect(doc.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 });

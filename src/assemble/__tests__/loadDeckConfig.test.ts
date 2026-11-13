@@ -13,6 +13,8 @@ describe('loadDeckConfig', () => {
     expect(deck.outputPath).toBe(path.join(dir, 'Deck.html'));
     expect(deck.theme).toBeUndefined();
     expect(deck.config.version).toBe(1);
+    expect(deck.config.title).toBe('Deck');
+    expect(deck.slug).toBe('deck');
   });
 
   it('fails when version is missing', () => {
@@ -29,6 +31,15 @@ describe('loadDeckConfig', () => {
     const deck = load(withVersion({ title: 'x' }));
     expect(deck.outputPath).toBeUndefined();
     expect(deck.config.title).toBe('x');
+    expect(deck.slug).toBe('x');
+    expect(deck.titleFromFile).toBe('x');
+  });
+
+  it('rejects empty title and derives title from output stem', () => {
+    expect(() => load(withVersion({ output: 'a.html', title: '  ' }))).toThrow(/"title" must be a non-empty string/);
+    const deck = load(withVersion({ output: './dist/Q3-Review.html' }));
+    expect(deck.config.title).toBe('Q3-Review');
+    expect(deck.slug).toBe('q3-review');
   });
 
   it('rejects unknown fields naming the field', () => {
@@ -162,7 +173,28 @@ describe('resolveDeckInvocation', () => {
     });
     expect(deck.configPath).toBeUndefined();
     expect(deck.config.title).toBe('Pure');
+    expect(deck.slug).toBe('pure');
     expect(deck.outputPath).toBe(path.join(dir, 'Out.html'));
+  });
+
+  it('derives title from CLI output stem when title omitted', () => {
+    const dir = makeDeckDir({ 'a.html': '<html></html>' });
+    const deck = resolveDeckInvocation({
+      cwd: dir,
+      baseDir: '/',
+      overrides: { outputPath: path.join(dir, 'Demo.html') },
+    });
+    expect(deck.config.title).toBe('Demo');
+    expect(deck.slug).toBe('demo');
+  });
+
+  it('derives title from cwd basename when title and output omitted', () => {
+    const parent = makeDeckDir({});
+    const dir = path.join(parent, 'about');
+    fs.mkdirSync(dir);
+    const deck = resolveDeckInvocation({ cwd: dir, baseDir: '/' });
+    expect(deck.config.title).toBe('about');
+    expect(deck.slug).toBe('about');
   });
 
   it('fails build merge when output missing', () => {

@@ -5,22 +5,25 @@ import {
   formatPaddedIndex,
   frameFileName,
   indexPadWidth,
-  presentationNameFromOutput,
 } from '../exportPaths.ts';
 
 describe('exportPaths', () => {
-  it('derives presentation name from HTML stem', () => {
-    expect(presentationNameFromOutput('/repo/dist/about.html')).toBe('about');
-    expect(presentationNameFromOutput('dist/templates.html')).toBe('templates');
+  it('maps output dir and title slug to png dir, concat pdf, pptx, and print pdf', () => {
+    const p = exportArtifactPaths({
+      outputPath: path.join('/repo', 'dist', 'about.html'),
+      name: 'q3-review',
+    });
+    expect(p.name).toBe('q3-review');
+    expect(p.pngDir).toBe(path.join('/repo', 'dist', 'q3-review', 'png'));
+    expect(p.pngPdfPath).toBe(path.join('/repo', 'dist', 'q3-review', 'png', 'q3-review.pdf'));
+    expect(p.pptxPath).toBe(path.join('/repo', 'dist', 'q3-review', 'png', 'q3-review.pptx'));
+    expect(p.printPdfPath).toBe(path.join('/repo', 'dist', 'q3-review.pdf'));
   });
 
-  it('maps dist/about.html to png dir, concat pdf, pptx, and print pdf', () => {
-    const p = exportArtifactPaths(path.join('/repo', 'dist', 'about.html'));
-    expect(p.name).toBe('about');
-    expect(p.pngDir).toBe(path.join('/repo', 'dist', 'about', 'png'));
-    expect(p.pngPdfPath).toBe(path.join('/repo', 'dist', 'about', 'png', 'about.pdf'));
-    expect(p.pptxPath).toBe(path.join('/repo', 'dist', 'about', 'png', 'about.pptx'));
-    expect(p.printPdfPath).toBe(path.join('/repo', 'dist', 'about.pdf'));
+  it('rejects an empty presentation name', () => {
+    expect(() =>
+      exportArtifactPaths({ outputPath: '/repo/dist/about.html', name: '  ' }),
+    ).toThrow(/presentation name/);
   });
 
   it('pads zero-based indices so lexical order matches numeric order', () => {

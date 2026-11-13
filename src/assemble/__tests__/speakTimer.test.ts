@@ -85,12 +85,12 @@ describe('speak timer', () => {
     Timer.useFakeNow(0);
     key('s');
     expect(Timer.isOn()).toBe(true);
-    expect(doc.defaultView!.localStorage.getItem('hptx-timer')).toBe('1');
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('1');
     expect(flash().classList.contains('is-flash-start')).toBe(true);
     expect(Timer.snapshot().live).toBe('2:00');
     key('s');
     expect(Timer.isOn()).toBe(false);
-    expect(doc.defaultView!.localStorage.getItem('hptx-timer')).toBeNull();
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBeNull();
     expect(flash().classList.contains('is-flash-end')).toBe(true);
     expect(flash().classList.contains('is-locked')).toBe(false);
     expect(Timer.snapshot().live).toBe('');
@@ -149,15 +149,15 @@ describe('speak timer', () => {
     expect(flash().classList.contains('is-locked')).toBe(false);
   });
 
-  it('clears hptx-timer on Reset browser data', async () => {
+  it('clears slug-scoped timer pref on Reset browser data', async () => {
     const { Timer, doc, win } = await boot();
     Timer.setMode(true);
-    expect(doc.defaultView!.localStorage.getItem('hptx-timer')).toBe('1');
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('1');
     win.confirm = () => true;
     const btn = doc.getElementById('tcEraseAllBtn') as HTMLButtonElement | null;
     expect(btn).not.toBeNull();
     btn!.click();
-    expect(doc.defaultView!.localStorage.getItem('hptx-timer')).toBeNull();
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBeNull();
     expect(Timer.isOn()).toBe(false);
   });
 });

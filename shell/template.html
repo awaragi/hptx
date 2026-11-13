@@ -877,7 +877,7 @@
       <div class="tc-panel" role="tabpanel" id="tcPanelStorage" aria-labelledby="tcTabStorage" hidden>
         <div class="tc-field">
           <label>Clear saved presentation data</label>
-          <p class="tc-field-hint">Removes the applied theme, hidden-slide selection, clicker-mode and remember-step preferences, and light/dark preference from this browser. Does not change the HTML file.</p>
+          <p class="tc-field-hint">Removes this presentation’s saved prefs (theme, hidden slides, clicker-mode, remember-step, speak-timer, light/dark) for this title slug only. Does not change the HTML file or other decks’ prefs.</p>
           <div class="tc-actions">
             <button type="button" class="tc-btn tc-btn-danger" id="tcEraseAllBtn">Erase all stored data</button>
           </div>
@@ -899,6 +899,11 @@
     return names.map(function(n){ return deckCssVar(n); });
   }
 (function(){
+  /* Pref keys are scoped by the baked presentation slug (data-deck-slug). Legacy flat hptx-* keys are ignored. */
+  var DECK_SLUG = document.documentElement.getAttribute('data-deck-slug') || 'deck';
+  var LS_PREFIX = 'hptx/' + DECK_SLUG + '/';
+  function lsKey(suffix){ return LS_PREFIX + suffix; }
+
   /* Fall back to in-memory storage when localStorage is blocked (e.g. some sandboxed embeds). */
   var deckStore = (function(){
     var mem = {};
@@ -925,7 +930,8 @@
         delete mem[key];
         if(!ls) return;
         try{ ls.removeItem(key); }catch(_e){}
-      }
+      },
+      hasLocalStorage: function(){ return !!ls; }
     };
   })();
 
@@ -935,7 +941,7 @@
     opts = opts || {};
     var persist = opts.persist !== false;
     document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
-    if(persist) deckStore.setItem('hptx-theme', light ? 'light' : 'dark');
+    if(persist) deckStore.setItem(lsKey('theme'), light ? 'light' : 'dark');
     if(themeCheckbox) themeCheckbox.checked = !light;
     syncNotesTheme();
   }
@@ -949,7 +955,7 @@
     var tag = el.tagName;
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
   }
-  var storedTheme = deckStore.getItem('hptx-theme');
+  var storedTheme = deckStore.getItem(lsKey('theme'));
   if(storedTheme === 'dark') setPresentationTheme(false);
   else setPresentationTheme(true);
   if(themeCheckbox){
@@ -961,7 +967,7 @@
 
   /* ============ HIDDEN AI THEME CUSTOMIZER (shortcut C — not documented in UI) ============ */
   var CUSTOM_THEME_STYLE_ID = 'hptxCustomThemeStyle';
-  var LS_CUSTOM_THEME_CSS = 'hptx-custom-theme-css';
+  var LS_CUSTOM_THEME_CSS = lsKey('custom-theme-css');
   var embeddedThemeCssSnapshot = (function(){
     var el = document.getElementById(CUSTOM_THEME_STYLE_ID);
     return el ? el.textContent : '';
@@ -1087,12 +1093,12 @@
     deckNotifyCustomThemeApplied();
     syncThemeSwitchControl();
   }
-  var LS_HIDDEN_SLIDES = 'hptx-hidden-slides';
-  var LS_CLICKER_MODE = 'hptx-clicker-mode';
-  var LS_REMEMBER_SLIDE_STEP = 'hptx-remember-slide-step';
-  var LS_SHOW_AGENDA = 'hptx-show-agenda';
-  var LS_TIMER = 'hptx-timer';
-  var DECK_LS_KEYS = ['hptx-theme', LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA, LS_TIMER];
+  var LS_HIDDEN_SLIDES = lsKey('hidden-slides');
+  var LS_CLICKER_MODE = lsKey('clicker-mode');
+  var LS_REMEMBER_SLIDE_STEP = lsKey('remember-slide-step');
+  var LS_SHOW_AGENDA = lsKey('show-agenda');
+  var LS_TIMER = lsKey('timer');
+  var DECK_LS_KEYS = [lsKey('theme'), LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA, LS_TIMER];
   var clickerModeEnabled = deckStore.getItem(LS_CLICKER_MODE) === '1';
   var rememberSlideStepEnabled = deckStore.getItem(LS_REMEMBER_SLIDE_STEP) === '1';
   function isClickerMode(){ return !!clickerModeEnabled; }
@@ -2073,7 +2079,7 @@
     onSpeakTimerNavigate();
   }
 
-  /* ============ SPEAK TIMER (S toggles, ⇧S resets; persisted as hptx-timer) ============ */
+  /* ============ SPEAK TIMER (S toggles, ⇧S resets; persisted under slug-scoped timer key) ============ */
   var timerCheckbox = document.getElementById('timerCheckbox');
   var timerModeOn = deckStore.getItem(LS_TIMER) === '1';
   var timerClock = null;
@@ -2792,19 +2798,25 @@
 
   /* ============ SETTINGS → SLIDES (hide / show) ============ */
   var tcSlideList = document.getElementById('tcSlideList');
-  function storeAgendaShown(on){
+  function storeAgendaShown(on, opts){
+    opts = opts || {};
     agendaShown = !!on;
-    if(agendaShown) deckStore.removeItem(LS_SHOW_AGENDA);
-    else deckStore.setItem(LS_SHOW_AGENDA, '0');
+    if(opts.persist !== false){
+      if(agendaShown) deckStore.removeItem(LS_SHOW_AGENDA);
+      else deckStore.setItem(LS_SHOW_AGENDA, '0');
+    }
   }
   /* opts.showAgenda: also set the home page agenda on/off (Show all, deck reset). */
   function setHiddenSlideKeys(keys, opts){
+    opts = opts || {};
     hiddenSlideKeys = {};
     keys.forEach(function(k){ if(SLIDE_MANIFEST.indexOf(k) > 0) hiddenSlideKeys[k] = true; });
     var stored = Object.keys(hiddenSlideKeys);
-    if(stored.length) deckStore.setItem(LS_HIDDEN_SLIDES, JSON.stringify(stored));
-    else deckStore.removeItem(LS_HIDDEN_SLIDES);
-    if(opts && typeof opts.showAgenda === 'boolean') storeAgendaShown(opts.showAgenda);
+    if(opts.persist !== false){
+      if(stored.length) deckStore.setItem(LS_HIDDEN_SLIDES, JSON.stringify(stored));
+      else deckStore.removeItem(LS_HIDDEN_SLIDES);
+    }
+    if(typeof opts.showAgenda === 'boolean') storeAgendaShown(opts.showAgenda, opts);
     buildTitleAgenda();
     buildNavDrawerList();
     renderSlideVisibilityList();
@@ -3135,6 +3147,60 @@
   document.addEventListener('webkitfullscreenchange', fitDeckToViewport);
   fitDeckToViewport();
   window.addEventListener('load', function(){ requestAnimationFrame(fitDeckToViewport); }, { once: true });
+
+  /* Cross-tab preference sync (storage events fire only in other same-origin contexts). */
+  function applyRemotePref(suffix, newValue){
+    if(suffix === 'theme'){
+      setPresentationTheme(newValue !== 'dark', { persist:false });
+      return;
+    }
+    if(suffix === 'custom-theme-css'){
+      if(newValue == null || String(newValue).trim() === ''){
+        var el = document.getElementById(CUSTOM_THEME_STYLE_ID);
+        if(el) el.textContent = embeddedThemeCssSnapshot;
+        deckNotifyCustomThemeApplied();
+        syncThemeSwitchControl();
+      } else {
+        injectCustomThemeCss(newValue);
+        deckNotifyCustomThemeApplied();
+        syncThemeSwitchControl();
+      }
+      return;
+    }
+    if(suffix === 'hidden-slides'){
+      var keys = [];
+      try{ keys = JSON.parse(newValue || '[]'); }catch(_e){ keys = []; }
+      if(!Array.isArray(keys)) keys = [];
+      setHiddenSlideKeys(keys, { persist:false });
+      return;
+    }
+    if(suffix === 'show-agenda'){
+      storeAgendaShown(newValue !== '0', { persist:false });
+      buildTitleAgenda();
+      renderSlideVisibilityList();
+      update();
+      return;
+    }
+    if(suffix === 'clicker-mode'){
+      setClickerMode(newValue === '1', { persist:false });
+      return;
+    }
+    if(suffix === 'remember-slide-step'){
+      setRememberSlideStep(newValue === '1', { persist:false });
+      return;
+    }
+    if(suffix === 'timer'){
+      setSpeakTimerMode(newValue === '1', { persist:false });
+    }
+  }
+  if(deckStore.hasLocalStorage()){
+    window.addEventListener('storage', function(ev){
+      if(!ev.key || ev.key.indexOf(LS_PREFIX) !== 0) return;
+      var suffix = ev.key.slice(LS_PREFIX.length);
+      if(!suffix || suffix.indexOf('/') !== -1) return;
+      applyRemotePref(suffix, ev.newValue);
+    });
+  }
 
   schedulePresentationReveal();
 })();

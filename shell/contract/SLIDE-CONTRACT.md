@@ -190,7 +190,7 @@ speaker notes window.
   Head `<meta>` stays ignored; put the estimate on the module, not in
   `<head>`.
 - **Speak timer**: optional presenter mode (`S` or the Timer switch beside
-  theme on the home page / notes toolbar; stored as `hptx-timer`). When on,
+  theme on the home page / notes toolbar; stored under the slug-scoped `timer` pref). When on,
   each content slide starts a clock — countdown from `estimatedMinutes`, or
   count-up as `+m:ss` when there is no estimate. Notes show the live readout;
   the deck canvas uses a subtle 1px border flash (start: fade-in then snap

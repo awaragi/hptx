@@ -42,7 +42,7 @@ Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names o
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort) at **1920×1080** (Full HD, 16:9); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `pptx` adds `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (artifact parent dir). Presentation `<name>` is the slug of the resolved deck title (CLI `--title` → `deck.json` `title` → output stem → cwd basename). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort) at **1920×1080** (Full HD, 16:9); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `pptx` adds `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 
@@ -54,7 +54,7 @@ Dev prints the Local URL (typically `http://localhost:5173/`).
 | `cover` | no | HTML file shown as the home page title block (top left, above the keyboard hints); not a slide, not in `slides` |
 | `theme` | no | Local CSS path or `https://` URL — appended after shell defaults in theme markers (cascade) |
 | `scripts` / `styles` | no | `https://` CDN URLs (string or `{ src, integrity?, crossorigin? }`) |
-| `title` | no | Document and top-bar title (default `Presentation`) |
+| `title` | no | Document and top-bar title; if omitted, output stem then cwd basename |
 | `brand` | no | Primary shell brand label, exact text (default `Brand.`) |
 | `caption` | no | Optional secondary line under `brand` in the top bar / loader |
 
@@ -162,7 +162,7 @@ writing a slide; start from a template (`npx hptx new`), not from scratch.
 - Speaker notes: `<aside class="notes">` in the slide body (basic HTML, inline
   styles with theme tokens). Hidden on the canvas; `N` opens the shell-styled
   notes window, `⇧N` closes it. Optional `estimatedMinutes` on `registerSlide`
-  shows a static `N min` label. Speak timer (`S` / Timer switch, `hptx-timer`)
+  shows a static `N min` label. Speak timer (`S` / Timer switch, slug-scoped `timer` pref)
   adds a live countdown or `+` count-up in notes with subtle canvas flashes;
   `⇧S` resets the current slide. One set of notes per slide (no step notes yet).
 - Local images: paths relative to the slide (or cover) HTML file; assemble bakes

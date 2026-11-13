@@ -68,7 +68,7 @@ function exportCommand(): Command {
     .option('--cwd <dir>', 'working root for slides and relative deck paths')
     .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
     .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
-    .option('--output <path>', 'HTML output path (required unless set in the deck file; names export artifacts)')
+    .option('--output <path>', 'HTML output path (required unless set in the deck file; parent dir for export artifacts)')
     .option('--format <fmt>', 'png | pdf | print | pptx (one per run; default: png)')
     .option('--theme <light|dark>', 'presentation appearance light|dark (default: light; not a CSS theme file)')
     .option('--progress', 'log each frame as (slide/total - step/steps) filename')

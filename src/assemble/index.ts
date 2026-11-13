@@ -194,6 +194,7 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     template,
     config: deck.config,
     slides: parsed,
+    slug: deck.slug,
     ...(cover ? { cover } : {}),
     contractCss,
     assets,

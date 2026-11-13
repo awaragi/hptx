@@ -1,16 +1,9 @@
 import path from 'node:path';
 
-/** Presentation name = filename stem of the HTML output path. */
-export function presentationNameFromOutput(outputPath: string): string {
-  const name = path.parse(outputPath).name;
-  if (!name) throw new Error(`Cannot derive presentation name from output path: ${outputPath}`);
-  return name;
-}
-
 export interface ExportArtifactPaths {
-  /** HTML output path (naming source). */
+  /** HTML output path (artifact parent directory source). */
   outputPath: string;
-  /** Presentation name (HTML stem). */
+  /** Presentation name (title slug). */
   name: string;
   /** Directory for PNG frames: `<dir(output)>/<name>/png`. */
   pngDir: string;
@@ -22,9 +15,18 @@ export interface ExportArtifactPaths {
   printPdfPath: string;
 }
 
-/** Resolve export artifact paths from the effective HTML output path. */
-export function exportArtifactPaths(outputPath: string): ExportArtifactPaths {
-  const name = presentationNameFromOutput(outputPath);
+export interface ExportArtifactPathsInput {
+  /** HTML output path (artifact parent directory). */
+  outputPath: string;
+  /** Presentation slug from the resolved deck title. */
+  name: string;
+}
+
+/** Resolve export artifact paths from the HTML output path and title slug. */
+export function exportArtifactPaths(input: ExportArtifactPathsInput): ExportArtifactPaths {
+  const name = input.name.trim();
+  if (!name) throw new Error('Export presentation name (title slug) must be non-empty');
+  const { outputPath } = input;
   const outDir = path.dirname(outputPath);
   const pngDir = path.join(outDir, name, 'png');
   return {

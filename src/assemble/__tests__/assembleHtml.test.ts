@@ -40,11 +40,12 @@ describe('assembleHtml', () => {
     expect(html.indexOf('<link rel="stylesheet"')).toBeLessThan(html.indexOf('<body>'));
   });
 
-  it('sets title, brand, and caption without magic splitting', () => {
+  it('sets title, brand, caption, and deck slug without magic splitting', () => {
     const { html, warnings } = assembleHtml({
       template: TEMPLATE,
       config: { output: 'o.html', title: 'Kickoff', brand: 'Acme.', caption: 'Deck' },
       slides: [slide('a')],
+      slug: 'kickoff',
       themeCss: ':root{ --brand:#abc; --accent:#def; }',
     });
     expect(html).toContain('<title>Kickoff</title>');
@@ -52,6 +53,7 @@ describe('assembleHtml', () => {
     expect(html).toContain('<div class="loader-brand">Acme. <span>Deck</span></div>');
     expect(html).toContain('<div class="brand-row"><div class="nav-menu-slot"><button>m</button></div>');
     expect(html).toContain('<div class="deck-title">Kickoff</div>');
+    expect(html).toMatch(/<html\b[^>]*\bdata-deck-slug="kickoff"/);
     expect(html).not.toContain('Shell.');
     expect(html).not.toContain('Default deck');
     expect(html).toContain('DECK THEME — START');
@@ -302,13 +304,14 @@ describe('assembleDeck', () => {
     expect(theme).toContain('h1.slide-title');
   });
 
-  it('defaults to the neutral palette, title, and brand', async () => {
+  it('defaults to the neutral palette, title from output stem, and brand', async () => {
     const { html } = await assembleDeck(makeDeckDir({ 'deck.json': JSON.stringify({ output: 'o.html' }), 'a.html': slideDoc() }));
     const theme = html.slice(html.indexOf('<style id="deck-theme">'));
     expect(theme.slice(0, theme.indexOf('DECK THEME — END'))).toMatch(/--brand:\s*#0d6efd/i);
-    expect(html).toContain('<title>Presentation</title>');
+    expect(html).toContain('<title>o</title>');
     expect(html).toContain('<div class="brand">Brand.</div>');
-    expect(html).toContain('<div class="deck-title">Presentation</div>');
+    expect(html).toContain('<div class="deck-title">o</div>');
+    expect(html).toMatch(/<html\b[^>]*\bdata-deck-slug="o"/);
   });
 
   it('keeps layout tokens when a baked theme sets only colors, and lets a theme override them', async () => {

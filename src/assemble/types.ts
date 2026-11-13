@@ -46,6 +46,10 @@ export interface ResolvedDeck {
   coverPath?: string;
   /** Theme source, with local paths made absolute. */
   theme?: ThemeSource;
+  /** Presentation slug from the resolved title (export paths + browser pref keys). */
+  slug: string;
+  /** Explicit `title` from the deck file when present (pre-cascade; for CLI re-resolve). */
+  titleFromFile?: string;
 }
 
 /** A slide file selected for the deck. */
