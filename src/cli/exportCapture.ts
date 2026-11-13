@@ -111,8 +111,14 @@ async function readSlideSteps(page: Page): Promise<SlideStepInfo[]> {
 export const EXPORT_CAPTURE_CSS = `
   header.chrome, .progress, .navdots, .counter, .arrows, .hint,
   .nav-drawer, #fsPrompt, #appLoader, #deckTimerFlash { display: none !important; }
-  .slide {
+  /* Instant slide swaps + step reveals (e.g. .rev { transition: opacity .5s }) so
+     frames are never mid-fade / one step behind. */
+  .slide,
+  .slide *,
+  .slide *::before,
+  .slide *::after {
     transition: none !important;
+    animation: none !important;
   }
   .slide:not(.active) {
     opacity: 0 !important;
@@ -153,9 +159,11 @@ async function settleOnSlide(page: Page, key: string): Promise<void> {
   });
 }
 
-/** Wait for step paint after Deck.setStep. */
+/** Wait for step paint after Deck.setStep (transitions already disabled). */
 async function settleAfterStep(page: Page): Promise<void> {
   await page.evaluate(async () => {
+    // Force style flush so class toggles (e.g. .rev.on) apply before the screenshot.
+    void document.body.offsetHeight;
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   });
 }

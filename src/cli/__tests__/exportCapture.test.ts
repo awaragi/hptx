@@ -50,8 +50,10 @@ describe('frameStepIds / plannedPngPaths', () => {
     ]);
   });
 
-  it('disables slide transitions during capture CSS', () => {
-    expect(EXPORT_CAPTURE_CSS).toMatch(/\.slide\s*\{[^}]*transition:\s*none/s);
+  it('disables slide and descendant transitions during capture CSS', () => {
+    expect(EXPORT_CAPTURE_CSS).toMatch(/\.slide\s*,/);
+    expect(EXPORT_CAPTURE_CSS).toMatch(/transition:\s*none\s*!important/);
+    expect(EXPORT_CAPTURE_CSS).toMatch(/animation:\s*none\s*!important/);
     expect(EXPORT_CAPTURE_CSS).toMatch(/\.slide:not\(\.active\)/);
   });
 

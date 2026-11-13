@@ -64,7 +64,7 @@ Prefer clipping `#deckCanvas` with viewport locked to 1710×1107 so CSS `scale()
 
 **Chrome UI:** Hide presentation chrome for PNG export so evaluation targets slide content. Print PDF already hides chrome via print mode.
 
-**Settle / no ghost frames:** Inject CSS that disables `.slide` transitions and forces non-active slides to `opacity:0` / `visibility:hidden` immediately. After each `goToKey`, wait until `.slide.active` matches that key, then `document.fonts.ready` + two animation frames before screenshotting. This avoids capturing the previous slide (e.g. agenda) mid-crossfade (~0.55–0.6s shell transition).
+**Settle / no ghost frames:** Inject CSS that disables transitions/animations on `.slide` and descendants (shell crossfades and in-slide reveals such as `.rev`), and forces non-active slides to `opacity:0` / `visibility:hidden` immediately. After each `goToKey`, wait until `.slide.active` matches that key, then `document.fonts.ready` + two animation frames. After each `setStep`, flush layout and wait two animation frames. This avoids agenda ghosts and step frames that look one step behind because reveals were still at opacity 0.
 
 ### 4. Print PDF (`--format pdf`)
 

@@ -105,11 +105,15 @@ Export MUST assemble with the same slide resolution, harvesting, CSS scoping, re
 - **THEN** the help text names `--format`, `--theme light|dark`, and `--progress`
 
 ### Requirement: Capture settles without transition ghosts
-For PNG capture (`png` / `png-pdf`), export MUST disable slide enter/leave transitions for the capture session and MUST wait until the target slide is the active slide before writing each slide’s frames, so the previous slide (including `agenda`) is not visible in the screenshot.
+For PNG capture (`png` / `png-pdf`), export MUST disable slide enter/leave transitions and in-slide reveal transitions/animations for the capture session, MUST wait until the target slide is the active slide before writing that slide’s frames, and MUST apply each `setStep` before screenshotting so frames are not mid-fade.
 
 #### Scenario: First content slide has no agenda ghost
 - **WHEN** export navigates from `agenda` to the first content slide and writes that slide’s first PNG
 - **THEN** the frame shows only that content slide (no overlapping agenda content from a mid-transition)
+
+#### Scenario: Stepped reveals match the requested step
+- **WHEN** a content slide reveals items via CSS transitions on step change and export writes step index `k`
+- **THEN** that PNG shows the fully applied step-`k` state (not the previous step or a faded-in intermediate)
 
 ### Requirement: Optional progress logging
 When `--progress` is set and the format writes PNG frames (`png` or `png-pdf`), export MUST print one line per written frame. For a slide with export steps, the line MUST include `(s/S - n/N)` where `s`/`S` are the one-based current and total slide counts and `n`/`N` are the one-based current step and that slide’s `stepCount`, plus the frame filename. For a slide with no export steps (including `agenda`), the line MUST include `(s/S)` and the unsuffixed filename (no `- n/N` step counters). When `--progress` is omitted, export MUST NOT print those per-frame lines. For `--format pdf`, `--progress` MAY print a single line naming the print PDF path.
