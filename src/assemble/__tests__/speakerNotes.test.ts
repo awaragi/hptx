@@ -97,10 +97,14 @@ describe('speaker notes on the canvas', () => {
     expect(doc.defaultView!.getComputedStyle(aside).display).toBe('none');
   });
 
-  it('lists N in the home page keyboard hints', async () => {
-    const { doc } = await boot(DECK);
+  it('documents N under Settings → Help, not on the home hint list', async () => {
+    const { doc, key } = await boot(DECK);
     const keys = [...doc.querySelectorAll('[data-slide="agenda"] .title-kbd-hint .key')].map((e) => e.textContent);
-    expect(keys).toContain('N');
+    expect(keys).not.toContain('N');
+    expect(keys).toContain('?');
+    key('?');
+    const helpKeys = [...doc.querySelectorAll('#tcPanelHelp .tc-help-row .key')].map((e) => e.textContent);
+    expect(helpKeys).toContain('N');
   });
 });
 
@@ -168,12 +172,19 @@ describe('speaker notes window (jsdom)', () => {
   });
 
   it('forwards keys from the notes window to the deck', async () => {
-    const { key, Deck, notesKey, text } = await boot(DECK);
+    const { key, Deck, notesKey, text, doc } = await boot(DECK);
     key('n');
     notesKey('ArrowDown');
     expect(Deck.currentKey()).toBe('overview');
     expect(text('nwTitle')).toBe('Overview');
     notesKey('h');
+    expect(Deck.currentKey()).toBe('overview');
+    notesKey('?');
+    expect(doc.getElementById('themeCustomizer')?.classList.contains('open')).toBe(true);
+    expect(doc.getElementById('tcTabHelp')?.getAttribute('aria-selected')).toBe('true');
+    key('Escape');
+    notesKey('0');
+    notesKey('Enter');
     expect(Deck.currentKey()).toBe('agenda');
     expect(text('nwTitle')).toBe('Home');
   });

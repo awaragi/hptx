@@ -49,7 +49,7 @@ Dev prints the Local URL (typically `http://localhost:5173/`).
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `version` | yes (in file) | Schema version; current is `1` |
-| `output` | for build / export | Single-file HTML path (file and/or `--output`); also names export artifacts |
+| `output` | for build / export | Single-file HTML path (file and/or `--output`); parent dir for export artifacts |
 | `slides` | no | Ordered `*.html` filenames; else discover `*.html` (skipping `output` and `cover`) |
 | `cover` | no | HTML file shown as the home page title block (top left, above the keyboard hints); not a slide, not in `slides` |
 | `theme` | no | Local CSS path or `https://` URL — appended after shell defaults in theme markers (cascade) |

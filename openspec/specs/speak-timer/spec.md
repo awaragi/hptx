@@ -18,7 +18,7 @@ The shell MUST support a speak-timer mode stored in the deck browser store under
 - **THEN** the slug-scoped timer key is cleared and speak-timer mode is off
 
 ### Requirement: Toggle with S and the timer switch
-Pressing `S` (no modifier) MUST toggle speak-timer mode. Turning mode on MUST play a single start-envelope canvas flash (fade in, then sudden hide) and start the current content slide’s clock when applicable. Turning mode off MUST reset the active clock and hide all timer visuals (border and live readout). A timer switch beside the theme toggle on the deck home chrome and in the notes toolbar MUST mirror the same on/off behavior and stay in sync with `S`.
+Pressing `S` (no modifier) MUST toggle speak-timer mode. Turning mode on MUST play a single start-envelope canvas flash (fade in, then sudden hide) and start the current content slide’s clock when applicable. Turning mode off MUST reset the active clock and hide all timer visuals (border and live readout). A timer switch beside the theme toggle on the deck home chrome, a speak-timer control in Settings → Playback, and the notes toolbar timer switch MUST mirror the same on/off behavior and stay in sync with `S`.
 
 #### Scenario: S turns mode on
 - **WHEN** speak-timer mode is off and the presenter presses `S`
@@ -30,6 +30,10 @@ Pressing `S` (no modifier) MUST toggle speak-timer mode. Turning mode on MUST pl
 
 #### Scenario: Switch matches S
 - **WHEN** the presenter flips the timer switch in the notes window
+- **THEN** speak-timer mode toggles the same way as `S` and the deck home switch reflects the new state
+
+#### Scenario: Playback matches S
+- **WHEN** the presenter toggles speak-timer in Settings → Playback
 - **THEN** speak-timer mode toggles the same way as `S` and the deck home switch reflects the new state
 
 ### Requirement: Shift+S resets without stopping mode

@@ -66,7 +66,7 @@ The notes window MUST update whenever the deck's current slide or step changes, 
 - **THEN** the notes window's step position updates
 
 ### Requirement: Keys in the notes window act on the deck
-Every key pressed in the notes window MUST be handled exactly as if it were pressed in the deck window (navigation, steps, Enter, `H`, `Home`, `End`, `M`, `⇧M`, `C`, `T`, `N`, `⇧N`, clicker input, and slide `onKey` handlers). The notes window MUST have no shortcuts of its own. `F` pressed in the notes window is not required to make the deck full screen.
+Every key pressed in the notes window MUST be handled exactly as if it were pressed in the deck window (navigation, steps, Enter, `Home`, `End`, `M`, `⇧M`, `C`, `?`, `T`, `N`, `⇧N`, clicker input, and slide `onKey` handlers). The notes window MUST have no shortcuts of its own. `F` pressed in the notes window is not required to make the deck full screen. The letter `H` MUST NOT navigate the deck to the home page from the notes window.
 
 #### Scenario: Arrow in notes window navigates the deck
 - **WHEN** the notes window has focus and the presenter presses `↓`
@@ -74,7 +74,11 @@ Every key pressed in the notes window MUST be handled exactly as if it were pres
 
 #### Scenario: H in notes window goes home
 - **WHEN** the notes window has focus and the presenter presses `H` on a content slide
-- **THEN** the deck window shows the home page
+- **THEN** the deck window stays on the current content slide (`H` is not a home shortcut)
+
+#### Scenario: Question mark in notes opens Help
+- **WHEN** the notes window has focus and the presenter presses `?`
+- **THEN** the deck window opens Settings on the Help tab
 
 ### Requirement: Notes window follows the theme
 The notes window MUST be styled by the shell only, using the deck's current theme tokens (defaults, baked theme, and any Settings theme) and the deck's light/dark mode. It MUST update when the light/dark mode changes or a Settings theme is applied or cleared.

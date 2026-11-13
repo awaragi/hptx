@@ -64,10 +64,13 @@ async function boot(files: Record<string, string>, opts: { stored?: Record<strin
 }
 
 describe('digit slide navigation', () => {
-  it('lists a digit jump hint on the home page', async () => {
-    const { hintText, errors } = await boot(deckFiles(3));
+  it('documents digit jump under Settings → Help, not on the home hint list', async () => {
+    const { hintText, doc, key, errors } = await boot(deckFiles(3));
     expect(errors).toEqual([]);
-    expect(hintText().some((t) => t.includes('0–9') && /slide number/i.test(t))).toBe(true);
+    expect(hintText().some((t) => t.includes('0–9'))).toBe(false);
+    expect(hintText().some((t) => t.includes('?'))).toBe(true);
+    key('?');
+    expect(doc.getElementById('tcPanelHelp')?.textContent).toMatch(/0–9/);
   });
 
   it('jumps to slide 1 after idle on digit 1', async () => {

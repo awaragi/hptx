@@ -83,7 +83,27 @@ describe('shell home page (jsdom)', () => {
     key('Enter');
     expect(Deck.currentKey()).toBe('closing');
     key('h');
+    expect(Deck.currentKey()).toBe('closing');
+    key('0');
+    key('Enter');
     expect(Deck.currentKey()).toBe('agenda');
+  });
+
+  it('lists only arrow and ? hints on home; drawer strip matches', async () => {
+    const { home, doc, key } = await boot(DECK);
+    const keys = [...home.querySelectorAll('.title-kbd-hint .key')].map((e) =>
+      [...e.querySelectorAll('kbd')].map((k) => k.textContent).join('/'),
+    );
+    expect(keys).toEqual(['←/→', '↑/↓', '?']);
+    expect(home.querySelectorAll('.title-kbd-hint kbd').length).toBe(5);
+    expect(keys).not.toContain('H');
+    expect(keys).not.toContain('N');
+    expect(keys).not.toContain('0–9');
+    key('m');
+    const hint = doc.querySelector('.nav-drawer-hint')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    expect(hint).toMatch(/\?/);
+    expect(hint).toMatch(/↑/);
+    expect(hint).not.toMatch(/\bH\b/);
   });
 
   it('renders an empty title block when no cover is configured', async () => {
@@ -184,17 +204,55 @@ describe('theme toggle chrome (jsdom)', () => {
 describe('Settings theme (jsdom)', () => {
   const OTHER_NAMES = ':root { --primary: #123456; }';
 
-  it('exposes Theme, Slides, Playback, and Reset tabs', async () => {
+  it('exposes Theme, Slides, Playback, Help, and Reset tabs', async () => {
     const { doc, key } = await boot(DECK);
     key('c');
     const labels = [...doc.querySelectorAll('.tc-tabs .tc-tab')].map((el) => el.textContent?.trim());
-    expect(labels).toEqual(['Theme', 'Slides', 'Playback', 'Reset']);
+    expect(labels).toEqual(['Theme', 'Slides', 'Playback', 'Help', 'Reset']);
     expect(doc.getElementById('tcPanelTheme')).not.toBeNull();
     expect(doc.getElementById('tcPasteIn')).not.toBeNull();
     expect(doc.getElementById('tcPromptOut')).not.toBeNull();
     expect(doc.getElementById('tcThemeInstructions')).not.toBeNull();
+    expect(doc.getElementById('tcPanelHelp')).not.toBeNull();
+    expect(doc.getElementById('tcPanelHelp')?.textContent).toMatch(/0–9/);
+    expect(doc.getElementById('tcPanelHelp')?.textContent).not.toMatch(/\bHome\b/);
     expect(doc.getElementById('tcPanelPrompt')).toBeNull();
     expect(doc.getElementById('tcPanelDelivery')).toBeNull();
+  });
+
+  it('opens Help on ? and Theme on C; Playback mirrors theme and timer', async () => {
+    const { doc, key, Deck } = await boot(DECK);
+    key('?');
+    expect(doc.getElementById('themeCustomizer')?.classList.contains('open')).toBe(true);
+    expect(doc.getElementById('tcTabHelp')?.getAttribute('aria-selected')).toBe('true');
+    expect(doc.getElementById('tcPanelHelp')?.hidden).toBe(false);
+    key('Escape');
+    key('c');
+    expect(doc.getElementById('tcTabTheme')?.getAttribute('aria-selected')).toBe('true');
+    (doc.getElementById('tcTabPlayback') as HTMLButtonElement).click();
+    const dark = doc.getElementById('tcDarkMode') as HTMLInputElement;
+    const timer = doc.getElementById('tcSpeakTimer') as HTMLInputElement;
+    expect(dark).not.toBeNull();
+    expect(timer).not.toBeNull();
+    const beforeTheme = doc.documentElement.getAttribute('data-theme');
+    dark.click();
+    expect(doc.documentElement.getAttribute('data-theme')).not.toBe(beforeTheme);
+    expect((doc.getElementById('themeCheckbox') as HTMLInputElement).checked).toBe(dark.checked);
+    timer.click();
+    expect((doc.getElementById('timerCheckbox') as HTMLInputElement).checked).toBe(true);
+    expect(doc.getElementById('clickerToggleWrap')).not.toBeNull();
+    expect(doc.defaultView!.getComputedStyle(doc.getElementById('clickerToggleWrap')!).display).not.toBe('none');
+    Deck.goTo(1);
+    expect(doc.defaultView!.getComputedStyle(doc.getElementById('clickerToggleWrap')!).display).toBe('none');
+  });
+
+  it('syncs the home clicker toggle with Playback', async () => {
+    const { doc, dom } = await boot(DECK);
+    const homeCb = doc.getElementById('clickerCheckbox') as HTMLInputElement;
+    homeCb.click();
+    expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(true);
+    expect(dom.window.localStorage.getItem('hptx/o/clicker-mode')).toBe('1');
+    expect((doc.getElementById('tcClickerMode') as HTMLInputElement).checked).toBe(true);
   });
 
   it('applies a stored theme as written', async () => {
