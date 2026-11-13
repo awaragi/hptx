@@ -47,7 +47,7 @@ The framework MUST ship `shell/contract/slide-contract.css`, `shell/contract/sli
 - **THEN** it declares optional `estimatedMinutes` as a whole number of minutes for the speaker notes window
 
 ### Requirement: Authoring rules document
-`SLIDE-CONTRACT.md` MUST state the slide authoring rules: file layout, filename key, canvas size, CSS scoping and `:scope`, theme token use, script scope, slide-scoped `document` versus `window.document`, passing elements rather than selector strings to libraries, keyframe and ID-reference rules, CDN dependencies via `deck.json`, how to link the contract stylesheet, how to write the cover file, how to write speaker notes (including optional estimated speaking time on `registerSlide`), and how to reference local images with paths relative to the slide or cover file (baked into the single-file output). It MUST describe `deck.json` `theme` as appending over the default token block (cascade), not replacing it.
+`SLIDE-CONTRACT.md` MUST state the slide authoring rules: file layout, filename key, canvas size (**1920×1080**, Full HD, 16:9), CSS scoping and `:scope`, theme token use, script scope, slide-scoped `document` versus `window.document`, passing elements rather than selector strings to libraries, keyframe and ID-reference rules, CDN dependencies via `deck.json`, how to link the contract stylesheet, how to write the cover file, how to write speaker notes (including optional estimated speaking time on `registerSlide`), and how to reference local images with paths relative to the slide or cover file (baked into the single-file output). It MUST describe `deck.json` `theme` as appending over the default token block (cascade), not replacing it.
 
 #### Scenario: Rules cover the build checks
 - **WHEN** an assemble check from `slide-scoping` or `html-slides` fails
@@ -68,6 +68,10 @@ The framework MUST ship `shell/contract/slide-contract.css`, `shell/contract/sli
 #### Scenario: Local images documented
 - **WHEN** an author reads `SLIDE-CONTRACT.md` to add a photo or diagram
 - **THEN** it explains that local image paths are relative to the slide or cover HTML file, that assemble bakes them into the single-file output via a shared registry, and that `https:` image URLs are left as network references
+
+#### Scenario: Canvas is Full HD 16:9
+- **WHEN** an author reads the canvas size in `SLIDE-CONTRACT.md`
+- **THEN** it states **1920×1080** (Full HD, 16:9)
 
 ### Requirement: Project docs point to the contract
 The project's agent and author notes (`CLAUDE.md`) MUST point to `shell/contract/` as the slide authoring reference and MUST NOT contradict it.
