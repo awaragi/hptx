@@ -131,13 +131,13 @@ Steps don't wrap in clicker mode. Reaching the end of a slide's steps moves to
 the next slide instead. If a step's detail modal is open, it follows the
 steps and closes when you move on to another slide.
 
-Turn on clicker mode in Settings (`C`) under **Navigation**. The setting is
+Turn on clicker mode in Settings (`C`) under **Playback**. The setting is
 saved in the browser, and all other shortcuts keep working.
 
 ### Remembering steps
 
 By default, each visit to a slide starts at the slide's landing step. Turn on
-**Remember last step on each slide** in Settings → Navigation to return to the
+**Remember last step on each slide** in Settings → Playback to return to the
 step you left instead. Remembered steps are cleared when you refresh the page.
 This setting works in both modes.
 
@@ -150,7 +150,7 @@ This setting works in both modes.
 | `H` | Return to the home page |
 | `F` | Toggle full screen |
 | `T` | Toggle dark / light theme |
-| `C` | Open settings (theme, slide visibility, navigation) |
+| `C` | Open settings (theme, slides, playback, reset) |
 | `N` | Open the speaker notes window, bring it forward, or reconnect it after a reload |
 | `⇧N` | Close the speaker notes window |
 | `S` | Toggle speak timer (persisted per title slug; subtle canvas flash when enabling) |
@@ -273,10 +273,9 @@ An override theme can also adjust the shell. For example, it can hide the
 dark/light toggle and the settings gear for a locked-down kiosk look. `C`
 still opens Settings when the gear is hidden.
 
-To create a theme, open Settings → **Generate theme** and copy the prompt into
-your AI assistant. It asks for your brand colors and returns a complete theme
-block that you can paste back in and apply. The **Instructions** tab explains
-how to bake that theme into a build instead.
+To create a theme, open Settings → **Theme**, copy the **Generate theme** prompt
+into your AI assistant, then paste the result into **Apply theme**. The same tab’s
+**Bake into build** section explains how to ship that theme via `deck.json`.
 
 Overrides are stored in the browser under keys scoped by the presentation title
 slug (`hptx/<slug>/…`). Same-slug tabs on the same origin stay in sync when

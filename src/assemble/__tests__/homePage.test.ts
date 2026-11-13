@@ -184,6 +184,19 @@ describe('theme toggle chrome (jsdom)', () => {
 describe('Settings theme (jsdom)', () => {
   const OTHER_NAMES = ':root { --primary: #123456; }';
 
+  it('exposes Theme, Slides, Playback, and Reset tabs', async () => {
+    const { doc, key } = await boot(DECK);
+    key('c');
+    const labels = [...doc.querySelectorAll('.tc-tabs .tc-tab')].map((el) => el.textContent?.trim());
+    expect(labels).toEqual(['Theme', 'Slides', 'Playback', 'Reset']);
+    expect(doc.getElementById('tcPanelTheme')).not.toBeNull();
+    expect(doc.getElementById('tcPasteIn')).not.toBeNull();
+    expect(doc.getElementById('tcPromptOut')).not.toBeNull();
+    expect(doc.getElementById('tcThemeInstructions')).not.toBeNull();
+    expect(doc.getElementById('tcPanelPrompt')).toBeNull();
+    expect(doc.getElementById('tcPanelDelivery')).toBeNull();
+  });
+
   it('applies a stored theme as written', async () => {
     const { doc, dom } = await boot(DECK, { stored: { 'hptx/o/custom-theme-css': `${OTHER_NAMES} :root { --brand: #654321; }` } });
     expect(doc.getElementById('hptxCustomThemeStyle')?.textContent).toContain('--primary: #123456');

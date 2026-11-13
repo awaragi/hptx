@@ -558,6 +558,14 @@
   .tc-panel.is-active{ display:flex; }
   .tc-panel .tc-field{ display:flex; flex-direction:column; flex:1; min-height:0; }
   .tc-panel .tc-textarea{ flex:1; min-height:200px; resize:none; }
+  /* Theme tab stacks Apply / Generate / Bake — natural height, scroll the panel */
+  .tc-panel.is-stacked{ gap:22px; }
+  .tc-panel.is-stacked .tc-field{ flex:0 0 auto; min-height:0; }
+  .tc-panel.is-stacked .tc-textarea{ flex:none; min-height:120px; resize:vertical; }
+  .tc-panel.is-stacked .tc-paste-drop .tc-textarea{ min-height:160px; }
+  .tc-section-rule{
+    height:0; margin:0; border:none; border-top:1px solid var(--line);
+  }
   .tc-field label{ display:block; font-size:11px; letter-spacing:1.1px; text-transform:uppercase; color:var(--text-dim); font-weight:700; margin-bottom:8px; }
   .tc-field-hint{ font-size:12.5px; color:var(--text-dim); margin:0 0 8px; line-height:1.45; }
   .tc-mode-row{ display:flex; flex-wrap:wrap; gap:10px 18px; }
@@ -802,23 +810,21 @@
     <div class="theme-customizer-head">
       <div>
         <span class="modal-tag" id="themeCustomizerTitle">Settings</span>
-        <p>Load or paste a theme and apply it in this browser (overrides defaults and any bake). To create a theme, use Generate theme, then come back here and apply it. To bake a theme into the built file, set <code>theme</code> in <code>deck.json</code> and build — bake appends over shell defaults (see Instructions).</p>
+        <p>Theme (apply, generate, or bake), which slides to show, playback prefs, and reset for this deck in this browser.</p>
       </div>
       <button type="button" class="theme-customizer-close" id="themeCustomizerClose" aria-label="Close">&times;</button>
     </div>
     <div class="tc-tabs" role="tablist" aria-label="Settings sections">
-      <button type="button" class="tc-tab" role="tab" id="tcTabPreview" aria-selected="true" aria-controls="tcPanelPreview" data-tc-tab="preview">Theme</button>
-      <button type="button" class="tc-tab" role="tab" id="tcTabPrompt" aria-selected="false" aria-controls="tcPanelPrompt" data-tc-tab="prompt" tabindex="-1">Generate theme</button>
-      <button type="button" class="tc-tab" role="tab" id="tcTabDelivery" aria-selected="false" aria-controls="tcPanelDelivery" data-tc-tab="delivery" tabindex="-1">Instructions</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabTheme" aria-selected="true" aria-controls="tcPanelTheme" data-tc-tab="theme">Theme</button>
       <button type="button" class="tc-tab" role="tab" id="tcTabSlides" aria-selected="false" aria-controls="tcPanelSlides" data-tc-tab="slides" tabindex="-1">Slides</button>
-      <button type="button" class="tc-tab" role="tab" id="tcTabNavigation" aria-selected="false" aria-controls="tcPanelNavigation" data-tc-tab="navigation" tabindex="-1">Navigation</button>
-      <button type="button" class="tc-tab" role="tab" id="tcTabStorage" aria-selected="false" aria-controls="tcPanelStorage" data-tc-tab="storage" tabindex="-1">Reset</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabPlayback" aria-selected="false" aria-controls="tcPanelPlayback" data-tc-tab="playback" tabindex="-1">Playback</button>
+      <button type="button" class="tc-tab" role="tab" id="tcTabReset" aria-selected="false" aria-controls="tcPanelReset" data-tc-tab="reset" tabindex="-1">Reset</button>
     </div>
     <div class="theme-customizer-body">
-      <div class="tc-panel is-active" role="tabpanel" id="tcPanelPreview" aria-labelledby="tcTabPreview">
+      <div class="tc-panel is-stacked is-active" role="tabpanel" id="tcPanelTheme" aria-labelledby="tcTabTheme">
         <div class="tc-field">
-          <label for="tcPasteIn">Theme CSS</label>
-          <p class="tc-field-hint">Load a <code>.css</code> file (picker or drag onto the box), or paste from your AI assistant. The theme stays in this browser for presentations. If the theme hides the gear, <kbd>C</kbd> still opens Settings. To ship the theme in the file, put the same <code>:root</code> values into the main stylesheet.</p>
+          <label for="tcPasteIn">Apply theme</label>
+          <p class="tc-field-hint">Load a <code>.css</code> file (picker or drag onto the box), or paste from your AI assistant. The theme stays in this browser for presentations. If the theme hides the gear, <kbd>C</kbd> still opens Settings. To ship the theme in the file, use Bake below or put the same <code>:root</code> values into the main stylesheet.</p>
           <div class="tc-paste-drop" id="tcPasteDrop">
             <textarea class="tc-textarea" id="tcPasteIn" rows="8" spellcheck="false" placeholder="/* hptx-custom-theme BEGIN */&#10;:root { --brand: #...; }&#10;/* hptx-custom-theme END */&#10;&#10;Or drop a .css file here"></textarea>
           </div>
@@ -829,21 +835,20 @@
             <button type="button" class="tc-btn tc-btn-danger" id="tcResetBtn">Clear theme</button>
           </div>
         </div>
-      </div>
-      <div class="tc-panel" role="tabpanel" id="tcPanelPrompt" aria-labelledby="tcTabPrompt" hidden>
+        <hr class="tc-section-rule" aria-hidden="true">
         <div class="tc-field">
-          <label for="tcPromptOut">Prompt for AI assistant</label>
-          <p class="tc-field-hint">Paste into chat; the assistant asks for brand colors (which is the primary CTA), accent roles, and single vs dual theme, then returns a complete <code>:root</code> CSS block remapped from the live baseline in this file.</p>
-          <textarea class="tc-textarea" id="tcPromptOut" readonly rows="10"></textarea>
+          <label for="tcPromptOut">Generate theme</label>
+          <p class="tc-field-hint">Paste into chat; the assistant asks for brand colors (which is the primary CTA), accent roles, and single vs dual theme, then returns a complete <code>:root</code> CSS block remapped from the live baseline in this file. Apply the result above.</p>
+          <textarea class="tc-textarea" id="tcPromptOut" readonly rows="8"></textarea>
           <div class="tc-actions" style="margin-top:10px">
             <button type="button" class="tc-btn" id="tcCopyPromptBtn">Copy prompt</button>
           </div>
         </div>
-      </div>
-      <div class="tc-panel" role="tabpanel" id="tcPanelDelivery" aria-labelledby="tcTabDelivery" hidden>
+        <hr class="tc-section-rule" aria-hidden="true">
         <div class="tc-field">
-          <label for="tcThemeInstructions">How to bake a theme into the build</label>
-          <textarea class="tc-textarea" id="tcThemeInstructions" readonly rows="12"></textarea>
+          <label for="tcThemeInstructions">Bake into build</label>
+          <p class="tc-field-hint">How to set <code>theme</code> in <code>deck.json</code> so bake appends over shell defaults (Settings override still wins in the browser).</p>
+          <textarea class="tc-textarea" id="tcThemeInstructions" readonly rows="10"></textarea>
         </div>
       </div>
       <div class="tc-panel" role="tabpanel" id="tcPanelSlides" aria-labelledby="tcTabSlides" hidden>
@@ -858,7 +863,7 @@
           <div class="tc-slide-list" id="tcSlideList"></div>
         </div>
       </div>
-      <div class="tc-panel" role="tabpanel" id="tcPanelNavigation" aria-labelledby="tcTabNavigation" hidden>
+      <div class="tc-panel" role="tabpanel" id="tcPanelPlayback" aria-labelledby="tcTabPlayback" hidden>
         <div class="tc-field">
           <label class="tc-check-row" id="tcClickerModeRow" for="tcClickerMode">
             <input type="checkbox" id="tcClickerMode">
@@ -874,7 +879,7 @@
           <p class="tc-field-hint">When on, returning to a slide restores the step you left on (session only; cleared on refresh). When off, each visit uses the slide’s authored landing step. Preference is saved in this browser; applies in clicker and normal mode.</p>
         </div>
       </div>
-      <div class="tc-panel" role="tabpanel" id="tcPanelStorage" aria-labelledby="tcTabStorage" hidden>
+      <div class="tc-panel" role="tabpanel" id="tcPanelReset" aria-labelledby="tcTabReset" hidden>
         <div class="tc-field">
           <label>Clear saved presentation data</label>
           <p class="tc-field-hint">Removes this presentation’s saved prefs (theme, hidden slides, clicker-mode, remember-step, speak-timer, light/dark) for this title slug only. Does not change the HTML file or other decks’ prefs.</p>
@@ -1320,12 +1325,10 @@
   var themeCustomizerEl = document.getElementById('themeCustomizer');
   var tcTabButtons = document.querySelectorAll('.tc-tab');
   var TC_TAB_PANELS = {
-    prompt: document.getElementById('tcPanelPrompt'),
-    preview: document.getElementById('tcPanelPreview'),
-    delivery: document.getElementById('tcPanelDelivery'),
+    theme: document.getElementById('tcPanelTheme'),
     slides: document.getElementById('tcPanelSlides'),
-    navigation: document.getElementById('tcPanelNavigation'),
-    storage: document.getElementById('tcPanelStorage')
+    playback: document.getElementById('tcPanelPlayback'),
+    reset: document.getElementById('tcPanelReset')
   };
   function tcSwitchTab(key){
     tcTabButtons.forEach(function(btn){
@@ -1471,7 +1474,7 @@
   }
   function openThemeCustomizer(){
     if(!themeCustomizerEl) return;
-    tcSwitchTab('preview');
+    tcSwitchTab('theme');
     tcRefreshPromptTextarea();
     var stored = deckStore.getItem(LS_CUSTOM_THEME_CSS);
     if(tcPasteIn) tcPasteIn.value = stored || '';
