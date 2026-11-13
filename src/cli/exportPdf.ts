@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 
-const DECK_W = 1710;
-const DECK_H = 1107;
+const DECK_W = 1920;
+const DECK_H = 1080;
 
-/** Build a PDF with one 1710×1107 page per PNG, in array order. */
+/** Build a PDF with one 1920×1080 page per PNG, in array order. */
 export async function stitchPngsToPdf(pngPaths: string[], outPath: string): Promise<void> {
   const pdf = await PDFDocument.create();
   for (const pngPath of pngPaths) {

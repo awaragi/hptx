@@ -19,7 +19,7 @@ mistakes are caught early.
 - **Theming**: colors are CSS custom properties. Bake a theme into the build, or load an override theme into a finished presentation to reuse it for different audiences and brands.
 - **Shell included**: home page with agenda tiles, keyboard navigation, step-through slides, and settings.
 
-The design canvas is **1710×1107**. The shell scales it to fit the viewport.
+The design canvas is **1920×1080** (Full HD, 16:9). The shell scales it to fit the viewport.
 
 ## Contents
 
@@ -183,7 +183,7 @@ Prefer the local `hptx` binary (`npx hptx …` after `npm install`). Equivalent 
 | --- | --- |
 | `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
 | `npx hptx build --cwd <dir> \| --deck <file> [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file) |
-| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
+| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs / PPTX via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print\|pptx` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
 | `npx hptx new deck --cwd <dir> [field flags…]` | Scaffold a new deck (`deck.json` with `version: 1`, `cover.html`, `overview.html`) |
 | `npx hptx new slide --cwd <dir> --key <stem> --from <template> […]` | Add a slide from a template |
 | `npx hptx new --list` | List slide templates |
@@ -207,8 +207,9 @@ Presentation name is the HTML `output` stem (e.g. `dist/about.html` → `about`)
 
 | Format | Writes |
 | --- | --- |
-| `png` (default) | `dist/<name>/png/<paddedSlide>-<slideKey>-<paddedStep>.png` for stepped slides; `<paddedSlide>-<slideKey>.png` with no steps (agenda is `0-agenda.png`; indices padded to sort) at 1710×1107 |
+| `png` (default) | `dist/<name>/png/<paddedSlide>-<slideKey>-<paddedStep>.png` for stepped slides; `<paddedSlide>-<slideKey>.png` with no steps (agenda is `0-agenda.png`; indices padded to sort) at 1920×1080 (Full HD, 16:9) |
 | `pdf` | those PNGs plus `dist/<name>/png/<name>.pdf` (PNG pages concatenated) |
+| `pptx` | those PNGs plus `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG, 16:9) |
 | `print` | `dist/<name>.pdf` via the shell print layout (not the PNG stack) |
 
 Requires Google Chrome installed. Export uses `playwright-core` with channel `chrome` and does not download a browser; missing Chrome fails with a clear error. For an interactive print-layout PDF, use Cmd/Ctrl+P on the previewed or built deck HTML.
@@ -291,7 +292,7 @@ includes what an agent needs to work on its own:
 - **Agent notes**: [`CLAUDE.md`](CLAUDE.md) covers commands, theming rules, slide authoring, and visual QA.
 - **A slide contract**: the rules, tokens, and types listed under [Writing slides](#writing-slides) define exactly what a valid slide looks like.
 - **Strict build checks**: the build fails on contract violations such as colliding IDs or undefined animations, so the agent can fix problems right away.
-- **Visual QA**: with the dev server running, an agent can use Playwright MCP to jump to any slide with `Deck.goToKey('<key>')` and screenshot it on the 1710×1107 canvas.
+- **Visual QA**: with the dev server running, an agent can use Playwright MCP to jump to any slide with `Deck.goToKey('<key>')` and screenshot it on the 1920×1080 canvas.
 
 A typical session:
 

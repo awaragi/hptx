@@ -51,7 +51,7 @@ One standalone HTML document per slide. The filename stem is the slide key
   `<section class="slide" data-slide="<key>">`.
 - **Registration**: exactly one `window.registerSlide({ … })` call per slide,
   in a head or body script. No key argument.
-- **Canvas**: slides are laid out on a fixed **1710×1107** canvas that the
+- **Canvas**: slides are laid out on a fixed **1920×1080** (Full HD, 16:9) canvas that the
   shell scales. Size type and spacing for that canvas.
 
 ## Scripts

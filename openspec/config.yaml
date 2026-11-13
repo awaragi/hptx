@@ -9,7 +9,7 @@ context: |
   runtime is a vanilla HTML/JS template (shell/template.html).
   Deck themes are CSS files set as deck.json `theme` (baked at build)
   or loaded in Settings (browser preview). Design canvas for
-  decks: 1710×1107. Theme colors must use named CSS tokens
+  decks: 1920×1080 (Full HD, 16:9). Theme colors must use named CSS tokens
   (var(--brand), etc.) — do not invent new color tokens without approval.
 
   Prefer OpenSpec changes for all feature and platform work.

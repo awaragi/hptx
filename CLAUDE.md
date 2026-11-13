@@ -5,7 +5,7 @@ tooling; vanilla HTML/JS shell runtime). Decks are folders with `deck.json` + st
 Platform shell template: `shell/template.html`. Public navigation API:
 `window.Deck.goToKey('<slideKey>')`.
 
-Design canvas: **1710×1107** (size type and screenshots for this, not the
+Design canvas: **1920×1080** (Full HD, 16:9; size type and screenshots for this, not the
 scaled laptop viewport).
 
 **No commercial branding in the framework:** specs, docs, tests, templates,
@@ -30,19 +30,19 @@ npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--t
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
-npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print] [--theme light|dark] [--progress] ...
+npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--theme light|dark] [--progress] ...
 npm test
 ```
 
 Examples: `npx hptx dev --cwd templates`, `npx hptx build --cwd templates --slide cardGrid --slide stepper`,
-`npx hptx export --cwd decks/about --format png --progress`, `npx hptx export --cwd templates --format pdf --theme dark`,
+`npx hptx export --cwd decks/about --format png --progress`, `npx hptx export --cwd templates --format pptx --theme dark`,
 `npx hptx new deck --cwd decks/demo --title "Demo deck" --output ./Demo.html`,
 `npx hptx new slide --cwd decks/demo --key detail --from cardGrid --after overview`.
 Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names only.
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (names artifacts from the HTML stem). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort) at **1920×1080** (Full HD, 16:9); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `pptx` adds `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 
@@ -113,7 +113,7 @@ download / `npx playwright install` path.
 
 ### Agent workflow
 
-1. **Resize** to **1710×1107**.
+1. **Resize** to **1920×1080**.
 2. **Navigate** to the Vite Local URL.
 3. **Go to a slide**: `Deck.goToKey('<key>')`.
 4. For explorer slides, interact, then screenshot.
@@ -167,6 +167,6 @@ writing a slide; start from a template (`npx hptx new`), not from scratch.
   `⇧S` resets the current slide. One set of notes per slide (no step notes yet).
 - Local images: paths relative to the slide (or cover) HTML file; assemble bakes
   them into the single-file output via a shared registry (see `SLIDE-CONTRACT.md`).
-- Size type for the **1710×1107 canvas**. Prefer rail + detail explorers for
+- Size type for the **1920×1080** (Full HD, 16:9) canvas. Prefer rail + detail explorers for
   dense process content (start from `stepper` or `cardGrid`).
 - After visual edits: `npx hptx dev --cwd <deck>` → Playwright screenshot.

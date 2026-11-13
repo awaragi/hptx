@@ -33,7 +33,7 @@
   html[data-theme="dark"] .bg-grid{ opacity:.35; }
   /* ---------- shell ---------- */
   .deck{ position:relative; height:100vh; width:100vw; z-index:1; }
-  /* 1710×1107 design canvas — scaled to fit the viewport, never above 100%.
+  /* 1920×1080 design canvas — scaled to fit the viewport, never above 100%.
      Header, progress, dots, arrows, and the agenda drawer live inside the canvas so they scale with the slides. */
   .deck.deck-viewport-fit{
     position:fixed; inset:0; width:auto; height:auto;
@@ -41,10 +41,10 @@
     overflow:hidden; z-index:1;
   }
   .deck-viewport-fit .deck-canvas{
-    width:1710px; height:1107px; position:relative; flex-shrink:0;
+    width:1920px; height:1080px; position:relative; flex-shrink:0;
     transform-origin:center center; will-change:transform;
   }
-  .deck-viewport-fit .slides{ width:1710px; height:1107px; }
+  .deck-viewport-fit .slides{ width:1920px; height:1080px; }
   header.chrome{
     position:fixed; top:0; left:0; right:0; z-index:280;
     display:flex; align-items:center; justify-content:space-between;
@@ -357,7 +357,7 @@
     font-family:inherit; font-size:11px; padding:2px 6px; border-radius:5px;
     border:1px solid var(--line); background:var(--panel-2); color:var(--text);
   }
-  /* ---------- Print / PDF (1710×1107 native pages, Cmd/Ctrl+P) ---------- */
+  /* ---------- Print / PDF (1920×1080 native pages, Cmd/Ctrl+P) ---------- */
   @page{
     size: 17.8125in 11.53125in;
     margin: 0;
@@ -388,10 +388,10 @@
       display: none !important;
     }
     html.deck-print-mode .slide.slide-print-frame{
-      width: 1710px !important;
-      height: 1107px !important;
-      min-height: 1107px !important;
-      max-height: 1107px !important;
+      width: 1920px !important;
+      height: 1080px !important;
+      min-height: 1080px !important;
+      max-height: 1080px !important;
       display: block !important;
       transform: none !important;
       zoom: normal !important;
@@ -400,8 +400,8 @@
     }
     html.deck-print-mode .slide-print-fit{
       position: relative !important;
-      width: 1710px !important;
-      height: 1107px !important;
+      width: 1920px !important;
+      height: 1080px !important;
       transform: none !important;
       zoom: normal !important;
     }
@@ -450,10 +450,10 @@
     box-sizing: border-box !important;
     padding: 0 !important;
     margin: 0 !important;
-    width: 1710px !important;
-    height: 1107px !important;
-    min-height: 1107px !important;
-    max-height: 1107px !important;
+    width: 1920px !important;
+    height: 1080px !important;
+    min-height: 1080px !important;
+    max-height: 1080px !important;
     display: block !important;
     overflow: hidden !important;
     page-break-after: always;
@@ -477,8 +477,8 @@
   }
   html.deck-print-mode .slide-print-fit{
     position: relative;
-    width: 1710px;
-    height: 1107px;
+    width: 1920px;
+    height: 1080px;
     padding: 76px 70px 56px 70px;
     box-sizing: border-box;
     display: flex;
@@ -3035,8 +3035,8 @@
     if(document.readyState === 'complete') run();
     else window.addEventListener('load', run, { once: true });
   }
-  var DECK_REF_W = 1710;
-  var DECK_REF_H = 1107;
+  var DECK_REF_W = 1920;
+  var DECK_REF_H = 1080;
   var deckCanvasEl = document.getElementById('deckCanvas');
   function fitDeckToViewport(){
     if(!deckCanvasEl) return;

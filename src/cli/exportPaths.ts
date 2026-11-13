@@ -16,6 +16,8 @@ export interface ExportArtifactPaths {
   pngDir: string;
   /** Raster concat PDF: `<pngDir>/<name>.pdf`. */
   pngPdfPath: string;
+  /** PNG-frame PowerPoint: `<pngDir>/<name>.pptx`. */
+  pptxPath: string;
   /** Print PDF: `<dir(output)>/<name>.pdf`. */
   printPdfPath: string;
 }
@@ -30,6 +32,7 @@ export function exportArtifactPaths(outputPath: string): ExportArtifactPaths {
     name,
     pngDir,
     pngPdfPath: path.join(pngDir, `${name}.pdf`),
+    pptxPath: path.join(pngDir, `${name}.pptx`),
     printPdfPath: path.join(outDir, `${name}.pdf`),
   };
 }

@@ -90,7 +90,9 @@ export async function runExport(argv: string[]): Promise<void> {
       ? [artifacts.printPdfPath]
       : args.format === 'pdf'
         ? [artifacts.pngDir, artifacts.pngPdfPath]
-        : [artifacts.pngDir];
+        : args.format === 'pptx'
+          ? [artifacts.pngDir, artifacts.pptxPath]
+          : [artifacts.pngDir];
   printExportSummary({
     format: args.format,
     appearance: args.appearance,
@@ -109,6 +111,7 @@ export async function runExport(argv: string[]): Promise<void> {
       format: args.format,
       pngDir: artifacts.pngDir,
       pngPdfPath: artifacts.pngPdfPath,
+      pptxPath: artifacts.pptxPath,
       printPdfPath: artifacts.printPdfPath,
       ...(args.progress ? { onProgress: (line) => console.log(line) } : {}),
     });
@@ -117,6 +120,9 @@ export async function runExport(argv: string[]): Promise<void> {
     }
     if (result.pdfPath) {
       console.log(`Wrote ${result.pdfPath}`);
+    }
+    if (result.pptxPath) {
+      console.log(`Wrote ${result.pptxPath}`);
     }
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));

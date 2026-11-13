@@ -14,11 +14,12 @@ describe('exportPaths', () => {
     expect(presentationNameFromOutput('dist/templates.html')).toBe('templates');
   });
 
-  it('maps dist/about.html to png dir, concat pdf, and print pdf', () => {
+  it('maps dist/about.html to png dir, concat pdf, pptx, and print pdf', () => {
     const p = exportArtifactPaths(path.join('/repo', 'dist', 'about.html'));
     expect(p.name).toBe('about');
     expect(p.pngDir).toBe(path.join('/repo', 'dist', 'about', 'png'));
     expect(p.pngPdfPath).toBe(path.join('/repo', 'dist', 'about', 'png', 'about.pdf'));
+    expect(p.pptxPath).toBe(path.join('/repo', 'dist', 'about', 'png', 'about.pptx'));
     expect(p.printPdfPath).toBe(path.join('/repo', 'dist', 'about.pdf'));
   });
 

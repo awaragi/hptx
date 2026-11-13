@@ -4,9 +4,10 @@ import type { Browser, Page } from 'playwright-core';
 import type { AppearanceTheme } from './exportArgs.ts';
 import { frameFileName } from './exportPaths.ts';
 import { deckSizeInches, stitchPngsToPdf } from './exportPdf.ts';
+import { stitchPngsToPptx } from './exportPptx.ts';
 
-export const DECK_REF_W = 1710;
-export const DECK_REF_H = 1107;
+export const DECK_REF_W = 1920;
+export const DECK_REF_H = 1080;
 
 export interface SlideStepInfo {
   key: string;
@@ -253,17 +254,19 @@ export interface CaptureOptions {
   browser: Browser;
   url: string;
   appearance: AppearanceTheme;
-  format: 'png' | 'pdf' | 'print';
+  format: 'png' | 'pdf' | 'print' | 'pptx';
   pngDir: string;
   pngPdfPath: string;
+  pptxPath: string;
   printPdfPath: string;
-  /** When set, called with each PNG progress line (and once for print PDF). */
+  /** When set, called with each PNG progress line (and once for print PDF / PPTX). */
   onProgress?: (line: string) => void;
 }
 
 export interface CaptureResult {
   pngPaths: string[];
   pdfPath?: string;
+  pptxPath?: string;
 }
 
 /** Drive a loaded deck page and write the requested export artifacts. */
@@ -288,6 +291,11 @@ export async function captureExport(opts: CaptureOptions): Promise<CaptureResult
       await stitchPngsToPdf(pngPaths, opts.pngPdfPath);
       if (opts.onProgress) opts.onProgress(`wrote ${path.basename(opts.pngPdfPath)}`);
       return { pngPaths, pdfPath: opts.pngPdfPath };
+    }
+    if (opts.format === 'pptx') {
+      await stitchPngsToPptx(pngPaths, opts.pptxPath);
+      if (opts.onProgress) opts.onProgress(`wrote ${path.basename(opts.pptxPath)}`);
+      return { pngPaths, pptxPath: opts.pptxPath };
     }
     return { pngPaths };
   } finally {

@@ -162,7 +162,7 @@
     font-size:16px; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:3px;
   }
   .link-btn:hover{ color:var(--brand-strong); }
-  /* Slides are authored at 1710×1107 and scaled by .deck-canvas.
+  /* Slides are authored at 1920×1080 and scaled by .deck-canvas.
      Do not add viewport @media or vw/vh inside slide CSS — that reflows the canvas. */
   /* Speaker notes are for the notes window (N); keep them off the canvas in previews too. */
   aside.notes{ display:none !important; }

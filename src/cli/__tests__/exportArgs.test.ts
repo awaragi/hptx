@@ -23,6 +23,7 @@ describe('parseExportArgs', () => {
     process.env.INIT_CWD = '/work';
     expect(parseExportArgs(['--cwd', 'd', '--format', 'pdf']).format).toBe('pdf');
     expect(parseExportArgs(['--cwd', 'd', '--format', 'print']).format).toBe('print');
+    expect(parseExportArgs(['--cwd', 'd', '--format', 'pptx']).format).toBe('pptx');
     expect(parseExportArgs(['--cwd', 'd', '--theme', 'dark']).appearance).toBe('dark');
     expect(parseExportArgs(['--cwd', 'd', '--progress']).progress).toBe(true);
   });
@@ -40,7 +41,7 @@ describe('parseExportArgs', () => {
   it('documents format, theme, progress, and HTML print in help', () => {
     const help = exportHelpText();
     expect(help).toMatch(/--format/);
-    expect(help).toMatch(/png \| pdf \| print/);
+    expect(help).toMatch(/png \| pdf \| print \| pptx/);
     expect(help).toMatch(/light\|dark/);
     expect(help).toMatch(/--progress/);
     expect(help).toMatch(/Cmd\/Ctrl\+P/);
