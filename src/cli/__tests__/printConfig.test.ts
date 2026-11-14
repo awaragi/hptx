@@ -24,6 +24,7 @@ describe('printEffectiveConfig', () => {
         outputPath: '/proj/dist/Out.html',
         coverPath: '/proj/templates/cover.html',
         theme: { kind: 'path', value: '/proj/templates/theme.css' },
+        slug: 'demo',
       },
       slides: [
         { key: 'a', filename: 'a.html', path: '/proj/templates/a.html' },
