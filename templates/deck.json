@@ -9,10 +9,16 @@
     "cardGrid.html",
     "stepper.html",
     "d3Chart.html",
+    "codeTree.html",
     "photoStrip.html",
     "blank.html"
   ],
   "scripts": [
-    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+    "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"
+  ],
+  "styles": [
+    "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github.min.css",
+    "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css"
   ]
 }

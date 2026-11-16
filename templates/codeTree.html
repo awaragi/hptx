@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Code tree</title>
+<!--
+  Template: codeTree — file tree + scrollable syntax-highlighted snippets.
+  Needs highlight.js CDN script and theme styles in deck.json (npm run new adds them).
+  Pass the code element to hljs.highlightElement — never a selector string.
+  Rules: shell/contract/SLIDE-CONTRACT.md · API: shell/contract/slide-contract.d.ts
+-->
+<link rel="stylesheet" href="../shell/contract/slide-contract.css">
+<style>
+  :scope { justify-content: flex-start; }
+  .ct-body {
+    flex: 1; min-height: 0;
+    display: grid; grid-template-columns: 340px 1fr; gap: 22px;
+  }
+  .ct-tree, .ct-pane {
+    min-height: 0; border-radius: 18px;
+    background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  .ct-tree-head, .ct-pane-head {
+    flex-shrink: 0; padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .ct-tree-head { font-size: 15px; font-weight: 700; letter-spacing: .4px;
+    text-transform: uppercase; color: var(--text-dim); }
+  .ct-pane-path { font-size: 17px; font-weight: 650; color: var(--text-strong); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .ct-pane-lang {
+    margin-left: auto; font-size: 13px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--brand);
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(var(--brand-rgb), .1); border: 1px solid rgba(var(--brand-rgb), .25);
+  }
+  .ct-tree-list {
+    flex: 1; min-height: 0; overflow: auto;
+    padding: 12px 10px 18px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .ct-folder {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; margin-top: 6px;
+    font-size: 15px; font-weight: 700; color: var(--text-dim);
+  }
+  .ct-folder::before {
+    content: ""; width: 8px; height: 8px; border-radius: 2px;
+    background: var(--text-dim); opacity: .55; flex-shrink: 0;
+  }
+  .ct-file {
+    appearance: none; font: inherit; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    margin: 0; padding: 10px 14px 10px 28px; border-radius: 10px;
+    border: 1px solid transparent; background: transparent; color: var(--text);
+    transition: background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+  }
+  .ct-file:hover { background: var(--panel-2); }
+  .ct-file.is-active {
+    border-color: var(--brand); background: rgba(var(--brand-rgb), .1); color: var(--text-strong);
+  }
+  .ct-file-name { font-size: 17px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .ct-code-wrap {
+    flex: 1; min-height: 0; overflow: auto;
+    padding: 0; background: var(--panel-2);
+  }
+  .ct-code-wrap pre {
+    margin: 0; padding: 22px 26px 40px; min-height: 100%;
+    font-size: 16px; line-height: 1.55;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .ct-code-wrap code {
+    display: block; white-space: pre; background: transparent !important;
+    padding: 0 !important; color: var(--text);
+  }
+  /* Keep chrome readable when a CDN hljs theme paints the pre background. */
+  .ct-code-wrap pre.hljs { background: transparent; }
+</style>
+<script>
+  var files = [];
+  var current = 0;
+  var HLJS_LIGHT = 'github.min.css';
+  var HLJS_DARK = 'github-dark.min.css';
+
+  function fileName(path) {
+    var parts = path.split('/');
+    return parts[parts.length - 1] || path;
+  }
+
+  function folderOf(path) {
+    var i = path.lastIndexOf('/');
+    return i === -1 ? '' : path.slice(0, i);
+  }
+
+  function syncHljsThemes() {
+    var dark = window.document.documentElement.getAttribute('data-theme') === 'dark';
+    window.document.querySelectorAll('link[rel="stylesheet"]').forEach(function (link) {
+      var href = link.getAttribute('href') || '';
+      if (href.indexOf(HLJS_LIGHT) !== -1) link.disabled = dark;
+      if (href.indexOf(HLJS_DARK) !== -1) link.disabled = !dark;
+    });
+  }
+
+  function paint(i) {
+    if (i < 0 || i >= files.length) return;
+    current = i;
+    var file = files[i];
+    document.querySelectorAll('.ct-file').forEach(function (el, idx) {
+      el.classList.toggle('is-active', idx === i);
+    });
+    document.getElementById('ctPath').textContent = file.path;
+    document.getElementById('ctLang').textContent = file.language;
+    var code = document.getElementById('ctCode');
+    code.className = 'language-' + file.language;
+    code.textContent = file.code;
+    delete code.dataset.highlighted;
+    if (window.hljs && typeof window.hljs.highlightElement === 'function') {
+      window.hljs.highlightElement(code);
+    }
+    document.getElementById('ctCodeWrap').scrollTop = 0;
+  }
+
+  function buildTree(D) {
+    var list = document.getElementById('ctTree');
+    list.innerHTML = '';
+    var lastFolder = null;
+    files.forEach(function (file, i) {
+      var folder = folderOf(file.path);
+      if (folder !== lastFolder) {
+        lastFolder = folder;
+        var folderEl = document.createElement('div');
+        folderEl.className = 'ct-folder';
+        folderEl.textContent = folder || '/';
+        list.appendChild(folderEl);
+      }
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ct-file';
+      btn.innerHTML = '<span class="ct-file-name">' + fileName(file.path) + '</span>';
+      btn.addEventListener('click', function () { D.setStep(D.currentKey(), i); });
+      list.appendChild(btn);
+    });
+  }
+
+  window.registerSlide({
+    title: 'Code tree',
+    icon: 'terminal',
+    boot: function (D) {
+      files = JSON.parse(document.getElementById('ctData').textContent).files;
+      buildTree(D);
+      this.stepCount = files.length;
+      syncHljsThemes();
+      paint(0);
+      D.onThemeRefresh(function () { syncHljsThemes(); paint(current); });
+    },
+    stepCount: 0,
+    landingStep: 0,
+    setStep: paint,
+    onReset: function () { paint(0); }
+  });
+</script>
+</head>
+<body>
+  <div class="eyebrow">Source</div>
+  <h1 class="slide-title">Walk a small codebase</h1>
+  <p class="slide-sub">Click a file or press ← / →. The pane scrolls when a snippet is taller than the viewport. Highlighting comes from a public CDN.</p>
+  <div class="ct-body">
+    <div class="ct-tree">
+      <div class="ct-tree-head">Project</div>
+      <div class="ct-tree-list" id="ctTree"></div>
+    </div>
+    <div class="ct-pane">
+      <div class="ct-pane-head">
+        <span class="ct-pane-path" id="ctPath"></span>
+        <span class="ct-pane-lang" id="ctLang"></span>
+      </div>
+      <div class="ct-code-wrap" id="ctCodeWrap">
+        <pre><code id="ctCode"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="ctData">
+    {
+      "files": [
+        {
+          "path": "demo/deck.json",
+          "language": "json",
+          "code": "{\n  \"version\": 1,\n  \"title\": \"Demo deck\",\n  \"brand\": \"Acme.\",\n  \"output\": \"../dist/Demo.html\",\n  \"cover\": \"cover.html\",\n  \"slides\": [\n    \"overview.html\",\n    \"detail.html\"\n  ],\n  \"scripts\": [\n    \"https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js\"\n  ]\n}"
+        },
+        {
+          "path": "demo/overview.html",
+          "language": "html",
+          "code": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<!-- Document title set by assemble from registerSlide -->\n<link rel=\"stylesheet\" href=\"../shell/contract/slide-contract.css\">\n<style>\n  :scope { justify-content: flex-start; }\n  .hero { color: var(--text-strong); }\n</style>\n</head>\n<body>\n  <div class=\"eyebrow\">Intro</div>\n  <h1 class=\"slide-title\">Demo overview</h1>\n  <p class=\"slide-sub\">Sized for the 1920×1080 canvas.</p>\n  <!-- registerSlide lives in the head; kept short here for the demo -->\n</body>\n</html>"
+        },
+        {
+          "path": "demo/theme.css",
+          "language": "css",
+          "code": "/* Bake via deck.json \"theme\" — appended after shell defaults. */\n:root {\n  /* Set brand + light surfaces with named tokens only. */\n  --deck-theme-toggle-display: flex;\n}\n\nhtml[data-theme=\"dark\"] {\n  /* Dark surface overrides; keep --ink / --paper fixed. */\n}\n\n.hero {\n  color: var(--text-strong);\n  border: 1px solid var(--line);\n  border-radius: var(--radius);\n  background: rgba(var(--brand-rgb), .08);\n}\n\n.hero:focus-visible {\n  outline: 2px solid var(--brand);\n  outline-offset: 3px;\n}"
+        },
+        {
+          "path": "shell/contract/registerSlide.js",
+          "language": "javascript",
+          "code": "window.registerSlide({\n  title: 'Stepper',\n  icon: 'cicd',\n  boot: function (D) {\n    var steps = JSON.parse(document.getElementById('stData').textContent);\n    var rail = document.getElementById('stRail');\n    steps.forEach(function (step, i) {\n      var el = document.createElement('div');\n      el.className = 'st-step';\n      el.innerHTML =\n        '<span class=\"st-num\">' + (i + 1) + '</span>' +\n        '<span class=\"st-label\">' + step.label + '</span>';\n      el.addEventListener('click', function () {\n        D.setStep(D.currentKey(), i);\n      });\n      rail.appendChild(el);\n    });\n    this.stepCount = steps.length;\n    paint(0);\n  },\n  stepCount: 0,\n  landingStep: 0,\n  setStep: paint,\n  onReset: function () { paint(0); }\n});"
+        },
+        {
+          "path": "src/assemble/emitCdn.ts",
+          "language": "typescript",
+          "code": "import type { CdnEntry } from './types.ts';\n\nfunction normalize(entry: CdnEntry): { src: string; integrity?: string; crossorigin?: string } {\n  return typeof entry === 'string' ? { src: entry } : entry;\n}\n\nfunction escapeAttr(value: string): string {\n  return value\n    .replace(/&/g, '&amp;')\n    .replace(/\"/g, '&quot;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\n/** Emit classic (no async/defer) CDN tags for deck.json scripts/styles. */\nexport function emitCdnTags(\n  scripts: CdnEntry[] = [],\n  styles: CdnEntry[] = [],\n): { scriptHtml: string; linkHtml: string } {\n  const scriptHtml = scripts\n    .map(normalize)\n    .map((e) => '<' + 'script src=\"' + escapeAttr(e.src) + '\"></' + 'script>')\n    .join('\\n');\n  const linkHtml = styles\n    .map(normalize)\n    .map((e) => '<' + 'link rel=\"stylesheet\" href=\"' + escapeAttr(e.src) + '\">')\n    .join('\\n');\n  return { scriptHtml, linkHtml };\n}\n\n// CDN scripts load before boot so slide globals (d3, hljs, …) exist.\n// Styles land in head; toggle highlight themes with link.disabled."
+        }
+      ]
+    }
+  </script>
+
+  <aside class="notes">
+    <p>Show the tree first, then walk HTML → JS → TypeScript so the audience sees highlighting change.</p>
+    <ul>
+      <li>Click a file or use <b>← / →</b>.</li>
+      <li>Scroll the pane for longer snippets.</li>
+    </ul>
+  </aside>
+</body>
+</html>

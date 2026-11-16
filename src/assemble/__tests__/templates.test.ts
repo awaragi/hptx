@@ -44,7 +44,7 @@ describe('template library', () => {
 
   it('contains the starter templates, each with a description', () => {
     const catalog = readCatalog();
-    expect(templateKeys()).toEqual(['blank', 'cardGrid', 'd3Chart', 'photoStrip', 'section', 'stepper']);
+    expect(templateKeys()).toEqual(['blank', 'cardGrid', 'codeTree', 'd3Chart', 'photoStrip', 'section', 'stepper']);
     for (const entry of Object.values(catalog)) expect(entry.description.length).toBeGreaterThan(10);
   });
 
@@ -65,6 +65,9 @@ describe('template library', () => {
       for (const src of entry.styles ?? []) expect(deckStyles, key).toContain(src);
     }
     expect(readCatalog().d3Chart.scripts?.[0]).toMatch(/^https:\/\/.*d3/);
+    expect(readCatalog().codeTree.scripts?.[0]).toMatch(/highlight/);
+    expect(readCatalog().codeTree.styles?.some((s) => /github\.min\.css/.test(s))).toBe(true);
+    expect(readCatalog().codeTree.styles?.some((s) => /github-dark\.min\.css/.test(s))).toBe(true);
   });
 
   it.each([...templateKeys(), COVER])('%s follows the copy-safety rules', (key) => {
