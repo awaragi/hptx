@@ -331,6 +331,15 @@ You can also pass `landingStep` (the step shown when the slide opens) and
 and clicker mode. Your slide only draws the view for each step. To handle
 other keys, use `onKey(e)` and return `true` to consume the key.
 
+Local relative images (`<img src="assets/…">`, CSS `url(…)`) are baked into the
+single-file build. At boot the early assets script fills `src` on every
+`img[data-asset]` / `source[data-asset]`, including nodes inside `<template>`
+content, so cloning a template already carries working images. If you create
+markup after boot (for example with `createElement`) that still uses
+`data-asset`, call `window.__deckApplyAssets(root?)` on the page window
+(default root is the document) to apply the same registry — do not read
+`#deck-assets` through slide-scoped `document`.
+
 Whether you write slides yourself or with an agent, the contract files are the
 reference:
 

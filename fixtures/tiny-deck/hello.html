@@ -8,8 +8,19 @@
 </head>
 <body>
 <div class="hello"><h1>Hello, deck</h1></div>
+<template id="helloTpl">
+  <img src="assets/dot.png" alt="dot">
+</template>
+<div id="helloMount"></div>
 <script>
-  window.registerSlide({ title: 'Hello', boot() {} });
+  window.registerSlide({
+    title: 'Hello',
+    boot() {
+      var tpl = document.getElementById('helloTpl');
+      var mount = document.getElementById('helloMount');
+      if (tpl && mount) mount.appendChild(tpl.content.cloneNode(true));
+    },
+  });
 </script>
 </body>
 </html>

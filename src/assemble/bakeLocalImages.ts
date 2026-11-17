@@ -147,7 +147,8 @@ export function assetsRegistryScriptJson(registry: AssetRegistry): string {
 /**
  * HTML for the head assets placeholder: JSON registry + sync script that sets
  * `--asset-*` immediately and fills `img`/`source` `[data-asset]` on DOM ready
- * (body may not exist yet when the script runs in `<head>`).
+ * (including nodes inside `<template>` content). Exposes
+ * `window.__deckApplyAssets(root?)` for post-boot inserts.
  */
 export function emitAssetsHtml(registry: AssetRegistry): string {
   if (Object.keys(registry).length === 0) return '';
@@ -165,16 +166,23 @@ export function emitAssetsHtml(registry: AssetRegistry): string {
     `    var uri = String(reg[id]).replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\"');\n` +
     `    root.style.setProperty('--asset-' + id, 'url("' + uri + '")');\n` +
     `  }\n` +
-    `  function applyImgs(){\n` +
-    `    var nodes = document.querySelectorAll('img[data-asset], source[data-asset]');\n` +
+    `  function applyAssets(scope){\n` +
+    `    var base = scope || document;\n` +
+    `    if (!base || !base.querySelectorAll) return;\n` +
+    `    var nodes = base.querySelectorAll('img[data-asset], source[data-asset]');\n` +
     `    for (var i = 0; i < nodes.length; i++) {\n` +
     `      var n = nodes[i];\n` +
     `      var aid = n.getAttribute('data-asset');\n` +
     `      if (aid && reg[aid]) n.setAttribute('src', reg[aid]);\n` +
     `    }\n` +
+    `    var templates = base.querySelectorAll('template');\n` +
+    `    for (var t = 0; t < templates.length; t++) {\n` +
+    `      applyAssets(templates[t].content);\n` +
+    `    }\n` +
     `  }\n` +
-    `  if (document.body) applyImgs();\n` +
-    `  else document.addEventListener('DOMContentLoaded', applyImgs);\n` +
+    `  window.__deckApplyAssets = applyAssets;\n` +
+    `  if (document.body) applyAssets(document);\n` +
+    `  else document.addEventListener('DOMContentLoaded', function(){ applyAssets(document); });\n` +
     `})();\n` +
     `</script>`
   );
