@@ -973,7 +973,7 @@
       <div class="tc-panel" role="tabpanel" id="tcPanelReset" aria-labelledby="tcTabReset" hidden>
         <div class="tc-field">
           <label>Clear saved presentation data</label>
-          <p class="tc-field-hint">Removes this presentation’s saved prefs (theme, hidden slides, clicker-mode, remember-step, speak-timer, light/dark) for this title slug only. Does not change the HTML file or other decks’ prefs.</p>
+          <p class="tc-field-hint">Removes this presentation’s saved prefs (appearance, hidden slides, clicker, remember-step, speak-timer, custom theme) for this title slug only and restores baked deck defaults. Does not change the HTML file or other decks’ prefs.</p>
           <div class="tc-actions">
             <button type="button" class="tc-btn tc-btn-danger" id="tcEraseAllBtn">Erase all stored data</button>
           </div>
@@ -999,6 +999,23 @@
   var DECK_SLUG = document.documentElement.getAttribute('data-deck-slug') || 'deck';
   var LS_PREFIX = 'hptx/' + DECK_SLUG + '/';
   function lsKey(suffix){ return LS_PREFIX + suffix; }
+
+  /* Baked settings from assemble (`data-deck-settings`); platform defaults if missing/invalid. */
+  var DECK_SETTINGS = (function(){
+    var defaults = { clicker:false, rememberStep:false, timer:false, appearance:'light' };
+    try{
+      var raw = document.documentElement.getAttribute('data-deck-settings');
+      if(!raw) return defaults;
+      var parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== 'object') return defaults;
+      return {
+        clicker: parsed.clicker === true,
+        rememberStep: parsed.rememberStep === true,
+        timer: parsed.timer === true,
+        appearance: parsed.appearance === 'dark' ? 'dark' : 'light'
+      };
+    }catch(_e){ return defaults; }
+  })();
 
   /* Fall back to in-memory storage when localStorage is blocked (e.g. some sandboxed embeds). */
   var deckStore = (function(){
@@ -1031,13 +1048,25 @@
     };
   })();
 
-  /* ============ THEME ============ */
+  function readPrefBool(key, baked){
+    var v = deckStore.getItem(lsKey(key));
+    if(v === 'true') return true;
+    if(v === 'false') return false;
+    return !!baked;
+  }
+  function readPrefAppearance(){
+    var v = deckStore.getItem(lsKey('appearance'));
+    if(v === 'light' || v === 'dark') return v;
+    return DECK_SETTINGS.appearance;
+  }
+
+  /* ============ THEME (appearance: light/dark) ============ */
   var themeCheckbox = document.getElementById('themeCheckbox');
   function setPresentationTheme(light, opts){
     opts = opts || {};
     var persist = opts.persist !== false;
     document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
-    if(persist) deckStore.setItem(lsKey('theme'), light ? 'light' : 'dark');
+    if(persist) deckStore.setItem(lsKey('appearance'), light ? 'light' : 'dark');
     if(themeCheckbox) themeCheckbox.checked = !light;
     var tcDark = document.getElementById('tcDarkMode');
     if(tcDark) tcDark.checked = !light;
@@ -1053,9 +1082,7 @@
     var tag = el.tagName;
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
   }
-  var storedTheme = deckStore.getItem(lsKey('theme'));
-  if(storedTheme === 'dark') setPresentationTheme(false);
-  else setPresentationTheme(true);
+  setPresentationTheme(readPrefAppearance() !== 'dark', { persist:false });
   if(themeCheckbox){
     themeCheckbox.addEventListener('change', function(){
       if(isThemeSwitchDisabled()) return;
@@ -1195,13 +1222,14 @@
     syncThemeSwitchControl();
   }
   var LS_HIDDEN_SLIDES = lsKey('hidden-slides');
-  var LS_CLICKER_MODE = lsKey('clicker-mode');
-  var LS_REMEMBER_SLIDE_STEP = lsKey('remember-slide-step');
+  var LS_CLICKER = lsKey('clicker');
+  var LS_REMEMBER_STEP = lsKey('rememberStep');
   var LS_SHOW_AGENDA = lsKey('show-agenda');
   var LS_TIMER = lsKey('timer');
-  var DECK_LS_KEYS = [lsKey('theme'), LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER_MODE, LS_REMEMBER_SLIDE_STEP, LS_SHOW_AGENDA, LS_TIMER];
-  var clickerModeEnabled = deckStore.getItem(LS_CLICKER_MODE) === '1';
-  var rememberSlideStepEnabled = deckStore.getItem(LS_REMEMBER_SLIDE_STEP) === '1';
+  var LS_APPEARANCE = lsKey('appearance');
+  var DECK_LS_KEYS = [LS_APPEARANCE, LS_CUSTOM_THEME_CSS, LS_HIDDEN_SLIDES, LS_CLICKER, LS_REMEMBER_STEP, LS_SHOW_AGENDA, LS_TIMER];
+  var clickerModeEnabled = readPrefBool('clicker', DECK_SETTINGS.clicker);
+  var rememberSlideStepEnabled = readPrefBool('rememberStep', DECK_SETTINGS.rememberStep);
   function isClickerMode(){ return !!clickerModeEnabled; }
   function isRememberSlideStep(){ return !!rememberSlideStepEnabled; }
   function syncTitleKbdHintsForClicker(){
@@ -1223,8 +1251,7 @@
     opts = opts || {};
     clickerModeEnabled = !!on;
     if(opts.persist !== false){
-      if(clickerModeEnabled) deckStore.setItem(LS_CLICKER_MODE, '1');
-      else deckStore.removeItem(LS_CLICKER_MODE);
+      deckStore.setItem(LS_CLICKER, clickerModeEnabled ? 'true' : 'false');
     }
     var cb = document.getElementById('tcClickerMode');
     if(cb) cb.checked = clickerModeEnabled;
@@ -1241,8 +1268,7 @@
     opts = opts || {};
     rememberSlideStepEnabled = !!on;
     if(opts.persist !== false){
-      if(rememberSlideStepEnabled) deckStore.setItem(LS_REMEMBER_SLIDE_STEP, '1');
-      else deckStore.removeItem(LS_REMEMBER_SLIDE_STEP);
+      deckStore.setItem(LS_REMEMBER_STEP, rememberSlideStepEnabled ? 'true' : 'false');
     }
     var cb = document.getElementById('tcRememberSlideStep');
     if(cb) cb.checked = rememberSlideStepEnabled;
@@ -1284,12 +1310,12 @@
     DECK_LS_KEYS.forEach(function(key){ deckStore.removeItem(key); });
     resetStoredCustomTheme();
     if(tcPasteIn) tcPasteIn.value = '';
-    setPresentationTheme(true);
+    setPresentationTheme(DECK_SETTINGS.appearance !== 'dark', { persist:false });
     syncThemeSwitchControl();
     setHiddenSlideKeys([], { showAgenda:true });
-    setClickerMode(false, { persist:false });
-    setRememberSlideStep(false, { persist:false });
-    if(typeof setSpeakTimerMode === 'function') setSpeakTimerMode(false, { persist:false });
+    setClickerMode(DECK_SETTINGS.clicker, { persist:false });
+    setRememberSlideStep(DECK_SETTINGS.rememberStep, { persist:false });
+    if(typeof setSpeakTimerMode === 'function') setSpeakTimerMode(DECK_SETTINGS.timer, { persist:false });
   }
   function readDeliveryThemeRootDeclMap(){
     var map = {};
@@ -1635,7 +1661,7 @@
   var tcEraseAllBtn = document.getElementById('tcEraseAllBtn');
   if(tcEraseAllBtn){
     tcEraseAllBtn.addEventListener('click', function(){
-      if(!window.confirm('Erase saved presentation data in this browser (applied theme, hidden slides, clicker mode, remember-step preference, and light/dark preference)?')) return;
+      if(!window.confirm('Erase saved presentation data in this browser (custom theme, hidden slides, clicker, remember-step, speak-timer, appearance) and restore baked deck defaults?')) return;
       eraseAllDeckStoredData();
       tcSetStatus('All local presentation data erased.', 'ok');
     });
@@ -2298,7 +2324,7 @@
 
   /* ============ SPEAK TIMER (S toggles, ⇧S resets; persisted under slug-scoped timer key) ============ */
   var timerCheckbox = document.getElementById('timerCheckbox');
-  var timerModeOn = deckStore.getItem(LS_TIMER) === '1';
+  var timerModeOn = readPrefBool('timer', DECK_SETTINGS.timer);
   var timerClock = null;
   var timerTickId = null;
   var timerFlashTimers = [];
@@ -2484,8 +2510,7 @@
     var was = timerModeOn;
     timerModeOn = next;
     if(opts.persist !== false){
-      if(timerModeOn) deckStore.setItem(LS_TIMER, '1');
-      else deckStore.removeItem(LS_TIMER);
+      deckStore.setItem(LS_TIMER, timerModeOn ? 'true' : 'false');
     }
     if(timerCheckbox) timerCheckbox.checked = timerModeOn;
     var tcTimer = document.getElementById('tcSpeakTimer');
@@ -3398,8 +3423,10 @@
 
   /* Cross-tab preference sync (storage events fire only in other same-origin contexts). */
   function applyRemotePref(suffix, newValue){
-    if(suffix === 'theme'){
-      setPresentationTheme(newValue !== 'dark', { persist:false });
+    if(suffix === 'appearance'){
+      if(newValue === 'light' || newValue === 'dark'){
+        setPresentationTheme(newValue !== 'dark', { persist:false });
+      }
       return;
     }
     if(suffix === 'custom-theme-css'){
@@ -3429,16 +3456,22 @@
       update();
       return;
     }
-    if(suffix === 'clicker-mode'){
-      setClickerMode(newValue === '1', { persist:false });
+    if(suffix === 'clicker'){
+      if(newValue === 'true' || newValue === 'false'){
+        setClickerMode(newValue === 'true', { persist:false });
+      }
       return;
     }
-    if(suffix === 'remember-slide-step'){
-      setRememberSlideStep(newValue === '1', { persist:false });
+    if(suffix === 'rememberStep'){
+      if(newValue === 'true' || newValue === 'false'){
+        setRememberSlideStep(newValue === 'true', { persist:false });
+      }
       return;
     }
     if(suffix === 'timer'){
-      setSpeakTimerMode(newValue === '1', { persist:false });
+      if(newValue === 'true' || newValue === 'false'){
+        setSpeakTimerMode(newValue === 'true', { persist:false });
+      }
     }
   }
   if(deckStore.hasLocalStorage()){

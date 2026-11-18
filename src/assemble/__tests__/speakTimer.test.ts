@@ -85,12 +85,12 @@ describe('speak timer', () => {
     Timer.useFakeNow(0);
     key('s');
     expect(Timer.isOn()).toBe(true);
-    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('1');
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('true');
     expect(flash().classList.contains('is-flash-start')).toBe(true);
     expect(Timer.snapshot().live).toBe('2:00');
     key('s');
     expect(Timer.isOn()).toBe(false);
-    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBeNull();
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('false');
     expect(flash().classList.contains('is-flash-end')).toBe(true);
     expect(flash().classList.contains('is-locked')).toBe(false);
     expect(Timer.snapshot().live).toBe('');
@@ -152,7 +152,7 @@ describe('speak timer', () => {
   it('clears slug-scoped timer pref on Reset browser data', async () => {
     const { Timer, doc, win } = await boot();
     Timer.setMode(true);
-    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('1');
+    expect(doc.defaultView!.localStorage.getItem('hptx/o/timer')).toBe('true');
     win.confirm = () => true;
     const btn = doc.getElementById('tcEraseAllBtn') as HTMLButtonElement | null;
     expect(btn).not.toBeNull();

@@ -10,40 +10,46 @@ describe('parseExportArgs', () => {
     else process.env.INIT_CWD = prev;
   });
 
-  it('defaults format to png, appearance to light, and progress off', () => {
+  it('defaults format to png and progress off; settings optional', () => {
     process.env.INIT_CWD = '/work';
     const args = parseExportArgs(['--cwd', 'decks/demo']);
     expect(args.format).toBe('png');
-    expect(args.appearance).toBe('light');
+    expect(args.settings).toBeUndefined();
     expect(args.progress).toBe(false);
     expect(args.cwd).toBe(path.resolve('/work', 'decks/demo'));
   });
 
-  it('accepts each format, dark theme, and progress', () => {
+  it('accepts each format, settings appearance, and progress', () => {
     process.env.INIT_CWD = '/work';
     expect(parseExportArgs(['--cwd', 'd', '--format', 'pdf']).format).toBe('pdf');
     expect(parseExportArgs(['--cwd', 'd', '--format', 'print']).format).toBe('print');
     expect(parseExportArgs(['--cwd', 'd', '--format', 'pptx']).format).toBe('pptx');
-    expect(parseExportArgs(['--cwd', 'd', '--theme', 'dark']).appearance).toBe('dark');
+    expect(parseExportArgs(['--cwd', 'd', '--settings.appearance', 'dark']).settings).toEqual({
+      appearance: 'dark',
+    });
     expect(parseExportArgs(['--cwd', 'd', '--progress']).progress).toBe(true);
   });
 
-  it('rejects invalid format and theme', () => {
+  it('rejects invalid format and settings values; rejects old --theme', () => {
     expect(() => parseExportArgs(['--cwd', 'd', '--format', 'webp'])).toThrow(/--format must be/);
     expect(() => parseExportArgs(['--cwd', 'd', '--format', 'png-pdf'])).toThrow(/--format must be/);
-    expect(() => parseExportArgs(['--cwd', 'd', '--theme', 'blue'])).toThrow(/--theme must be light or dark/);
+    expect(() => parseExportArgs(['--cwd', 'd', '--settings.appearance', 'blue'])).toThrow(
+      /--settings\.appearance must be light or dark/,
+    );
+    expect(() => parseExportArgs(['--cwd', 'd', '--theme', 'dark'])).toThrow(/unknown option/i);
   });
 
   it('requires cwd or deck', () => {
     expect(() => parseExportArgs([])).toThrow(/--cwd/);
   });
 
-  it('documents format, theme, progress, and HTML print in help', () => {
+  it('documents format, settings appearance, progress, and HTML print in help', () => {
     const help = exportHelpText();
     expect(help).toMatch(/--format/);
     expect(help).toMatch(/png \| pdf \| print \| pptx/);
-    expect(help).toMatch(/light\|dark/);
+    expect(help).toMatch(/--settings\.appearance/);
     expect(help).toMatch(/--progress/);
     expect(help).toMatch(/Cmd\/Ctrl\+P/);
+    expect(help).not.toMatch(/--theme <light\|dark>/);
   });
 });

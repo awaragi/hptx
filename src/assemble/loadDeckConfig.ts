@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveDeckTitle } from './deckTitle.ts';
-import type { CdnEntry, DeckConfig, ResolvedDeck, ThemeSource } from './types.ts';
+import type {
+  AppearanceSetting,
+  CdnEntry,
+  DeckConfig,
+  DeckSettings,
+  DeckSettingsPartial,
+  ResolvedDeck,
+  ThemeSource,
+} from './types.ts';
+import { PLATFORM_SETTINGS_DEFAULTS, SETTINGS_KEYS } from './types.ts';
 
 export const DECK_SCHEMA_VERSION = 1;
 
@@ -16,7 +25,10 @@ const KNOWN_FIELDS = [
   'title',
   'brand',
   'caption',
+  'settings',
 ] as const;
+
+const SETTINGS_BOOL_KEYS = ['clicker', 'rememberStep', 'timer'] as const;
 const CDN_OBJECT_KEYS = ['src', 'integrity', 'crossorigin'];
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -49,6 +61,66 @@ export function resolveThemeSource(value: string, baseDir: string, label = 'them
 
 function describe(value: unknown): string {
   return JSON.stringify(value) ?? String(value);
+}
+
+/** Validate a partial settings object (file or CLI). Rejects unknown keys and bad types. */
+export function validateSettingsPartial(raw: unknown, label = 'settings'): DeckSettingsPartial {
+  if (!isPlainObject(raw)) {
+    throw new Error(`${label}: "settings" must be an object`);
+  }
+  const unknown = Object.keys(raw).filter((k) => !(SETTINGS_KEYS as readonly string[]).includes(k));
+  if (unknown.length > 0) {
+    const names = unknown.map((k) => `"${k}"`).join(', ');
+    throw new Error(
+      `${label}: unknown settings key${unknown.length > 1 ? 's' : ''} ${names} (allowed: ${SETTINGS_KEYS.join(', ')})`,
+    );
+  }
+  const out: DeckSettingsPartial = {};
+  for (const key of SETTINGS_BOOL_KEYS) {
+    if (raw[key] === undefined) continue;
+    if (typeof raw[key] !== 'boolean') {
+      throw new Error(`${label}: settings.${key} must be a boolean`);
+    }
+    out[key] = raw[key] as boolean;
+  }
+  if (raw.appearance !== undefined) {
+    if (raw.appearance !== 'light' && raw.appearance !== 'dark') {
+      throw new Error(`${label}: settings.appearance must be "light" or "dark"`);
+    }
+    out.appearance = raw.appearance as AppearanceSetting;
+  }
+  return out;
+}
+
+/** Merge settings layers per key: platform defaults ← file ← CLI. */
+export function mergeSettings(
+  file?: DeckSettingsPartial,
+  cli?: DeckSettingsPartial,
+): DeckSettings {
+  return {
+    ...PLATFORM_SETTINGS_DEFAULTS,
+    ...(file ?? {}),
+    ...(cli ?? {}),
+  };
+}
+
+/** Parse CLI `--settings.*` string values (`true`/`false`/`light`/`dark`). */
+export function parseSettingsCliValue(
+  key: (typeof SETTINGS_KEYS)[number],
+  value: string,
+  flag: string,
+): boolean | AppearanceSetting {
+  const trimmed = value.trim();
+  if (key === 'appearance') {
+    if (trimmed !== 'light' && trimmed !== 'dark') {
+      throw new Error(`${flag} must be light or dark (got '${value}')`);
+    }
+    return trimmed;
+  }
+  if (trimmed !== 'true' && trimmed !== 'false') {
+    throw new Error(`${flag} must be true or false (got '${value}')`);
+  }
+  return trimmed === 'true';
 }
 
 function validateCdnList(field: 'scripts' | 'styles', value: unknown, label: string): CdnEntry[] {
@@ -152,6 +224,10 @@ export function validateDeckConfig(raw: unknown, label = 'deck.json'): DeckConfi
   if (raw.scripts !== undefined) config.scripts = validateCdnList('scripts', raw.scripts, label);
   if (raw.styles !== undefined) config.styles = validateCdnList('styles', raw.styles, label);
 
+  if (raw.settings !== undefined) {
+    config.settings = validateSettingsPartial(raw.settings, label);
+  }
+
   for (const field of ['title', 'brand', 'caption'] as const) {
     if (raw[field] !== undefined) {
       if (typeof raw[field] !== 'string') {
@@ -224,6 +300,8 @@ export function loadDeckFile(configPath: string, root: string): ResolvedDeck {
   const label = path.basename(absConfig);
   const config = absolutizeDeckConfig(absRoot, validateDeckConfig(raw, label));
   const derived = pathsFromConfig(absRoot, config, label);
+  const settings = mergeSettings(config.settings);
+  config.settings = settings;
   const titleFromFile = config.title;
   const { title, slug } = resolveDeckTitle({
     ...(titleFromFile !== undefined ? { fileTitle: titleFromFile } : {}),
@@ -235,6 +313,7 @@ export function loadDeckFile(configPath: string, root: string): ResolvedDeck {
     root: absRoot,
     configPath: absConfig,
     config,
+    settings,
     slug,
     ...(titleFromFile !== undefined ? { titleFromFile } : {}),
     ...derived,
@@ -269,6 +348,8 @@ export interface DeckOverrides {
   scripts?: CdnEntry[];
   /** When set (including empty array), replaces file styles entirely. */
   styles?: CdnEntry[];
+  /** Partial settings from `--settings.*` (per-key overlay). */
+  settings?: DeckSettingsPartial;
 }
 
 const DEFAULTS: Pick<DeckConfig, 'brand'> = {
@@ -304,6 +385,9 @@ function mergeEffective(file: DeckConfig | undefined, overrides: DeckOverrides):
 
   if (overrides.styles !== undefined) config.styles = overrides.styles;
   else if (file?.styles !== undefined) config.styles = file.styles;
+
+  const settings = mergeSettings(file?.settings, overrides.settings);
+  config.settings = settings;
 
   return config;
 }
@@ -366,10 +450,14 @@ export function resolveDeckInvocation(input: ResolveDeckInvocationInput): Resolv
   });
   effective.title = title;
 
+  // mergeEffective already assigned complete settings onto the merged config.
+  const settings = effective.settings as DeckSettings;
+
   return {
     root,
     ...(configPath !== undefined ? { configPath } : {}),
     config: effective,
+    settings,
     slug,
     ...(fileDeck?.titleFromFile !== undefined ? { titleFromFile: fileDeck.titleFromFile } : {}),
     ...derived,

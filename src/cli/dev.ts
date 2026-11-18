@@ -21,6 +21,7 @@ function assembleOptsFromArgs(args: ReturnType<typeof parseDeckArgs>): AssembleD
     ...(args.caption ? { caption: args.caption } : {}),
     ...(args.scripts ? { scripts: args.scripts } : {}),
     ...(args.styles ? { styles: args.styles } : {}),
+    ...(args.settings ? { settings: args.settings } : {}),
   };
 }
 

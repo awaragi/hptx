@@ -24,6 +24,7 @@ function assembleOptsFromExport(args: ExportArgs): AssembleDeckOptions {
     ...(args.caption ? { caption: args.caption } : {}),
     ...(args.scripts ? { scripts: args.scripts } : {}),
     ...(args.styles ? { styles: args.styles } : {}),
+    ...(args.settings ? { settings: args.settings } : {}),
   };
 }
 
@@ -100,9 +101,10 @@ export async function runExport(argv: string[]): Promise<void> {
         : args.format === 'pptx'
           ? [artifacts.pngDir, artifacts.pptxPath]
           : [artifacts.pngDir];
+  const appearance = deck.settings.appearance;
   printExportSummary({
     format: args.format,
-    appearance: args.appearance,
+    appearance,
     name: artifacts.name,
     paths: summaryPaths,
     pathCtx,
@@ -115,7 +117,7 @@ export async function runExport(argv: string[]): Promise<void> {
     const result = await captureExport({
       browser,
       url: server.url,
-      appearance: args.appearance,
+      appearance,
       format: args.format,
       pngDir: artifacts.pngDir,
       pngPdfPath: artifacts.pngPdfPath,

@@ -1,10 +1,16 @@
-import type { CdnEntry } from '../assemble/types.ts';
+import type { CdnEntry, DeckSettings, DeckSettingsPartial } from '../assemble/types.ts';
+import { PLATFORM_SETTINGS_DEFAULTS } from '../assemble/types.ts';
 import type { AssemblePlan } from '../assemble/index.ts';
 import { invocationDir } from './args.ts';
 import { formatConsoleCwd, formatConsolePath } from './consolePaths.ts';
 
 function cdnLine(e: CdnEntry): string {
   return typeof e === 'string' ? e : e.src + (e.integrity ? ` (integrity)` : '');
+}
+
+function formatSettings(s: DeckSettings | DeckSettingsPartial | undefined): string {
+  const full = { ...PLATFORM_SETTINGS_DEFAULTS, ...(s ?? {}) };
+  return `clicker=${full.clicker} rememberStep=${full.rememberStep} timer=${full.timer} appearance=${full.appearance}`;
 }
 
 export interface PrintConfigOptions {
@@ -54,6 +60,10 @@ export function printEffectiveConfig(plan: AssemblePlan, opts: PrintConfigOption
     ['output', fmt(config.output)],
     ['cover', fmt(config.cover)],
     ['theme', theme],
+    [
+      'settings',
+      formatSettings(deck.settings ?? config.settings),
+    ],
     ['slides', slides.length ? slides.map((s) => formatConsolePath(s.path, ctx)) : '(none)'],
     ['scripts', config.scripts?.length ? config.scripts.map(cdnLine) : '(none)'],
     ['styles', config.styles?.length ? config.styles.map(cdnLine) : '(none)'],

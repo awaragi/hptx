@@ -24,6 +24,7 @@ describe('printEffectiveConfig', () => {
         outputPath: '/proj/dist/Out.html',
         coverPath: '/proj/templates/cover.html',
         theme: { kind: 'path', value: '/proj/templates/theme.css' },
+        settings: { clicker: true, rememberStep: false, timer: false, appearance: 'dark' },
         slug: 'demo',
       },
       slides: [
@@ -44,6 +45,7 @@ describe('printEffectiveConfig', () => {
     expect(text).toMatch(/slides\s+<cwd>\/a\.html\n\s+<cwd>\/b\.html/);
     expect(text).toMatch(/scripts\s+https:\/\/cdn\.example\.com\/x\.js\n\s+https:\/\/cdn\.example\.com\/y\.js/);
     expect(text).toMatch(/styles\s+https:\/\/cdn\.example\.com\/a\.css\n\s+https:\/\/cdn\.example\.com\/b\.css/);
+    expect(text).toMatch(/settings\s+clicker=true rememberStep=false timer=false appearance=dark/);
     expect(text).not.toContain('/proj/templates/deck.json');
     log.mockRestore();
   });

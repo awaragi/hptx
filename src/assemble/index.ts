@@ -82,6 +82,8 @@ export interface AssembleDeckOptions {
   caption?: string;
   scripts?: import('./types.ts').CdnEntry[];
   styles?: import('./types.ts').CdnEntry[];
+  /** Partial settings from `--settings.*`. */
+  settings?: import('./types.ts').DeckSettingsPartial;
   /** When true, require effective output (build). Default false. */
   requireOutput?: boolean;
   /**
@@ -121,6 +123,7 @@ export function resolveFromOpts(opts: AssembleDeckOptions): ResolvedDeck {
     ...(opts.caption !== undefined ? { caption: opts.caption } : {}),
     ...(opts.scripts !== undefined ? { scripts: opts.scripts } : {}),
     ...(opts.styles !== undefined ? { styles: opts.styles } : {}),
+    ...(opts.settings !== undefined ? { settings: opts.settings } : {}),
   };
 
   if (opts.cwd !== undefined || opts.deck !== undefined) {
@@ -195,6 +198,7 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     config: deck.config,
     slides: parsed,
     slug: deck.slug,
+    settings: deck.settings,
     ...(cover ? { cover } : {}),
     contractCss,
     assets,

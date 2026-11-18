@@ -2,7 +2,8 @@ import { bakeTheme } from './bakeTheme.ts';
 import { emitAssetsHtml, type AssetRegistry } from './bakeLocalImages.ts';
 import { emitCdnTags } from './emitCdn.ts';
 import { scopeCss, scopeSlideCss } from './scopeCss.ts';
-import type { DeckConfig, ParsedSlide } from './types.ts';
+import type { DeckConfig, DeckSettings, ParsedSlide } from './types.ts';
+import { PLATFORM_SETTINGS_DEFAULTS } from './types.ts';
 
 export const CDN_STYLES_PLACEHOLDER = '<!-- DECK_CDN_STYLES -->';
 export const CDN_SCRIPTS_PLACEHOLDER = '<!-- DECK_CDN_SCRIPTS -->';
@@ -26,6 +27,8 @@ export interface AssembleInput {
   assets?: AssetRegistry;
   /** Presentation slug for browser preference keys (`data-deck-slug`). */
   slug?: string;
+  /** Complete playback settings baked as `data-deck-settings`. */
+  settings?: DeckSettings;
 }
 
 function escapeText(value: string): string {
@@ -79,18 +82,29 @@ function setDeckTitle(html: string, title: string): string {
   return setDivContent(html, 'deck-title', escapeText(title));
 }
 
-/** Set `data-deck-slug` on the root `<html>` element for runtime preference scoping. */
-function setDeckSlug(html: string, slug: string): string {
+/** Set or replace a data-* attribute on the root `<html>` element. */
+function setHtmlDataAttr(html: string, name: string, value: string): string {
   const re = /<html\b([^>]*)>/i;
   if (!re.test(html)) {
     throw new Error('Template has no <html> element');
   }
+  const attrRe = new RegExp(`\\b${name}\\s*=\\s*(["']).*?\\1`, 'i');
   return html.replace(re, (_m, attrs: string) => {
-    if (/\bdata-deck-slug\s*=/.test(attrs)) {
-      return `<html${attrs.replace(/\bdata-deck-slug\s*=\s*(["']).*?\1/i, `data-deck-slug="${escapeAttr(slug)}"`)}>`;
+    if (attrRe.test(attrs)) {
+      return `<html${attrs.replace(attrRe, `${name}="${escapeAttr(value)}"`)}>`;
     }
-    return `<html${attrs} data-deck-slug="${escapeAttr(slug)}">`;
+    return `<html${attrs} ${name}="${escapeAttr(value)}">`;
   });
+}
+
+/** Set `data-deck-slug` on the root `<html>` element for runtime preference scoping. */
+function setDeckSlug(html: string, slug: string): string {
+  return setHtmlDataAttr(html, 'data-deck-slug', slug);
+}
+
+/** Bake complete settings JSON onto `<html data-deck-settings="…">`. */
+function setDeckSettings(html: string, settings: DeckSettings): string {
+  return setHtmlDataAttr(html, 'data-deck-settings', JSON.stringify(settings));
 }
 
 export const SLIDE_SCOPE_OPEN = '(function (document) {';
@@ -138,7 +152,7 @@ function renderCover(cover: ParsedSlide): string {
 
 /** Assemble the shell template with deck config, theme, cover and content slides. */
 export function assembleHtml(input: AssembleInput): { html: string; warnings: string[] } {
-  const { template, config, slides, cover, themeCss, contractCss, assets, slug } = input;
+  const { template, config, slides, cover, themeCss, contractCss, assets, slug, settings } = input;
   const warnings: string[] = [];
   let html = template;
 
@@ -150,6 +164,9 @@ export function assembleHtml(input: AssembleInput): { html: string; warnings: st
 
   if (config.title !== undefined) html = setDeckTitle(setTitle(html, config.title), config.title);
   if (slug !== undefined) html = setDeckSlug(html, slug);
+  if (/<html\b/i.test(html)) {
+    html = setDeckSettings(html, settings ?? PLATFORM_SETTINGS_DEFAULTS);
+  }
   if (config.brand !== undefined || config.caption !== undefined) {
     html = setBrand(html, config.brand ?? 'Brand.', config.caption);
   }

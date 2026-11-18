@@ -54,12 +54,26 @@ describe('assembleHtml', () => {
     expect(html).toContain('<div class="brand-row"><div class="nav-menu-slot"><button>m</button></div>');
     expect(html).toContain('<div class="deck-title">Kickoff</div>');
     expect(html).toMatch(/<html\b[^>]*\bdata-deck-slug="kickoff"/);
+    expect(html).toMatch(/data-deck-settings="/);
+    expect(html).toContain('&quot;clicker&quot;:false');
+    expect(html).toContain('&quot;appearance&quot;:&quot;light&quot;');
     expect(html).not.toContain('Shell.');
     expect(html).not.toContain('Default deck');
     expect(html).toContain('DECK THEME — START');
     expect(html).toContain('DECK THEME — END');
     expect(html).toContain('--brand:#abc');
     expect(warnings).toEqual([]);
+  });
+
+  it('bakes custom settings JSON onto the html element', () => {
+    const { html } = assembleHtml({
+      template: TEMPLATE,
+      config: { output: 'o.html' },
+      slides: [slide('a')],
+      settings: { clicker: true, rememberStep: true, timer: false, appearance: 'dark' },
+    });
+    expect(html).toContain('data-deck-settings="{&quot;clicker&quot;:true');
+    expect(html).toContain('&quot;appearance&quot;:&quot;dark&quot;');
   });
 
   it('does not split a brand that contains a period when caption is omitted', () => {

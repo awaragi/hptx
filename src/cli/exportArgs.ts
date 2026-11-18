@@ -5,13 +5,14 @@ import {
   invocationDir,
   resolveAgainst,
 } from './args.ts';
-import type { CdnEntry } from '../assemble/types.ts';
+import type { CdnEntry, DeckSettingsPartial } from '../assemble/types.ts';
+import { addSettingsOptions, settingsPartialFromOpts } from './settingsFlags.ts';
 
 export type ExportFormat = 'png' | 'pdf' | 'print' | 'pptx';
+/** Light/dark presentation appearance (same as settings.appearance). */
 export type AppearanceTheme = 'light' | 'dark';
 
 const FORMATS = new Set<ExportFormat>(['png', 'pdf', 'print', 'pptx']);
-const APPEARANCES = new Set<AppearanceTheme>(['light', 'dark']);
 
 export interface ExportArgs {
   cwd?: string;
@@ -24,10 +25,9 @@ export interface ExportArgs {
   caption?: string;
   scripts?: CdnEntry[];
   styles?: CdnEntry[];
+  settings?: DeckSettingsPartial;
   /** Capture format; default png. */
   format: ExportFormat;
-  /** Shell light/dark appearance; default light. Not a CSS theme file. */
-  appearance: AppearanceTheme;
   /** Log each frame as it is written (`(s/S - n/N) file`). */
   progress: boolean;
 }
@@ -56,28 +56,29 @@ function httpsCdnList(flag: string, values: string[] | undefined): CdnEntry[] | 
 }
 
 function exportCommand(): Command {
-  return new Command()
-    .name('hptx export')
-    .description(
-      'Export slide frames / PDFs / PPTX via system Chrome (playwright-core). ' +
-        'Print-layout PDF: --format print, or Cmd/Ctrl+P on the previewed/built HTML.',
-    )
-    .exitOverride()
-    .configureHelp({ helpWidth: 100 })
-    .allowExcessArguments(false)
-    .option('--cwd <dir>', 'working root for slides and relative deck paths')
-    .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
-    .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
-    .option('--output <path>', 'HTML output path (required unless set in the deck file; parent dir for export artifacts)')
-    .option('--format <fmt>', 'png | pdf | print | pptx (one per run; default: png)')
-    .option('--theme <light|dark>', 'presentation appearance light|dark (default: light; not a CSS theme file)')
-    .option('--progress', 'log each frame as (slide/total - step/steps) filename')
-    .option('--cover <file>', 'cover HTML file')
-    .option('--title <text>', 'document / presentation title')
-    .option('--brand <text>', 'primary brand label')
-    .option('--caption <text>', 'secondary brand caption')
-    .option('--script <url>', 'https CDN script URL (repeatable; replaces file scripts)', collect, [])
-    .option('--style <url>', 'https CDN stylesheet URL (repeatable; replaces file styles)', collect, []);
+  return addSettingsOptions(
+    new Command()
+      .name('hptx export')
+      .description(
+        'Export slide frames / PDFs / PPTX via system Chrome (playwright-core). ' +
+          'Print-layout PDF: --format print, or Cmd/Ctrl+P on the previewed/built HTML.',
+      )
+      .exitOverride()
+      .configureHelp({ helpWidth: 100 })
+      .allowExcessArguments(false)
+      .option('--cwd <dir>', 'working root for slides and relative deck paths')
+      .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
+      .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
+      .option('--output <path>', 'HTML output path (required unless set in the deck file; parent dir for export artifacts)')
+      .option('--format <fmt>', 'png | pdf | print | pptx (one per run; default: png)')
+      .option('--progress', 'log each frame as (slide/total - step/steps) filename')
+      .option('--cover <file>', 'cover HTML file')
+      .option('--title <text>', 'document / presentation title')
+      .option('--brand <text>', 'primary brand label')
+      .option('--caption <text>', 'secondary brand caption')
+      .option('--script <url>', 'https CDN script URL (repeatable; replaces file scripts)', collect, [])
+      .option('--style <url>', 'https CDN stylesheet URL (repeatable; replaces file styles)', collect, []),
+  );
 }
 
 /** Help text for `hptx export --help`. */
@@ -86,11 +87,11 @@ export function exportHelpText(): string {
 }
 
 export const EXPORT_USAGE =
-  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--theme light|dark] [--progress] [--output path] ...';
+  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--progress] [--output path] ...';
 
 /**
- * Parse export flags. `--theme` is appearance (light|dark), not a CSS theme path.
- * CSS bake still comes from the deck file.
+ * Parse export flags. Appearance comes from `--settings.appearance` (and deck.json settings).
+ * CSS theme bake still comes from the deck file.
  */
 export function parseExportArgs(argv: string[]): ExportArgs {
   const program = exportCommand();
@@ -107,7 +108,6 @@ export function parseExportArgs(argv: string[]): ExportArgs {
     slide?: string[];
     output?: string;
     format?: string;
-    theme?: string;
     progress?: boolean;
     cover?: string;
     title?: string;
@@ -115,6 +115,10 @@ export function parseExportArgs(argv: string[]): ExportArgs {
     caption?: string;
     script?: string[];
     style?: string[];
+    'settings.clicker'?: string;
+    'settings.rememberStep'?: string;
+    'settings.timer'?: string;
+    'settings.appearance'?: string;
   }>();
 
   if (opts.cwd === undefined && opts.deck === undefined) {
@@ -130,17 +134,8 @@ export function parseExportArgs(argv: string[]): ExportArgs {
     format = f;
   }
 
-  let appearance: AppearanceTheme = 'light';
-  if (opts.theme !== undefined) {
-    const t = opts.theme.trim() as AppearanceTheme;
-    if (!APPEARANCES.has(t)) {
-      throw new Error(`--theme must be light or dark (got '${opts.theme}')`);
-    }
-    appearance = t;
-  }
-
   const inv = invocationDir();
-  const result: ExportArgs = { format, appearance, progress: opts.progress === true };
+  const result: ExportArgs = { format, progress: opts.progress === true };
 
   if (opts.cwd !== undefined) {
     if (opts.cwd.trim() === '') throw new Error('--cwd requires a path');
@@ -179,6 +174,9 @@ export function parseExportArgs(argv: string[]): ExportArgs {
   if (scripts) result.scripts = scripts;
   const styles = httpsCdnList('--style', opts.style);
   if (styles) result.styles = styles;
+
+  const settings = settingsPartialFromOpts(opts);
+  if (settings) result.settings = settings;
 
   return result;
 }

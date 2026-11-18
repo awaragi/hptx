@@ -25,7 +25,7 @@ Given an explicit deck root, the toolchain MUST assemble the shell with the agen
 - **THEN** they can navigate the assembled deck in the browser and `output` is not created or modified
 
 ### Requirement: Same assemble rules as build
-Preview MUST resolve slides, harvest and scope slide files, bind registrations, bake in the effective theme, and emit effective CDN `scripts`/`styles` tags using the same cascade and validation rules as build (except `output` is not required and MUST NOT be written).
+Preview MUST resolve slides, harvest and scope slide files, bind registrations, bake in the effective theme, bake effective settings, and emit effective CDN `scripts`/`styles` tags using the same cascade and validation rules as build (except `output` is not required and MUST NOT be written).
 
 #### Scenario: Theme visible in preview
 - **WHEN** the deck file sets `theme` to a local path or `https://` CSS URL and preview starts without `--theme`
@@ -35,6 +35,10 @@ Preview MUST resolve slides, harvest and scope slide files, bind registrations, 
 - **WHEN** the effective config declares a CDN entry under `scripts` and preview starts
 - **THEN** the preview document includes that `<script src>` so slides that depend on it can boot
 
+#### Scenario: Settings bake matches build
+- **WHEN** the same deck root and settings are used for preview and for build
+- **THEN** both assembled HTML documents expose the same baked settings values to the shell
+
 ### Requirement: CLI theme override for preview
 Preview MUST accept the same `--theme <path-or-https-url>` override as build, applying that theme for the assembled preview instead of a deck-file `theme`. Local theme files MUST be watched for reload like a file local theme.
 
@@ -43,7 +47,7 @@ Preview MUST accept the same `--theme <path-or-https-url>` override as build, ap
 - **THEN** the preview shows that theme’s tokens in the deck theme region
 
 ### Requirement: Preview CLI uses Commander
-`npm run dev` MUST parse its arguments with Commander, sharing the deck option set with build (long-only `--cwd`, `--deck`, `--slide`, `--output`, `--theme`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style`). Preview MUST NOT write `output` even when `--output` is passed. Unknown options MUST fail. `--help` MUST print the full Commander help screen documenting those options.
+`npm run dev` MUST parse its arguments with Commander, sharing the deck option set with build (long-only `--cwd`, `--deck`, `--slide`, `--output`, `--theme`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style`, and `--settings.*`). Preview MUST NOT write `output` even when `--output` is passed. Unknown options MUST fail. `--help` MUST print the full Commander help screen documenting those options.
 
 #### Scenario: Dev unknown option fails
 - **WHEN** the user runs `npm run dev -- --cwd /path/to/deck --bogus`
@@ -52,6 +56,10 @@ Preview MUST accept the same `--theme <path-or-https-url>` override as build, ap
 #### Scenario: Dev --output does not write
 - **WHEN** the user starts preview with `--output /tmp/Out.html`
 - **THEN** preview serves in memory and does not create or modify `/tmp/Out.html` or any configured `output`
+
+#### Scenario: Dev accepts settings flag
+- **WHEN** the user starts preview with `--settings.clicker true`
+- **THEN** the preview assembles with baked clicker true
 
 ### Requirement: CLI slides filter for authoring
 Preview MUST accept the same `--slides` semantics as build (key or filename, CLI order, unknown entries fail). Authors MUST be able to load a single slide for faster preview. Preview MUST NOT use a URL query parameter as the filter mechanism.
@@ -87,7 +95,7 @@ When the effective `theme` is an `https://` URL, preview MUST fetch it once at s
 - **THEN** the remote theme is fetched again before the reload
 
 ### Requirement: Dev prints effective configuration
-Before starting the preview server, `npm run dev` MUST print the same style of effective-configuration summary as build (working root, deck file, merged fields, slide filter when set).
+Before starting the preview server, `npm run dev` MUST print the same style of effective-configuration summary as build (working root, deck file, merged fields including settings, slide filter when set).
 
 #### Scenario: Config summary before preview
 - **WHEN** the user runs `npm run dev -- --cwd /path/to/deck`

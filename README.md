@@ -131,8 +131,10 @@ Steps don't wrap in clicker mode. Reaching the end of a slide's steps moves to
 the next slide instead. If a step's detail modal is open, it follows the
 steps and closes when you move on to another slide.
 
-Turn on clicker mode in Settings (`C`) under **Playback**. The setting is
-saved in the browser, and all other shortcuts keep working.
+Turn on clicker mode in Settings (`C`) under **Playback**, or set a deck default
+with `"settings": { "clicker": true }` / `--settings.clicker true`. The browser
+override is saved under the presentation slug; **Reset** restores baked defaults.
+All other shortcuts keep working.
 
 ### Remembering steps
 
@@ -181,9 +183,9 @@ Prefer the local `hptx` binary (`npx hptx …` after `npm install`). Equivalent 
 
 | Command | Purpose |
 | --- | --- |
-| `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
+| `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--settings.clicker\|rememberStep\|timer true\|false`, `--settings.appearance light\|dark`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
 | `npx hptx build --cwd <dir> \| --deck <file> [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file) |
-| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs / PPTX via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print\|pptx` (one per run; default `png`). `--theme light\|dark` is presentation appearance (default `light`), not a CSS theme file — CSS bake still comes from the deck. `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
+| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs / PPTX via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print\|pptx` (one per run; default `png`). Same `--settings.*` flags as build/dev (appearance default `light`). `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
 | `npx hptx new deck --cwd <dir> [field flags…]` | Scaffold a new deck (`deck.json` with `version: 1`, `cover.html`, `overview.html`) |
 | `npx hptx new slide --cwd <dir> --key <stem> --from <template> […]` | Add a slide from a template |
 | `npx hptx new --list` | List slide templates |
@@ -224,7 +226,8 @@ Requires Google Chrome installed. Export uses `playwright-core` with channel `ch
 | `output` | for build / export | Single-file HTML output path (file and/or `--output`); parent dir for export artifacts |
 | `slides` | no | Ordered list of `*.html` files. If omitted, hptx discovers `*.html` files (skipping `output` and `cover`) |
 | `cover` | no | HTML file used as the home page title block. It is not a slide |
-| `theme` | no | Local CSS path or `https://` URL, baked into the output |
+| `theme` | no | Local CSS path or `https://` URL, baked into the output (color tokens — not light/dark) |
+| `settings` | no | Playback defaults object: `clicker`, `rememberStep`, `timer` (booleans), `appearance` (`light`\|`dark`). Merged platform → file → CLI; baked into the HTML |
 | `scripts` / `styles` | no | `https://` CDN URLs (a string or `{ src, integrity?, crossorigin? }`) |
 | `title` | no | Document `<title>` and top-bar deck title; if omitted, output stem then cwd basename |
 | `brand` | no | Primary shell brand label, shown exactly as written (default `Brand.`) |
@@ -237,9 +240,12 @@ Requires Google Chrome installed. Export uses `playwright-core` with channel `ch
   "caption": "Demo",
   "output": "dist/demo.html",
   "cover": "cover.html",
-  "slides": ["overview.html", "detail.html"]
+  "slides": ["overview.html", "detail.html"],
+  "settings": { "clicker": true, "appearance": "dark" }
 }
 ```
+
+Light/dark mode is `settings.appearance` (CLI `--settings.appearance`), not `theme`. CSS `theme` stays the token bake file/URL.
 
 ## Themes
 
@@ -278,9 +284,10 @@ into your AI assistant, then paste the result into **Apply theme**. The same tab
 **Bake into build** section explains how to ship that theme via `deck.json`.
 
 Overrides are stored in the browser under keys scoped by the presentation title
-slug (`hptx/<slug>/…`). Same-slug tabs on the same origin stay in sync when
-prefs change. Different titles do not share prefs. **Settings → Reset** clears
-only this slug’s keys.
+slug (`hptx/<slug>/…`), with the same literals as JSON/CLI (`true`/`false`,
+`light`/`dark`). Same-slug tabs on the same origin stay in sync when prefs
+change. Different titles do not share prefs. **Settings → Reset** clears only
+this slug’s keys and restores **baked** deck settings defaults.
 
 ## Authoring with AI
 

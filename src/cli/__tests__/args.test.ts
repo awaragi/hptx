@@ -85,6 +85,30 @@ describe('parseDeckArgs', () => {
     expect(() => parseDeckArgs(['--cwd', 'd', '--bogus'])).toThrow(/unknown option/i);
   });
 
+  it('parses --settings.* with exact true/false/light/dark literals', () => {
+    const args = parseDeckArgs([
+      '--cwd',
+      'd',
+      '--settings.clicker',
+      'true',
+      '--settings.rememberStep',
+      'false',
+      '--settings.timer',
+      'true',
+      '--settings.appearance',
+      'dark',
+    ]);
+    expect(args.settings).toEqual({
+      clicker: true,
+      rememberStep: false,
+      timer: true,
+      appearance: 'dark',
+    });
+    expect(() => parseDeckArgs(['--cwd', 'd', '--settings.clicker', 'yes'])).toThrow(
+      /--settings\.clicker must be true or false/,
+    );
+  });
+
   it('surfaces help as HelpDisplayedError', () => {
     expect(() => parseDeckArgs(['--help'])).toThrow(HelpDisplayedError);
   });

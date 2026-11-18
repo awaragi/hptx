@@ -25,12 +25,12 @@ Prefer `npx hptx …` after `npm install` (no `--` before flags). `npm run … -
 
 ```bash
 npm install
-npx hptx dev --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] ...
-npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] ...
+npx hptx dev --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
+npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
-npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--theme light|dark] [--progress] ...
+npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--settings.clicker true|false] [--progress] ...
 npm test
 ```
 
@@ -42,7 +42,7 @@ Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names o
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
-**Export** needs the same `output` as build (artifact parent dir). Presentation `<name>` is the slug of the resolved deck title (CLI `--title` → `deck.json` `title` → output stem → cwd basename). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort) at **1920×1080** (Full HD, 16:9); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `pptx` adds `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Export `--theme` is `light|dark` appearance (default `light`), not a CSS theme file. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
+**Export** needs the same `output` as build (artifact parent dir). Presentation `<name>` is the slug of the resolved deck title (CLI `--title` → `deck.json` `title` → output stem → cwd basename). Formats: `png` → `dist/<name>/png/<paddedSlide>-<key>-<paddedStep>.png` for stepped content slides, or `<paddedSlide>-<key>.png` when there are no steps (home `agenda` is `0-agenda.png`; slide/step indices padded so files sort) at **1920×1080** (Full HD, 16:9); `pdf` adds `dist/<name>/png/<name>.pdf` (PNG pages concatenated); `pptx` adds `dist/<name>/png/<name>.pptx` (one full-bleed image slide per PNG); `print` writes print-layout `dist/<name>.pdf`. Interactive print-layout PDF: Cmd/Ctrl+P on previewed or built HTML. `--progress` logs `(slide/total - step/steps)`. Appearance is `--settings.appearance light|dark` (same as build/dev; default `light`); CSS bake stays `deck.json` `theme` / build-dev `--theme` path/URL. Uses system Chrome via `playwright-core` (no browser download); fails clearly if Chrome is missing.
 
 ### `deck.json` (optional; cascade with CLI)
 
@@ -52,7 +52,8 @@ Dev prints the Local URL (typically `http://localhost:5173/`).
 | `output` | for build / export | Single-file HTML path (file and/or `--output`); parent dir for export artifacts |
 | `slides` | no | Ordered `*.html` filenames; else discover `*.html` (skipping `output` and `cover`) |
 | `cover` | no | HTML file shown as the home page title block (top left, above the keyboard hints); not a slide, not in `slides` |
-| `theme` | no | Local CSS path or `https://` URL — appended after shell defaults in theme markers (cascade) |
+| `theme` | no | Local CSS path or `https://` URL — appended after shell defaults in theme markers (cascade); not light/dark |
+| `settings` | no | Playback defaults: `clicker`, `rememberStep`, `timer` (bool), `appearance` (`light`\|`dark`); CLI `--settings.<key>`; baked into HTML |
 | `scripts` / `styles` | no | `https://` CDN URLs (string or `{ src, integrity?, crossorigin? }`) |
 | `title` | no | Document and top-bar title; if omitted, output stem then cwd basename |
 | `brand` | no | Primary shell brand label, exact text (default `Brand.`) |

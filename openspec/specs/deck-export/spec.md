@@ -43,17 +43,6 @@ The presentation name MUST be the title slug of the resolved deck title (see dec
 - **WHEN** a developer runs export with `--format pptx`
 - **THEN** the run is accepted as a valid format (subject to other export requirements)
 
-### Requirement: Appearance theme flag
-`hptx export` MUST accept `--theme light|dark` controlling the shell presentation appearance (`data-theme`) for the capture session. The default MUST be `light`. This flag MUST NOT mean CSS theme-file bake (bake still comes from effective deck theme as in build). An invalid value MUST fail.
-
-#### Scenario: Default appearance is light
-- **WHEN** export runs without `--theme`
-- **THEN** captures use the light presentation appearance
-
-#### Scenario: Dark appearance
-- **WHEN** export runs with `--theme dark`
-- **THEN** captures use the dark presentation appearance
-
 ### Requirement: PNG frame capture for each slide and step
 For `--format png` and as the raster source for `--format pdf` and `--format pptx`, export MUST navigate every included slide in assembled order (home `agenda` first, then content slides). Each filename MUST begin with a zero-based slide index (agenda is `0`) zero-padded to the digit width of `slideCount - 1` so lexical sort matches deck order, then a hyphen. For content slides with `stepCount > 0`, export MUST capture every in-slide step index from `0` through `stepCount - 1` as `<paddedSlide>-<slideKey>-<paddedStep>.png`, with the step segment zero-padded to the digit width of `stepCount - 1`. When a content slide has no steps (`stepCount` is `0` or unset), export MUST capture exactly one frame named `<paddedSlide>-<slideKey>.png` (no step suffix). The shell-owned home page (`agenda`) MUST be captured as exactly one frame (`<paddedSlide>-agenda.png`, with index `0`) even when its tile highlight `stepCount` is greater than zero. Each frame MUST be a PNG of the design canvas at **1920×1080**, written under `<dirname(output)>/<name>/png/`.
 
@@ -114,18 +103,18 @@ Export MUST launch browsing with Playwright’s library against an already-insta
 - **THEN** the process exits non-zero and the error message names missing Chrome (and does not silently skip)
 
 ### Requirement: Shared assemble semantics for export
-Export MUST assemble with the same slide resolution, harvesting, CSS scoping, registration binding, theme bake, and CDN tags as build (including `--slide` filter order). Export MAY serve the assembled HTML over a local HTTP URL for capture so CDN assets load. Export MUST NOT be required to leave the HTML `output` file written, but MUST still require the effective output path for naming.
+Export MUST assemble with the same slide resolution, harvesting, CSS scoping, registration binding, theme bake, settings bake, and CDN tags as build (including `--slide` filter order and `--settings.*`). Export MAY serve the assembled HTML over a local HTTP URL for capture so CDN assets load. Export MUST NOT be required to leave the HTML `output` file written, but MUST still require the effective output path for naming.
 
 #### Scenario: Slide filter applies
 - **WHEN** export is invoked with `--slide overview --slide detail`
 - **THEN** only the home page plus those slides (in CLI order) are captured
 
 ### Requirement: Export help and effective configuration
-`hptx export --help` MUST document `--cwd`, `--deck`, `--slide`, `--output`, `--format`, `--theme` (`light|dark`), `--progress`, and other shared deck field flags that export accepts. Before capturing, export MUST print an effective-configuration style summary including format, appearance theme, presentation name, and output artifact path(s). Filesystem paths in the shared effective-configuration block, the export artifact summary, and post-capture “Wrote …” lines MUST follow the CLI console path display rules (shorter of invocation-relative vs `<cwd>/…`, absolute when more than `../../` is required).
+`hptx export --help` MUST document `--cwd`, `--deck`, `--slide`, `--output`, `--format`, `--settings.*`, `--progress`, and other shared deck field flags that export accepts. It MUST NOT document `--theme` as light/dark appearance. Before capturing, export MUST print an effective-configuration style summary including format, settings (including appearance), presentation name, and output artifact path(s). Filesystem paths in the shared effective-configuration block, the export artifact summary, and post-capture “Wrote …” lines MUST follow the CLI console path display rules (shorter of invocation-relative vs `<cwd>/…`, absolute when more than `../../` is required).
 
 #### Scenario: Help lists format and theme
 - **WHEN** a developer runs `npx hptx export --help`
-- **THEN** the help text names `--format`, `--theme light|dark`, and `--progress`
+- **THEN** the help text names `--format`, `--settings.appearance`, and `--progress`, and does not describe `--theme` as light|dark appearance
 
 #### Scenario: Artifact paths use compact display
 - **WHEN** export prints its artifact summary and a “Wrote …” line for filesystem paths
@@ -171,3 +160,26 @@ Export `--help` and operator docs (README, CLAUDE.md) MUST document `--format pn
 #### Scenario: Docs state Full HD canvas
 - **WHEN** a developer reads README or CLAUDE.md export / canvas notes
 - **THEN** they state the design canvas is **1920×1080** (Full HD, 16:9)
+
+### Requirement: Shared settings CLI on export
+Export MUST accept the same `--settings.*` flags as build/dev (same keys, values, validation, and per-key merge). Effective settings MUST bake into the capture HTML. Capture `data-theme` MUST follow effective `appearance`. Export MUST NOT accept `--theme` as light/dark appearance.
+
+#### Scenario: Default appearance is light
+- **WHEN** export runs with no settings appearance from file or CLI
+- **THEN** captures use the light presentation appearance
+
+#### Scenario: Dark appearance from CLI
+- **WHEN** export runs with `--settings.appearance dark`
+- **THEN** captures use the dark presentation appearance
+
+#### Scenario: Appearance from deck.json settings
+- **WHEN** the deck file sets `"settings": { "appearance": "dark" }` and export omits `--settings.appearance`
+- **THEN** captures use the dark presentation appearance
+
+#### Scenario: Former appearance --theme is not accepted
+- **WHEN** a user runs export with `--theme dark`
+- **THEN** the command exits non-zero (unknown option; appearance is `--settings.appearance` only)
+
+#### Scenario: Settings clicker bakes for export assemble
+- **WHEN** export runs with `--settings.clicker true`
+- **THEN** the assembled HTML used for capture has baked clicker true

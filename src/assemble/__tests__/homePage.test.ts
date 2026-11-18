@@ -10,6 +10,7 @@ interface DeckApi {
   goToKey(k: string): void;
   setStep(k: string, i: number): void;
   get(k: string): { stepCount?: number } | undefined;
+  clickerMode(): boolean;
 }
 
 const slide = (title: string, section?: string) =>
@@ -251,7 +252,7 @@ describe('Settings theme (jsdom)', () => {
     const homeCb = doc.getElementById('clickerCheckbox') as HTMLInputElement;
     homeCb.click();
     expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(true);
-    expect(dom.window.localStorage.getItem('hptx/o/clicker-mode')).toBe('1');
+    expect(dom.window.localStorage.getItem('hptx/o/clicker')).toBe('true');
     expect((doc.getElementById('tcClickerMode') as HTMLInputElement).checked).toBe(true);
   });
 
@@ -310,12 +311,42 @@ describe('Settings theme (jsdom)', () => {
     const StorageEvent = dom.window.StorageEvent;
     dom.window.dispatchEvent(
       new StorageEvent('storage', {
-        key: 'hptx/o/theme',
+        key: 'hptx/o/appearance',
         newValue: 'dark',
         oldValue: 'light',
         storageArea: dom.window.localStorage,
       }),
     );
     expect(doc.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('uses baked clicker default and writes false when turning off', async () => {
+    const files = {
+      ...DECK,
+      'deck.json': JSON.stringify({
+        version: 1,
+        output: 'o.html',
+        cover: 'cover.html',
+        slides: ['process.html', 'metrics.html', 'closing.html'],
+        title: 'O',
+        settings: { clicker: true },
+      }),
+    };
+    const { doc, dom, Deck } = await boot(files);
+    expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(true);
+    expect(dom.window.localStorage.getItem('hptx/o/clicker')).toBeNull();
+    (doc.getElementById('clickerCheckbox') as HTMLInputElement).click();
+    expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(false);
+    expect(dom.window.localStorage.getItem('hptx/o/clicker')).toBe('false');
+    dom.window.confirm = () => true;
+    (doc.getElementById('tcEraseAllBtn') as HTMLButtonElement).click();
+    expect(dom.window.localStorage.getItem('hptx/o/clicker')).toBeNull();
+    expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(true);
+    expect(Deck.clickerMode()).toBe(true);
+  });
+
+  it('ignores legacy clicker-mode 1 when clicker key is absent', async () => {
+    const { doc } = await boot(DECK, { stored: { 'hptx/o/clicker-mode': '1' } });
+    expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(false);
   });
 });

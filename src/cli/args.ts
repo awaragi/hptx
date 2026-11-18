@@ -1,8 +1,9 @@
 import { Command, CommanderError } from 'commander';
 import path from 'node:path';
 import { resolveThemeSource } from '../assemble/loadDeckConfig.ts';
-import type { CdnEntry, ThemeSource } from '../assemble/types.ts';
+import type { CdnEntry, DeckSettingsPartial, ThemeSource } from '../assemble/types.ts';
 import type { DeckOverrides } from '../assemble/loadDeckConfig.ts';
+import { addSettingsOptions, settingsPartialFromOpts } from './settingsFlags.ts';
 
 /**
  * Directory the user ran the command from. `npm run` switches to the package
@@ -39,6 +40,8 @@ export interface DeckArgs {
   caption?: string;
   scripts?: CdnEntry[];
   styles?: CdnEntry[];
+  /** Partial settings from `--settings.*`. */
+  settings?: DeckSettingsPartial;
 }
 
 function collect(value: string, prev: string[]): string[] {
@@ -48,18 +51,20 @@ function collect(value: string, prev: string[]): string[] {
 
 /** Shared long-only deck options for `dev` / `build` (and mirrored by `new deck`). */
 export function addDeckOptions(command: Command): Command {
-  return command
-    .option('--cwd <dir>', 'working root for slides and relative deck paths')
-    .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
-    .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
-    .option('--output <path>', 'output HTML path (required for build unless set in the deck file)')
-    .option('--theme <src>', 'theme CSS (local path or https:// URL)')
-    .option('--cover <file>', 'cover HTML file')
-    .option('--title <text>', 'document / presentation title')
-    .option('--brand <text>', 'primary brand label')
-    .option('--caption <text>', 'secondary brand caption')
-    .option('--script <url>', 'https CDN script URL (repeatable; replaces file scripts)', collect, [])
-    .option('--style <url>', 'https CDN stylesheet URL (repeatable; replaces file styles)', collect, []);
+  return addSettingsOptions(
+    command
+      .option('--cwd <dir>', 'working root for slides and relative deck paths')
+      .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
+      .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
+      .option('--output <path>', 'output HTML path (required for build unless set in the deck file)')
+      .option('--theme <src>', 'theme CSS (local path or https:// URL)')
+      .option('--cover <file>', 'cover HTML file')
+      .option('--title <text>', 'document / presentation title')
+      .option('--brand <text>', 'primary brand label')
+      .option('--caption <text>', 'secondary brand caption')
+      .option('--script <url>', 'https CDN script URL (repeatable; replaces file scripts)', collect, [])
+      .option('--style <url>', 'https CDN stylesheet URL (repeatable; replaces file styles)', collect, []),
+  );
 }
 
 export class HelpDisplayedError extends Error {
@@ -124,6 +129,10 @@ export function parseDeckArgs(argv: string[]): DeckArgs {
     caption?: string;
     script?: string[];
     style?: string[];
+    'settings.clicker'?: string;
+    'settings.rememberStep'?: string;
+    'settings.timer'?: string;
+    'settings.appearance'?: string;
   }>();
 
   if (opts.cwd === undefined && opts.deck === undefined) {
@@ -174,6 +183,9 @@ export function parseDeckArgs(argv: string[]): DeckArgs {
   const styles = httpsCdnList('--style', opts.style);
   if (styles) result.styles = styles;
 
+  const settings = settingsPartialFromOpts(opts);
+  if (settings) result.settings = settings;
+
   return result;
 }
 
@@ -188,9 +200,10 @@ export function deckArgsToOverrides(args: DeckArgs): DeckOverrides {
     ...(args.caption !== undefined ? { caption: args.caption } : {}),
     ...(args.scripts !== undefined ? { scripts: args.scripts } : {}),
     ...(args.styles !== undefined ? { styles: args.styles } : {}),
+    ...(args.settings !== undefined ? { settings: args.settings } : {}),
   };
 }
 
 /** Shared usage hint for build/dev error paths. */
 export const DECK_USAGE =
-  'Usage: npx hptx <dev|build> --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] ...';
+  'Usage: npx hptx <dev|build> --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] ...';

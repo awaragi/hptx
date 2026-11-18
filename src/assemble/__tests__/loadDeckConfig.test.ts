@@ -212,6 +212,56 @@ describe('validateDeckConfig', () => {
   });
 });
 
+describe('settings', () => {
+  it('accepts partial settings and fills platform defaults on load', () => {
+    const deck = load(withVersion({ output: 'a.html', settings: { clicker: true } }));
+    expect(deck.settings).toEqual({
+      clicker: true,
+      rememberStep: false,
+      timer: false,
+      appearance: 'light',
+    });
+    expect(deck.config.settings).toEqual(deck.settings);
+  });
+
+  it('rejects unknown settings keys and bad values', () => {
+    expect(() => load(withVersion({ output: 'a.html', settings: { foo: true } }))).toThrow(/foo/);
+    expect(() => load(withVersion({ output: 'a.html', settings: { appearance: 'blue' } }))).toThrow(
+      /appearance/,
+    );
+    expect(() => load(withVersion({ output: 'a.html', settings: { clicker: 1 } }))).toThrow(/clicker/);
+  });
+
+  it('merges CLI settings over file per key', () => {
+    const dir = makeDeckDir({
+      'deck.json': JSON.stringify(
+        withVersion({ output: './Out.html', settings: { clicker: false, appearance: 'dark' } }),
+      ),
+    });
+    const deck = resolveDeckInvocation({
+      cwd: dir,
+      baseDir: '/',
+      overrides: { settings: { clicker: true } },
+    });
+    expect(deck.settings.clicker).toBe(true);
+    expect(deck.settings.appearance).toBe('dark');
+  });
+
+  it('uses platform defaults when settings omitted', () => {
+    const deck = resolveDeckInvocation({
+      cwd: makeDeckDir({ 'a.html': '<html></html>' }),
+      baseDir: '/',
+      overrides: { outputPath: '/tmp/Out.html' },
+    });
+    expect(deck.settings).toEqual({
+      clicker: false,
+      rememberStep: false,
+      timer: false,
+      appearance: 'light',
+    });
+  });
+});
+
 function fsWriteRaw(dir: string, cfg: Record<string, unknown>): void {
   fs.writeFileSync(path.join(dir, 'deck.json'), JSON.stringify(cfg));
 }
