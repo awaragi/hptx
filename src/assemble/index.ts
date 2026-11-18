@@ -10,6 +10,7 @@ import { filterSlides, resolveCover, resolveSlideList } from './resolveSlides.ts
 import type { ResolvedDeck, ResolvedSlide, ThemeSource } from './types.ts';
 
 export * from './types.ts';
+export * from './deckJson.ts';
 export * from './loadDeckConfig.ts';
 export * from './resolveSlides.ts';
 export * from './parseSlide.ts';

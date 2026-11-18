@@ -152,6 +152,30 @@ describe('createSlide', () => {
     ]);
   });
 
+  it('updates a JSON5 deck file and writes strict JSON without comments', () => {
+    const dir = tmp();
+    fs.writeFileSync(
+      path.join(dir, 'deck.json'),
+      `{
+  "version": 1,
+  "output": "o.html",
+  // skip metrics for this build
+  "slides": [
+    "a.html",
+    /* "metrics.html", */
+  ],
+}
+`,
+    );
+    fs.writeFileSync(path.join(dir, 'a.html'), template('blank'));
+    createSlide({ cwd: dir, key: 'detail', template: 'blank' });
+    const written = fs.readFileSync(path.join(dir, 'deck.json'), 'utf8');
+    expect(written).not.toContain('//');
+    expect(written).not.toContain('/*');
+    expect(() => JSON.parse(written)).not.toThrow();
+    expect(JSON.parse(written).slides).toEqual(['a.html', 'detail.html']);
+  });
+
   it('adds catalog CDN dependencies once, keeping deck.json key order', () => {
     const dir = deckDir({ title: 'T', output: 'o.html', slides: [] });
     const first = createSlide({ cwd: dir, key: 'chartA', template: 'd3Chart' });

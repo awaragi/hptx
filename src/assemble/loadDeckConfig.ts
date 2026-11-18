@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { readDeckJson } from './deckJson.ts';
 import { resolveDeckTitle } from './deckTitle.ts';
 import type {
   AppearanceSetting,
@@ -283,19 +284,7 @@ function pathsFromConfig(root: string, config: DeckConfig, label: string): Pick<
 export function loadDeckFile(configPath: string, root: string): ResolvedDeck {
   const absConfig = path.resolve(configPath);
   const absRoot = path.resolve(root);
-  let text: string;
-  try {
-    text = fs.readFileSync(absConfig, 'utf8');
-  } catch (err) {
-    throw new Error(`Cannot read ${absConfig}: ${(err as Error).message}`);
-  }
-
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (err) {
-    throw new Error(`Invalid JSON in ${absConfig}: ${(err as Error).message}`);
-  }
+  const raw = readDeckJson(absConfig);
 
   const label = path.basename(absConfig);
   const config = absolutizeDeckConfig(absRoot, validateDeckConfig(raw, label));

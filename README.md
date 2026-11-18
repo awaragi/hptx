@@ -218,7 +218,7 @@ Requires Google Chrome installed. Export uses `playwright-core` with channel `ch
 
 ## Deck configuration
 
-`deck.json` is optional but strict when present. hptx rejects unknown top-level fields and `http://` URLs. Missing `version` fails load.
+`deck.json` is optional but strict when present. Files are parsed as **JSON5** (a JSON superset), so `//` / `/* */` comments and trailing commas are allowed — useful for commenting out a slide entry without deleting it. Platform rewrites (`hptx new …`) write pretty-printed strict JSON and do not preserve comments. hptx rejects unknown top-level fields and `http://` URLs. Missing `version` fails load.
 
 | Field | Required | Meaning |
 | --- | --- | --- |

@@ -48,6 +48,30 @@ describe('loadDeckConfig', () => {
     );
   });
 
+  it('loads JSON5 comments and trailing commas in slides', () => {
+    const dir = makeDeckDir({
+      'deck.json': `{
+        "version": 1,
+        "output": "o.html",
+        // skip metrics for this build
+        "slides": [
+          "overview.html",
+          /* "metrics.html", */
+          "closing.html",
+        ],
+      }`,
+      'overview.html': '<html></html>',
+      'closing.html': '<html></html>',
+    });
+    const deck = loadDeckConfig(dir);
+    expect(deck.config.slides?.map((s) => path.basename(s))).toEqual(['overview.html', 'closing.html']);
+  });
+
+  it('fails when deck JSON5 text is invalid', () => {
+    const dir = makeDeckDir({ 'deck.json': '{ nope' });
+    expect(() => loadDeckConfig(dir)).toThrow(/Invalid deck JSON/);
+  });
+
   it('rejects relative script paths', () => {
     expect(() => load(withVersion({ output: 'a.html', scripts: ['./vendor/d3.min.js'] }))).toThrow(
       /scripts must be https:\/\/ CDN URLs/,

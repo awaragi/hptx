@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { parseDeckJson } from '../deckJson.ts';
 
 /** Ensure a deck.json object includes schema version 1 (for tests). */
 export function withVersion(cfg: Record<string, unknown>): Record<string, unknown> {
@@ -13,7 +14,7 @@ export function makeDeckDir(files: Record<string, string> = {}): string {
     let text = content;
     if (name === 'deck.json' || name.endsWith('/deck.json')) {
       try {
-        const parsed = JSON.parse(content) as Record<string, unknown>;
+        const parsed = parseDeckJson(content) as Record<string, unknown>;
         if (parsed.version === undefined) text = JSON.stringify(withVersion(parsed));
       } catch {
         /* leave invalid JSON for negative tests */

@@ -6,7 +6,9 @@ import {
   contractCssPath,
   DECK_SCHEMA_VERSION,
   loadDeckFile,
+  readDeckJson,
   RESERVED_SLIDE_KEYS,
+  writeDeckJson,
 } from '../assemble/index.ts';
 import type { CdnEntry } from '../assemble/index.ts';
 import { addDeckOptions, HelpDisplayedError } from '../cli/args.ts';
@@ -166,7 +168,7 @@ export function createSlide(opts: CreateSlideOptions): CreateSlideResult {
     if (slidePath === deck.coverPath) throw new Error(`"${filename}" is the deck's cover; pick another slide key`);
     if (fs.existsSync(slidePath)) throw new Error(`${slidePath} already exists`);
 
-    raw = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Record<string, unknown>;
+    raw = readDeckJson(configPath) as Record<string, unknown>;
     const slides = raw.slides as string[] | undefined;
     if (opts.after !== undefined) {
       if (!slides) throw new Error('--after needs a "slides" list in deck.json (this deck discovers slides by filename)');
@@ -206,7 +208,7 @@ export function createSlide(opts: CreateSlideOptions): CreateSlideResult {
   writeAtomic(slidePath, html);
   if (configPath !== undefined && raw !== undefined && (listed || addedCdn.length)) {
     try {
-      writeAtomic(configPath, JSON.stringify(raw, null, 2) + '\n');
+      writeDeckJson(configPath, raw);
     } catch (err) {
       fs.rmSync(slidePath, { force: true });
       throw err;
@@ -282,7 +284,7 @@ export function createDeck(opts: CreateDeckOptions): { root: string; files: stri
     if (opts.scripts !== undefined) json.scripts = opts.scripts;
     if (opts.styles !== undefined) json.styles = opts.styles;
 
-    writeAtomic(path.join(root, 'deck.json'), JSON.stringify(json, null, 2) + '\n');
+    writeDeckJson(path.join(root, 'deck.json'), json);
     if (!opts.slides) {
       createSlide({
         cwd: root,

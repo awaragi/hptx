@@ -46,6 +46,8 @@ Dev prints the Local URL (typically `http://localhost:5173/`).
 
 ### `deck.json` (optional; cascade with CLI)
 
+Parsed as **JSON5** (strict JSON still works): authors may use `//` / `/* */` comments and trailing commas — e.g. comment out a `slides` entry to skip it for a build. Platform writes (`hptx new slide` / `new deck`) emit pretty-printed **strict JSON** and do not preserve comments. Filename stays `deck.json`.
+
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `version` | yes (in file) | Schema version; current is `1` |
