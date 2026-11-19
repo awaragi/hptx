@@ -169,8 +169,9 @@ describe('loadDeckConfig', () => {
 });
 
 describe('resolveDeckInvocation', () => {
-  it('requires cwd or deck', () => {
-    expect(() => resolveDeckInvocation({ baseDir: '/work' })).toThrow(/--cwd|--deck/);
+  it('defaults cwd to baseDir when --cwd and --deck are omitted', () => {
+    const deck = resolveDeckInvocation({ baseDir: '/work' });
+    expect(deck.root).toBe(path.resolve('/work'));
   });
 
   it('uses dirname(--deck) as root and merges CLI title over file', () => {

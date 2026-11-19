@@ -187,15 +187,15 @@ Prefer the local `hptx` binary (`npx hptx …` after `npm install`). Equivalent 
 
 | Command | Purpose |
 | --- | --- |
-| `npx hptx dev --cwd <dir> \| --deck <file> [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--settings.clicker\|rememberStep\|timer true\|false`, `--settings.appearance light\|dark`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
-| `npx hptx build --cwd <dir> \| --deck <file> [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file). Minifies inline CSS/JS by default; `--debug` writes readable HTML |
-| `npx hptx export --cwd <dir> \| --deck <file> [options]` | Export design-canvas PNGs / PDFs / PPTX via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print\|pptx` (one per run; default `png`). Same `--settings.*` flags as build/dev (appearance default `light`). `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
+| `npx hptx dev [--cwd <dir>] [--deck <file>] [options]` | Live preview; reload on slide / deck JSON / theme edits. Long-only flags: `--slide` (repeatable), `--output` (ignored for write), `--theme` (CSS theme file/URL), `--settings.clicker\|rememberStep\|timer true\|false`, `--settings.appearance light\|dark`, `--cover`, `--title`, `--brand`, `--caption`, `--script`, `--style` |
+| `npx hptx build [--cwd <dir>] [--deck <file>] [options]` | Write the single-file output (same flags; `--output` required unless set in the deck file). Minifies inline CSS/JS by default; `--debug` writes readable HTML |
+| `npx hptx export [--cwd <dir>] [--deck <file>] [options]` | Export design-canvas PNGs / PDFs / PPTX via **system Google Chrome** (`playwright-core`; no bundled browser). Requires `output` (same as build). `--format png\|pdf\|print\|pptx` (one per run; default `png`). Same `--settings.*` flags as build/dev (appearance default `light`). `--progress` logs `(slide/total - step/steps) filename` (no step counters when the slide has no steps). Print-layout PDF also works via Cmd/Ctrl+P on the previewed or built HTML. |
 | `npx hptx new deck --cwd <dir> [field flags…]` | Scaffold a new deck (`deck.json` with `version: 1`, `cover.html`, `overview.html`) |
 | `npx hptx new slide --cwd <dir> --key <stem> --from <template> […]` | Add a slide from a template |
 | `npx hptx new --list` | List slide templates |
 | `npm test` | Run the test suite |
 
-Always pass `--cwd` and/or `--deck` (no default root). Effective config: defaults < deck file < CLI. Relative paths resolve against the working root (absolute paths allowed).
+For `dev` / `build` / `export`, `--cwd` defaults to `.` (invocation directory) when both `--cwd` and `--deck` are omitted. `new deck` / `new slide` still require `--cwd`. Effective config: defaults < deck file < CLI. Relative paths resolve against the working root (absolute paths allowed).
 
 ### Example
 

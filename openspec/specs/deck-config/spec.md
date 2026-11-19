@@ -7,11 +7,15 @@ Defines the `deck.json` contract for a presentation deck project: required and o
 ## Requirements
 
 ### Requirement: Deck project root
-The deck working root MUST be the resolved `--cwd` directory, or the parent directory of `--deck` when `--cwd` is omitted. Relative filesystem paths in the deck file MUST resolve against that working root. The working root MUST NOT require a deck JSON file to exist.
+The deck working root MUST be the resolved `--cwd` directory when that flag is set; otherwise the parent directory of `--deck` when `--deck` is set; otherwise `.` resolved against the invocation directory. Relative filesystem paths in the deck file MUST resolve against that working root. The working root MUST NOT require a deck JSON file to exist.
 
 #### Scenario: Resolve paths relative to deck.json
 - **WHEN** the user runs with `--cwd /path/to/deck` (or `--deck /path/to/deck/deck.json`) and the effective config has `output` `./Deck.html` and `theme` `./theme.css`
 - **THEN** those paths resolve under `/path/to/deck`
+
+#### Scenario: Omitted cwd and deck use invocation directory
+- **WHEN** the user runs build, preview, or export with neither `--cwd` nor `--deck`
+- **THEN** the working root is the invocation directory (equivalent to `--cwd .`)
 
 ### Requirement: deck.json structure
 When a deck file is loaded, its text MUST be parsed as JSON5 and the result MUST be a plain object. Strict JSON remains valid (JSON5 is a JSON superset). The platform MUST recognize exactly these top-level fields: `version` (required integer), and the optional `output`, `slides` (string array), `cover`, `theme`, `title`, `brand`, and `caption` (strings), `scripts` and `styles` (arrays of strings or `{ src, integrity?, crossorigin? }` objects), and `settings` (object). Each field's meaning is defined by its own requirement. Fields present in the file participate in the effective config cascade; omitted optional fields leave those keys unset at the file layer. Parse failures MUST fail load with an error that names the deck file.

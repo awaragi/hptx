@@ -59,7 +59,7 @@ function collect(value: string, prev: string[]): string[] {
 export function addDeckOptions(command: Command): Command {
   return addSettingsOptions(
     command
-      .option('--cwd <dir>', 'working root for slides and relative deck paths')
+      .option('--cwd <dir>', 'working root for slides and relative deck paths (default: .)')
       .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
       .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
       .option('--output <path>', 'output HTML path (required for build unless set in the deck file)')
@@ -138,10 +138,6 @@ type DeckOpts = {
 };
 
 function deckArgsFromOpts(opts: DeckOpts): DeckArgs {
-  if (opts.cwd === undefined && opts.deck === undefined) {
-    throw new Error('Provide --cwd <dir> and/or --deck <file>');
-  }
-
   const inv = invocationDir();
   const result: DeckArgs = {};
 
@@ -152,6 +148,9 @@ function deckArgsFromOpts(opts: DeckOpts): DeckArgs {
   if (opts.deck !== undefined) {
     if (opts.deck.trim() === '') throw new Error('--deck requires a path');
     result.deck = resolveAgainst(inv, opts.deck);
+  }
+  if (result.cwd === undefined && result.deck === undefined) {
+    result.cwd = resolveAgainst(inv, '.');
   }
 
   const root = result.cwd ?? path.dirname(result.deck!);
@@ -246,4 +245,4 @@ export function deckArgsToOverrides(args: DeckArgs): DeckOverrides {
 
 /** Shared usage hint for build/dev error paths. */
 export const DECK_USAGE =
-  'Usage: npx hptx <dev|build> --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] ...';
+  'Usage: npx hptx <dev|build> [--cwd <dir>] [--deck <file>] [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] ...';

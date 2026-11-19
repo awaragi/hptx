@@ -66,7 +66,7 @@ function exportCommand(): Command {
       .exitOverride()
       .configureHelp({ helpWidth: 100 })
       .allowExcessArguments(false)
-      .option('--cwd <dir>', 'working root for slides and relative deck paths')
+      .option('--cwd <dir>', 'working root for slides and relative deck paths (default: .)')
       .option('--deck <file>', 'path to deck JSON (default: <cwd>/deck.json when present)')
       .option('--slide <key>', 'include this slide key or filename (repeatable; filter order)', collect, [])
       .option('--output <path>', 'HTML output path (required unless set in the deck file; parent dir for export artifacts)')
@@ -87,7 +87,7 @@ export function exportHelpText(): string {
 }
 
 export const EXPORT_USAGE =
-  'Usage: npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--progress] [--output path] ...';
+  'Usage: npx hptx export [--cwd <dir>] [--deck <file>] [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--progress] [--output path] ...';
 
 /**
  * Parse export flags. Appearance comes from `--settings.appearance` (and deck.json settings).
@@ -121,10 +121,6 @@ export function parseExportArgs(argv: string[]): ExportArgs {
     'settings.appearance'?: string;
   }>();
 
-  if (opts.cwd === undefined && opts.deck === undefined) {
-    throw new Error('Provide --cwd <dir> and/or --deck <file>');
-  }
-
   let format: ExportFormat = 'png';
   if (opts.format !== undefined) {
     const f = opts.format.trim() as ExportFormat;
@@ -144,6 +140,9 @@ export function parseExportArgs(argv: string[]): ExportArgs {
   if (opts.deck !== undefined) {
     if (opts.deck.trim() === '') throw new Error('--deck requires a path');
     result.deck = resolveAgainst(inv, opts.deck);
+  }
+  if (result.cwd === undefined && result.deck === undefined) {
+    result.cwd = resolveAgainst(inv, '.');
   }
 
   const root = result.cwd ?? path.dirname(result.deck!);

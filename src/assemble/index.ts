@@ -155,7 +155,12 @@ export function resolveFromOpts(opts: AssembleDeckOptions): ResolvedDeck {
     });
   }
 
-  throw new Error('Provide --cwd <dir> and/or --deck <file>');
+  return resolveDeckInvocation({
+    cwd: '.',
+    baseDir,
+    overrides,
+    requireOutput: opts.requireOutput === true,
+  });
 }
 
 /** Compute the assemble plan once (resolve config + select slides). */

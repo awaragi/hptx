@@ -6,12 +6,12 @@ Exports an assembled deck to design-canvas PNG frames and PDF artifacts for auto
 
 ## Requirements
 
-### Requirement: Explicit deck root and required output for export
-`hptx export` MUST require `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build. It MUST require an effective `output` path (deck file and/or `--output`) so the HTML output path and export artifact parent directory are defined. When the root or output is missing, the command MUST exit non-zero with usage that names those requirements.
+### Requirement: Optional deck root and required output for export
+`hptx export` MUST accept optional `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build (including defaulting the working root to `.` when both are omitted). It MUST require an effective `output` path (deck file and/or `--output`) so the HTML output path and export artifact parent directory are defined. When output is missing, the command MUST exit non-zero with usage that names that requirement.
 
-#### Scenario: Missing cwd and deck fails
-- **WHEN** a developer runs `npx hptx export` with neither `--cwd` nor `--deck`
-- **THEN** the command exits non-zero and prints usage that names those flags
+#### Scenario: Export defaults cwd to invocation directory
+- **WHEN** a developer runs `npx hptx export` with neither `--cwd` nor `--deck` from a directory that is a valid deck root with `output`
+- **THEN** the command uses that invocation directory as the working root and proceeds (same as `--cwd .`)
 
 #### Scenario: Missing output fails
 - **WHEN** a developer runs `npx hptx export --cwd <dir>` for a deck that has no `output` and no `--output`

@@ -6,12 +6,12 @@ Defines Vite-backed development preview for an explicitly chosen deck folder so 
 
 ## Requirements
 
-### Requirement: Explicit deck root for preview
-`npm run dev` MUST require `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build. When both are omitted, the command MUST exit non-zero with usage that names those flags. The toolchain MUST NOT default the working root to the invocation directory.
+### Requirement: Optional deck root for preview
+`npm run dev` / `hptx dev` MUST accept optional `--cwd <dir>` and/or `--deck <file>` using the same working-root and deck-file resolution rules as build. When both are omitted, the working root MUST default to `.` (the invocation directory).
 
-#### Scenario: Dev without deck path fails
-- **WHEN** a user runs `npm run dev` with neither `--cwd` nor `--deck`
-- **THEN** the command exits non-zero with usage that names `--cwd` and `--deck`
+#### Scenario: Dev defaults cwd to invocation directory
+- **WHEN** a user runs `npm run dev` with neither `--cwd` nor `--deck` from a directory that is a valid deck root
+- **THEN** the command uses that invocation directory as the working root, serves the assembled preview, and prints the preview URL (same as `--cwd .`)
 
 #### Scenario: Dev with explicit path
 - **WHEN** a user runs `npm run dev -- --cwd /path/to/deck`

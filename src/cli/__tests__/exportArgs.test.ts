@@ -39,8 +39,9 @@ describe('parseExportArgs', () => {
     expect(() => parseExportArgs(['--cwd', 'd', '--theme', 'dark'])).toThrow(/unknown option/i);
   });
 
-  it('requires cwd or deck', () => {
-    expect(() => parseExportArgs([])).toThrow(/--cwd/);
+  it('defaults cwd to invocation directory when --cwd and --deck are omitted', () => {
+    process.env.INIT_CWD = '/work';
+    expect(parseExportArgs([]).cwd).toBe(path.resolve('/work'));
   });
 
   it('documents format, settings appearance, progress, and HTML print in help', () => {

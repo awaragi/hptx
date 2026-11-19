@@ -398,13 +398,13 @@ export interface ResolveDeckInvocationInput {
  */
 export function resolveDeckInvocation(input: ResolveDeckInvocationInput): ResolvedDeck {
   const { baseDir, overrides = {}, requireOutput = false } = input;
-  if (!input.cwd && !input.deck) {
-    throw new Error('Provide --cwd <dir> and/or --deck <file>');
-  }
-
   const deckFileAbs = input.deck !== undefined ? path.resolve(baseDir, input.deck) : undefined;
   const root = path.resolve(
-    input.cwd !== undefined ? path.resolve(baseDir, input.cwd) : path.dirname(deckFileAbs!),
+    input.cwd !== undefined
+      ? path.resolve(baseDir, input.cwd)
+      : deckFileAbs !== undefined
+        ? path.dirname(deckFileAbs)
+        : baseDir,
   );
 
   let fileDeck: ResolvedDeck | undefined;

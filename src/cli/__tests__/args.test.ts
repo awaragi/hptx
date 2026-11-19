@@ -73,9 +73,11 @@ describe('parseDeckArgs', () => {
     expect(args.outputPath).toBe(path.resolve('/work', 'decks/demo', './Out.html'));
   });
 
-  it('fails without --cwd or --deck', () => {
-    expect(() => parseDeckArgs([])).toThrow(/--cwd|--deck/);
-    expect(() => parseDeckArgs(['--slide', 'a'])).toThrow(/--cwd|--deck/);
+  it('defaults cwd to invocation directory when --cwd and --deck are omitted', () => {
+    process.env.INIT_CWD = '/work';
+    expect(parseDeckArgs([]).cwd).toBe(path.resolve('/work'));
+    expect(parseDeckArgs(['--slide', 'a']).cwd).toBe(path.resolve('/work'));
+    expect(parseDeckArgs(['--slide', 'a']).slides).toEqual(['a']);
   });
 
   it('rejects -o and --slides', () => {

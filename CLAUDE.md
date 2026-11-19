@@ -25,12 +25,12 @@ Prefer `npx hptx …` after `npm install` (no `--` before flags). `npm run … -
 
 ```bash
 npm install
-npx hptx dev --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
-npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] [--debug] ...
+npx hptx dev [--cwd <dir>] [--deck <file>] [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
+npx hptx build [--cwd <dir>] [--deck <file>] [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] [--debug] ...
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
-npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--settings.clicker true|false] [--progress] ...
+npx hptx export [--cwd <dir>] [--deck <file>] [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--settings.clicker true|false] [--progress] ...
 npm test
 ```
 
@@ -40,7 +40,7 @@ Examples: `npx hptx dev --cwd templates`, `npx hptx build --cwd templates --slid
 `npx hptx export --cwd decks/about --format png --progress`, `npx hptx export --cwd templates --format pptx --theme dark`,
 `npx hptx new deck --cwd decks/demo --title "Demo deck" --output ./Demo.html`,
 `npx hptx new slide --cwd decks/demo --key detail --from cardGrid --after overview`.
-Require `--cwd` and/or `--deck` (no invocation-dir default). Long option names only.
+For `dev` / `build` / `export`, `--cwd` defaults to `.` when both `--cwd` and `--deck` are omitted. `new` still requires `--cwd`. Long option names only.
 Relative paths (except `--cwd` / `--deck`) resolve against the working root; absolute paths work everywhere.
 Dev prints the Local URL (typically `http://localhost:5173/`).
 
