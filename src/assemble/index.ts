@@ -5,6 +5,7 @@ import { assembleHtml } from './assembleHtml.ts';
 import { bakeLocalImages } from './bakeLocalImages.ts';
 import { checkSlides } from './checkSlides.ts';
 import { resolveDeckInvocation, type DeckOverrides } from './loadDeckConfig.ts';
+import { minifyAssembledHtml } from './minifyHtml.ts';
 import { parseSlideDocument } from './parseSlide.ts';
 import { filterSlides, resolveCover, resolveSlideList } from './resolveSlides.ts';
 import type { ResolvedDeck, ResolvedSlide, ThemeSource } from './types.ts';
@@ -19,6 +20,7 @@ export * from './bakeTheme.ts';
 export * from './bakeLocalImages.ts';
 export * from './emitCdn.ts';
 export * from './assembleHtml.ts';
+export * from './minifyHtml.ts';
 export * from './checkSlides.ts';
 
 export const THEME_FETCH_TIMEOUT_MS = 10_000;
@@ -88,6 +90,11 @@ export interface AssembleDeckOptions {
   /** When true, require effective output (build). Default false. */
   requireOutput?: boolean;
   /**
+   * When true, minify inline CSS/JS in the assembled HTML. Default false
+   * (preview/export). Build enables this unless `--debug`.
+   */
+  minify?: boolean;
+  /**
    * Legacy: absolute deck root that must contain deck.json.
    * Prefer `cwd` / `deck`. When set alone, treated as `--cwd`.
    */
@@ -101,6 +108,8 @@ export interface AssemblePlan {
   slides: ResolvedSlide[];
   templatePath: string;
   requireOutput: boolean;
+  /** When true, minify inline CSS/JS before returning HTML. */
+  minify: boolean;
 }
 
 export interface AssembleDeckResult {
@@ -155,12 +164,18 @@ export function planAssemble(opts: AssembleDeckOptions): AssemblePlan {
   const all = resolveSlideList(deck);
   const slides = opts.slides ? filterSlides(all, opts.slides) : all;
   const templatePath = opts.templatePath ? path.resolve(opts.templatePath) : defaultTemplatePath();
-  return { deck, slides, templatePath, requireOutput: opts.requireOutput === true };
+  return {
+    deck,
+    slides,
+    templatePath,
+    requireOutput: opts.requireOutput === true,
+    minify: opts.minify === true,
+  };
 }
 
 /** Assemble from an already-computed plan (no second resolve). */
 export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeckResult> {
-  const { deck, slides: selected, templatePath, requireOutput } = plan;
+  const { deck, slides: selected, templatePath, requireOutput, minify } = plan;
 
   const sourceName = (abs: string) => path.relative(deck.root, abs).split(path.sep).join('/');
   const parsed = selected.map((s) => ({
@@ -194,7 +209,7 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     throw new Error(`Cannot read shell template ${templatePath}: ${(err as Error).message}`);
   }
 
-  const { html, warnings } = assembleHtml({
+  const assembled = assembleHtml({
     template,
     config: deck.config,
     slides: parsed,
@@ -205,6 +220,8 @@ export async function assembleFromPlan(plan: AssemblePlan): Promise<AssembleDeck
     assets,
     ...(themeCss !== undefined ? { themeCss } : {}),
   });
+  const html = minify ? await minifyAssembledHtml(assembled.html) : assembled.html;
+  const { warnings } = assembled;
 
   const outputPath = deck.outputPath ?? deck.config.output;
   if (outputPath === undefined && requireOutput) {

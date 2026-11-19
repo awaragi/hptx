@@ -44,6 +44,12 @@ export interface DeckArgs {
   settings?: DeckSettingsPartial;
 }
 
+/** Build args: shared deck flags plus build-only `--debug`. */
+export interface BuildArgs extends DeckArgs {
+  /** When true, skip CSS/JS minify on the written output. */
+  debug: boolean;
+}
+
 function collect(value: string, prev: string[]): string[] {
   prev.push(value);
   return prev;
@@ -75,13 +81,22 @@ export class HelpDisplayedError extends Error {
   }
 }
 
+function deckCommandBase(): Command {
+  return new Command()
+    .name('hptx')
+    .exitOverride()
+    .configureHelp({ helpWidth: 100 })
+    .allowExcessArguments(false);
+}
+
 function deckCommand(): Command {
-  return addDeckOptions(
-    new Command()
-      .name('hptx')
-      .exitOverride()
-      .configureHelp({ helpWidth: 100 })
-      .allowExcessArguments(false),
+  return addDeckOptions(deckCommandBase());
+}
+
+function buildCommand(): Command {
+  return addDeckOptions(deckCommandBase()).option(
+    '--debug',
+    'skip CSS/JS minify (write readable HTML)',
   );
 }
 
@@ -103,38 +118,26 @@ function httpsCdnList(flag: string, values: string[] | undefined): CdnEntry[] | 
   });
 }
 
-/**
- * Parse `--cwd` / `--deck` and deck field flags via Commander.
- * `--cwd` / `--deck` resolve against the invocation directory; all other relative
- * paths resolve against the working root. Absolute paths are accepted everywhere.
- */
-export function parseDeckArgs(argv: string[]): DeckArgs {
-  const program = deckCommand();
-  try {
-    program.parse(argv, { from: 'user' });
-  } catch (err) {
-    if (err instanceof CommanderError) throw mapParseError(err);
-    throw err;
-  }
+type DeckOpts = {
+  cwd?: string;
+  deck?: string;
+  slide?: string[];
+  output?: string;
+  theme?: string;
+  cover?: string;
+  title?: string;
+  brand?: string;
+  caption?: string;
+  script?: string[];
+  style?: string[];
+  'settings.clicker'?: string;
+  'settings.rememberStep'?: string;
+  'settings.timer'?: string;
+  'settings.appearance'?: string;
+  debug?: boolean;
+};
 
-  const opts = program.opts<{
-    cwd?: string;
-    deck?: string;
-    slide?: string[];
-    output?: string;
-    theme?: string;
-    cover?: string;
-    title?: string;
-    brand?: string;
-    caption?: string;
-    script?: string[];
-    style?: string[];
-    'settings.clicker'?: string;
-    'settings.rememberStep'?: string;
-    'settings.timer'?: string;
-    'settings.appearance'?: string;
-  }>();
-
+function deckArgsFromOpts(opts: DeckOpts): DeckArgs {
   if (opts.cwd === undefined && opts.deck === undefined) {
     throw new Error('Provide --cwd <dir> and/or --deck <file>');
   }
@@ -187,6 +190,43 @@ export function parseDeckArgs(argv: string[]): DeckArgs {
   if (settings) result.settings = settings;
 
   return result;
+}
+
+/**
+ * Parse `--cwd` / `--deck` and deck field flags via Commander.
+ * `--cwd` / `--deck` resolve against the invocation directory; all other relative
+ * paths resolve against the working root. Absolute paths are accepted everywhere.
+ */
+export function parseDeckArgs(argv: string[]): DeckArgs {
+  const program = deckCommand();
+  try {
+    program.parse(argv, { from: 'user' });
+  } catch (err) {
+    if (err instanceof CommanderError) throw mapParseError(err);
+    throw err;
+  }
+  return deckArgsFromOpts(program.opts<DeckOpts>());
+}
+
+/**
+ * Parse build flags: shared deck options plus build-only `--debug`.
+ * `dev` must keep using {@link parseDeckArgs} so `--debug` stays unknown there.
+ */
+export function parseBuildArgs(argv: string[]): BuildArgs {
+  const program = buildCommand();
+  try {
+    program.parse(argv, { from: 'user' });
+  } catch (err) {
+    if (err instanceof CommanderError) throw mapParseError(err);
+    throw err;
+  }
+  const opts = program.opts<DeckOpts>();
+  return { ...deckArgsFromOpts(opts), debug: opts.debug === true };
+}
+
+/** Commander help text for `hptx build` (includes `--debug`). */
+export function buildHelpText(): string {
+  return buildCommand().helpInformation();
 }
 
 /** Map parsed CLI args into assemble overrides (excluding slides filter and cwd/deck). */

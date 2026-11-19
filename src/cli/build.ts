@@ -2,16 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { assembleFromPlan, planAssemble } from '../assemble/index.ts';
 import type { AssembleDeckOptions } from '../assemble/index.ts';
-import { DECK_USAGE, HelpDisplayedError, invocationDir, parseDeckArgs } from './args.ts';
+import { DECK_USAGE, HelpDisplayedError, invocationDir, parseBuildArgs, type BuildArgs } from './args.ts';
 import { formatConsolePath } from './consolePaths.ts';
 import { printEffectiveConfig } from './printConfig.ts';
 
-function assembleOptsFromArgs(args: ReturnType<typeof parseDeckArgs>, requireOutput: boolean): AssembleDeckOptions {
+function assembleOptsFromArgs(args: BuildArgs, requireOutput: boolean): AssembleDeckOptions {
   return {
     ...(args.cwd !== undefined ? { cwd: args.cwd } : {}),
     ...(args.deck !== undefined ? { deck: args.deck } : {}),
     baseDir: '/',
     requireOutput,
+    minify: !args.debug,
     ...(args.slides ? { slides: args.slides } : {}),
     ...(args.outputPath ? { outputPath: args.outputPath } : {}),
     ...(args.theme ? { theme: args.theme } : {}),
@@ -27,9 +28,9 @@ function assembleOptsFromArgs(args: ReturnType<typeof parseDeckArgs>, requireOut
 
 /** Assemble and write the deck; `argv` is flags after the `build` subcommand. */
 export async function runBuild(argv: string[]): Promise<void> {
-  let args;
+  let args: BuildArgs;
   try {
-    args = parseDeckArgs(argv);
+    args = parseBuildArgs(argv);
   } catch (err) {
     if (err instanceof HelpDisplayedError) return;
     console.error((err as Error).message);

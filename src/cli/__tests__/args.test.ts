@@ -1,6 +1,14 @@
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { HelpDisplayedError, invocationDir, parseDeckArgs, resolveAgainst, resolveCliPath } from '../args.ts';
+import {
+  HelpDisplayedError,
+  buildHelpText,
+  invocationDir,
+  parseBuildArgs,
+  parseDeckArgs,
+  resolveAgainst,
+  resolveCliPath,
+} from '../args.ts';
 
 describe('parseDeckArgs', () => {
   const prev = process.env.INIT_CWD;
@@ -111,6 +119,21 @@ describe('parseDeckArgs', () => {
 
   it('surfaces help as HelpDisplayedError', () => {
     expect(() => parseDeckArgs(['--help'])).toThrow(HelpDisplayedError);
+  });
+
+  it('rejects build-only --debug on parseDeckArgs', () => {
+    expect(() => parseDeckArgs(['--cwd', 'd', '--debug'])).toThrow(/unknown option/i);
+  });
+});
+
+describe('parseBuildArgs', () => {
+  it('defaults debug to false and accepts --debug', () => {
+    expect(parseBuildArgs(['--cwd', 'd']).debug).toBe(false);
+    expect(parseBuildArgs(['--cwd', 'd', '--debug']).debug).toBe(true);
+  });
+
+  it('lists --debug in build help', () => {
+    expect(buildHelpText()).toMatch(/--debug/);
   });
 });
 

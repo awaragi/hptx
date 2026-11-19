@@ -54,6 +54,13 @@ Root `npx hptx --help` MUST list the `export` subcommand alongside `build`, `dev
 - **WHEN** a developer runs `npx hptx --help` from the package root after `npm install`
 - **THEN** the process exits successfully and prints usage that names the `build`, `dev`, `new`, and `export` subcommands
 
+### Requirement: Build subcommand accepts --debug
+Via `npx hptx build` (and equivalent `npm run build`), the CLI MUST accept long-only `--debug` with the same semantics as deck-build (skip CSS/JS minify when writing `output`). Authors MUST NOT need an extra `--` between `hptx` and those flags when invoking via `npx hptx`.
+
+#### Scenario: Debug via bin
+- **WHEN** a developer runs `npx hptx build --cwd <dir> --debug` for a valid deck with `output`
+- **THEN** build writes unminified HTML without requiring a `--` token between `build` and `--debug`
+
 ### Requirement: CLI console path display
 Operator-facing CLI console output that names filesystem paths (effective-configuration summaries, export artifact summaries, and success “Wrote …” lines) MUST format those paths per the scenarios below. Path resolution and on-disk locations MUST NOT change. Non-path values MUST print unchanged.
 

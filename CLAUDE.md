@@ -26,13 +26,15 @@ Prefer `npx hptx …` after `npm install` (no `--` before flags). `npm run … -
 ```bash
 npm install
 npx hptx dev --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
-npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] ...
+npx hptx build --cwd <dir> | --deck <file> [--slide key]... [--output path] [--theme src] [--settings.clicker true|false] [--settings.appearance light|dark] [--debug] ...
 npx hptx new deck --cwd <dir> [--title <text>] [--output <path>] ...
 npx hptx new slide --cwd <dir> --key <stem> --from <template> [--title <text>] [--after <key>]
 npx hptx new --list          # slide templates (browse: npx hptx dev --cwd templates)
 npx hptx export --cwd <dir> | --deck <file> [--format png|pdf|print|pptx] [--settings.appearance light|dark] [--settings.clicker true|false] [--progress] ...
 npm test
 ```
+
+Build minifies inline CSS/JS by default; pass `--debug` to write readable HTML. Export assembles in memory without minify.
 
 Examples: `npx hptx dev --cwd templates`, `npx hptx build --cwd templates --slide cardGrid --slide stepper`,
 `npx hptx export --cwd decks/about --format png --progress`, `npx hptx export --cwd templates --format pptx --theme dark`,

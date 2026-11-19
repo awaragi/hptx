@@ -67,6 +67,7 @@ export function printEffectiveConfig(plan: AssemblePlan, opts: PrintConfigOption
     ['slides', slides.length ? slides.map((s) => formatConsolePath(s.path, ctx)) : '(none)'],
     ['scripts', config.scripts?.length ? config.scripts.map(cdnLine) : '(none)'],
     ['styles', config.styles?.length ? config.styles.map(cdnLine) : '(none)'],
+    ['minify', plan.minify ? 'on' : 'off'],
   ];
 
   const width = Math.max(...lines.map(([k]) => k.length));

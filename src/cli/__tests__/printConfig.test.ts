@@ -33,6 +33,7 @@ describe('printEffectiveConfig', () => {
       ],
       templatePath: '/shell/template.html',
       requireOutput: true,
+      minify: true,
     };
     printEffectiveConfig(plan, { command: 'build', invocationDir: '/proj' });
     const text = log.mock.calls.map((c) => c.join(' ')).join('\n');
@@ -46,7 +47,29 @@ describe('printEffectiveConfig', () => {
     expect(text).toMatch(/scripts\s+https:\/\/cdn\.example\.com\/x\.js\n\s+https:\/\/cdn\.example\.com\/y\.js/);
     expect(text).toMatch(/styles\s+https:\/\/cdn\.example\.com\/a\.css\n\s+https:\/\/cdn\.example\.com\/b\.css/);
     expect(text).toMatch(/settings\s+clicker=true rememberStep=false timer=false appearance=dark/);
+    expect(text).toMatch(/minify\s+on/);
     expect(text).not.toContain('/proj/templates/deck.json');
+    log.mockRestore();
+  });
+
+  it('prints minify off when plan.minify is false', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const plan: AssemblePlan = {
+      deck: {
+        root: '/proj/templates',
+        config: { version: 1, output: '/proj/dist/Out.html' },
+        outputPath: '/proj/dist/Out.html',
+        settings: { clicker: false, rememberStep: true, timer: false, appearance: 'light' },
+        slug: 'out',
+      },
+      slides: [],
+      templatePath: '/shell/template.html',
+      requireOutput: true,
+      minify: false,
+    };
+    printEffectiveConfig(plan, { command: 'build', invocationDir: '/proj' });
+    const text = log.mock.calls.map((c) => c.join(' ')).join('\n');
+    expect(text).toMatch(/minify\s+off/);
     log.mockRestore();
   });
 });
