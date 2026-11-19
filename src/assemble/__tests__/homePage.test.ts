@@ -9,6 +9,7 @@ interface DeckApi {
   goTo(i: number): void;
   goToKey(k: string): void;
   setStep(k: string, i: number): void;
+  stepIndex(key: string): number | undefined;
   get(k: string): { stepCount?: number } | undefined;
   clickerMode(): boolean;
 }
@@ -17,6 +18,11 @@ const slide = (title: string, section?: string) =>
   `<!doctype html><html><head><script>window.registerSlide({ title: ${JSON.stringify(title)}${
     section ? `, agendaSection: ${JSON.stringify(section)}` : ''
   } });</script></head><body><h1 class="slide-title">${title}</h1></body></html>`;
+
+const steppedSlide = (title: string, count: number, section?: string) =>
+  `<!doctype html><html><head><script>window.registerSlide({ title: ${JSON.stringify(title)}${
+    section ? `, agendaSection: ${JSON.stringify(section)}` : ''
+  }, stepCount: ${count}, setStep: function () {} });</script></head><body><h1 class="slide-title">${title}</h1></body></html>`;
 
 const COVER =
   '<!doctype html><html><head><style>.title-main{font-size:92px}</style></head><body>' +
@@ -348,5 +354,44 @@ describe('Settings theme (jsdom)', () => {
   it('ignores legacy clicker-mode 1 when clicker key is absent', async () => {
     const { doc } = await boot(DECK, { stored: { 'hptx/o/clicker-mode': '1' } });
     expect(doc.documentElement.classList.contains('deck-clicker-mode')).toBe(false);
+  });
+
+  it('clicker forward from home skips agenda tiles', async () => {
+    const { Deck, home, key, doc } = await boot(DECK);
+    expect(Deck.get('agenda')?.stepCount).toBeGreaterThan(1);
+    (doc.getElementById('clickerCheckbox') as HTMLInputElement).click();
+    expect(Deck.clickerMode()).toBe(true);
+    expect(Deck.currentKey()).toBe('agenda');
+    key('ArrowRight');
+    expect(Deck.currentKey()).toBe('process');
+    expect(home.classList.contains('active')).toBe(false);
+  });
+
+  it('clicker still steps content slides then returns to home on back', async () => {
+    const files = {
+      ...DECK,
+      'process.html': steppedSlide('Process overview', 3, 'Why'),
+    };
+    const { Deck, key, doc } = await boot(files);
+    (doc.getElementById('clickerCheckbox') as HTMLInputElement).click();
+    Deck.goToKey('process');
+    Deck.setStep('process', 0);
+    expect(Deck.stepIndex('process')).toBe(0);
+    key('ArrowRight');
+    expect(Deck.currentKey()).toBe('process');
+    expect(Deck.stepIndex('process')).toBe(1);
+    Deck.setStep('process', 0);
+    key('ArrowLeft');
+    expect(Deck.currentKey()).toBe('agenda');
+  });
+
+  it('non-clicker ArrowRight on home still highlights tiles', async () => {
+    const { Deck, home, key } = await boot(DECK);
+    expect(Deck.clickerMode()).toBe(false);
+    const hl = () => [...home.querySelectorAll('#tocGrid .toc-item')].findIndex((e) => e.classList.contains('highlight'));
+    expect(hl()).toBe(0);
+    key('ArrowRight');
+    expect(hl()).toBe(1);
+    expect(Deck.currentKey()).toBe('agenda');
   });
 });

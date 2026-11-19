@@ -8,6 +8,7 @@ interface DeckApi {
   goTo(i: number): void;
   goToKey(k: string): void;
   setStep(k: string, i: number): void;
+  clickerMode(): boolean;
 }
 
 type Popup = Window & { closed: boolean };
@@ -34,7 +35,7 @@ afterEach(() => {
   for (const d of doms.splice(0)) d.window.close();
 });
 
-async function boot(files: Record<string, string>) {
+async function boot(files: Record<string, string>, opts: { stored?: Record<string, string> } = {}) {
   const { html } = await assembleDeck(makeDeckDir(files), {});
   const errors: string[] = [];
   const popups: Record<string, Popup> = {};
@@ -48,6 +49,7 @@ async function boot(files: Record<string, string>) {
       w.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
       w.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} };
       win.Element.prototype.scrollIntoView ??= function () {};
+      for (const [k, v] of Object.entries(opts.stored ?? {})) win.localStorage.setItem(k, v);
       win.addEventListener('error', (e) => errors.push(String((e as ErrorEvent).message)));
       const origError = win.console.error.bind(win.console);
       win.console.error = (...args: unknown[]) => { errors.push(args.map(String).join(' ')); origError(...args); };
@@ -122,11 +124,13 @@ describe('speaker notes window (jsdom)', () => {
     expect(notes().closed).toBe(true);
   });
 
-  it('shows Home and the placeholder on the home page, then the slide notes in order', async () => {
+  it('shows Home TOC on the home page, then the slide notes in order', async () => {
     const { key, Deck, nd, text } = await boot(DECK);
     key('n');
     expect(text('nwTitle')).toBe('Home');
-    expect(text('nwNotes')).toBe('No notes');
+    expect(text('nwNotes')).not.toBe('No notes');
+    const tocItems = [...nd().querySelectorAll('#nwNotes .nw-toc li')].map((e) => e.textContent?.trim());
+    expect(tocItems).toEqual(['Overview', 'Process', 'Closing']);
     Deck.goToKey('overview');
     expect(text('nwTitle')).toBe('Overview');
     expect(text('nwSlidePos')).toBe('Slide 1 / 3');
@@ -136,6 +140,28 @@ describe('speaker notes window (jsdom)', () => {
     expect((nd().querySelector('#nwNotes p[style]') as HTMLElement).getAttribute('style')).toContain('var(--brand)');
     Deck.goToKey('closing');
     expect(text('nwNotes')).toBe('No notes');
+  });
+
+  it('groups home TOC by agendaSection, shows estimates, and omits hidden slides', async () => {
+    const files = {
+      'deck.json': JSON.stringify({ output: 'o.html', slides: ['process.html', 'metrics.html', 'closing.html'] }),
+      'process.html': slide('Process', '', ', agendaSection: "Why", estimatedMinutes: 3'),
+      'metrics.html': slide('Metrics', '', ', agendaSection: "Why"'),
+      'closing.html': slide('Closing', '', ', agendaSection: "Wrap"'),
+    };
+    const { key, Deck, nd } = await boot(files, { stored: { 'hptx/o/hidden-slides': '["metrics"]' } });
+    key('n');
+    expect(Deck.currentKey()).toBe('agenda');
+    const sections = [...nd().querySelectorAll('#nwNotes .nw-toc h3')].map((e) => e.textContent);
+    expect(sections).toEqual(['Why', 'Wrap']);
+    const items = [...nd().querySelectorAll('#nwNotes .nw-toc li')].map((e) => ({
+      text: e.childNodes[0]?.textContent?.trim(),
+      est: e.querySelector('.nw-toc-est')?.textContent ?? null,
+    }));
+    expect(items).toEqual([
+      { text: 'Process', est: '3 min' },
+      { text: 'Closing', est: null },
+    ]);
   });
 
   it('shows a static estimated-minutes label and clears it when absent or on home', async () => {
@@ -245,6 +271,34 @@ describe('speaker notes window (jsdom)', () => {
     expect(mode()).toBe(after);
     expect(nd().documentElement.getAttribute('data-theme')).toBe(after);
     expect(sw().checked).toBe(after === 'dark');
+  });
+
+  it('syncs clicker mode with the notes switch, home, and Settings', async () => {
+    const { key, doc, nd, Deck, dom } = await boot(DECK);
+    key('n');
+    const nw = () => nd().getElementById('nwClickerCheckbox') as HTMLInputElement;
+    const home = () => doc.getElementById('clickerCheckbox') as HTMLInputElement;
+    const settings = () => doc.getElementById('tcClickerMode') as HTMLInputElement;
+    expect(nw()).not.toBeNull();
+    expect(nw().checked).toBe(false);
+    expect(Deck.clickerMode()).toBe(false);
+
+    nw().click();
+    expect(Deck.clickerMode()).toBe(true);
+    expect(home().checked).toBe(true);
+    expect(settings().checked).toBe(true);
+    expect(dom.window.localStorage.getItem('hptx/o/clicker')).toBe('true');
+    expect(nd().querySelector('.nw-clicker-toggle')?.classList.contains('is-on')).toBe(true);
+
+    home().click();
+    expect(Deck.clickerMode()).toBe(false);
+    expect(nw().checked).toBe(false);
+    expect(settings().checked).toBe(false);
+    expect(nd().querySelector('.nw-clicker-toggle')?.classList.contains('is-on')).toBe(false);
+
+    settings().click();
+    expect(Deck.clickerMode()).toBe(true);
+    expect(nw().checked).toBe(true);
   });
 
   it('shows the disconnected banner when the deck window is gone', async () => {

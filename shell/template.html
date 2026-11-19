@@ -938,9 +938,9 @@
             <div class="tc-help-group">
               <h3>Navigate</h3>
               <div class="tc-help-rows">
-                <div class="tc-help-row"><span class="key"><kbd>↑</kbd><kbd>↓</kbd></span><span class="kbd-desc">previous / next page (or step then page in clicker mode)</span></div>
-                <div class="tc-help-row"><span class="key"><kbd>←</kbd><kbd>→</kbd></span><span class="kbd-desc">highlight a section on home, or scrub steps on a content slide</span></div>
-                <div class="tc-help-row"><span class="key"><kbd>Pg↑</kbd><kbd>Pg↓</kbd></span><span class="kbd-desc">change page (or step then page in clicker mode)</span></div>
+                <div class="tc-help-row"><span class="key"><kbd>↑</kbd><kbd>↓</kbd></span><span class="kbd-desc">previous / next page (or step then page in clicker mode; home skips steps)</span></div>
+                <div class="tc-help-row"><span class="key"><kbd>←</kbd><kbd>→</kbd></span><span class="kbd-desc">highlight a section on home, or scrub steps on a content slide (clicker: same as ↑/↓; home skips steps)</span></div>
+                <div class="tc-help-row"><span class="key"><kbd>Pg↑</kbd><kbd>Pg↓</kbd></span><span class="kbd-desc">change page (or step then page in clicker mode; home skips steps)</span></div>
                 <div class="tc-help-row"><span class="key"><kbd>Space</kbd></span><span class="kbd-desc">next page</span></div>
                 <div class="tc-help-row"><span class="key"><kbd>0–9</kbd></span><span class="kbd-desc">type a slide number (<kbd>0</kbd> = home); wait or Enter to jump</span></div>
                 <div class="tc-help-row"><span class="key"><kbd>M</kbd></span><span class="kbd-desc">open agenda from a content slide</span></div>
@@ -1236,12 +1236,12 @@
     var lr = document.getElementById('titleKbdHintNavLeftRight');
     var ud = document.getElementById('titleKbdHintNavUpDown');
     if(!lr || !ud) return;
-    var clickerDesc = 'step on the slide, then change page at the ends';
+    /* Home hints only: clicker skips agenda-tile steps and changes page. */
     var lrDesc = lr.querySelector('.kbd-desc');
     var udDesc = ud.querySelector('.kbd-desc');
     if(clickerModeEnabled){
-      if(lrDesc) lrDesc.textContent = clickerDesc;
-      if(udDesc) udDesc.textContent = clickerDesc;
+      if(lrDesc) lrDesc.textContent = 'navigate between pages';
+      if(udDesc) udDesc.textContent = 'navigate between pages';
     } else {
       if(lrDesc) lrDesc.textContent = 'highlight a section on the page';
       if(udDesc) udDesc.textContent = 'navigate between pages';
@@ -1263,6 +1263,10 @@
     if(wrap) wrap.classList.toggle('is-on', clickerModeEnabled);
     document.documentElement.classList.toggle('deck-clicker-mode', clickerModeEnabled);
     syncTitleKbdHintsForClicker();
+    if(typeof syncNotesClicker === 'function') syncNotesClicker();
+  }
+  function toggleClickerMode(){
+    setClickerMode(!clickerModeEnabled);
   }
   function setRememberSlideStep(on, opts){
     opts = opts || {};
@@ -1987,7 +1991,9 @@
     return true;
   }
   function clickerNavStep(delta){
-    if(moveStep(delta, false)){
+    /* Home agenda tiles are steps for non-clicker scrub/Enter, but clicker
+       treats home as slide-only so long tile lists are not a click-through. */
+    if(keyAt(current) !== 'agenda' && moveStep(delta, false)){
       if(modalOverlay.classList.contains('open')) activateSlideStep();
       return true;
     }
@@ -2584,13 +2590,13 @@
     '.nw-spacer{ flex:1; }' +
     /* Same look as the deck's .theme-toggle / .switch chrome. */
     '.theme-toggle{ display:var(--deck-theme-toggle-display, flex); align-items:center; gap:8px; margin-right:6px; cursor:pointer; }' +
-    '.theme-toggle.nw-timer-toggle{ display:flex; margin-left:14px; opacity:.55; }' +
-    '.theme-toggle.nw-timer-toggle.is-on{ opacity:1; }' +
-    '.theme-toggle.nw-timer-toggle.is-on .toggle-icon{ color:var(--text-strong); }' +
-    '.theme-toggle.nw-timer-toggle .switch .slider::before{ background:var(--text-dim); }' +
-    '.theme-toggle.nw-timer-toggle.is-on .switch .slider{' +
+    '.theme-toggle.nw-timer-toggle,.theme-toggle.nw-clicker-toggle{ display:flex; margin-left:14px; opacity:.55; }' +
+    '.theme-toggle.nw-timer-toggle.is-on,.theme-toggle.nw-clicker-toggle.is-on{ opacity:1; }' +
+    '.theme-toggle.nw-timer-toggle.is-on .toggle-icon,.theme-toggle.nw-clicker-toggle.is-on .toggle-icon{ color:var(--text-strong); }' +
+    '.theme-toggle.nw-timer-toggle .switch .slider::before,.theme-toggle.nw-clicker-toggle .switch .slider::before{ background:var(--text-dim); }' +
+    '.theme-toggle.nw-timer-toggle.is-on .switch .slider,.theme-toggle.nw-clicker-toggle.is-on .switch .slider{' +
       ' background:rgba(var(--brand-rgb), .18); border-color:rgba(var(--brand-rgb), .4); }' +
-    '.theme-toggle.nw-timer-toggle.is-on .switch .slider::before{ background:var(--brand); }' +
+    '.theme-toggle.nw-timer-toggle.is-on .switch .slider::before,.theme-toggle.nw-clicker-toggle.is-on .switch .slider::before{ background:var(--brand); }' +
     '.theme-toggle .toggle-icon{ display:inline-flex; width:16px; height:16px; color:var(--text-dim); flex-shrink:0; }' +
     '.theme-toggle .toggle-icon svg{ width:100%; height:100%; display:block; }' +
     '.switch{ position:relative; width:40px; height:22px; display:inline-block; }' +
@@ -2616,6 +2622,13 @@
     '.nw-notes code{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em;' +
       ' background:var(--panel-2); padding:1px 5px; border-radius:4px; }' +
     '.nw-notes .notes-block + .notes-block{ margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }' +
+    '.nw-toc h3{ margin:18px 0 8px; font-size:15px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;' +
+      ' color:var(--text-dim); }' +
+    '.nw-toc h3:first-child{ margin-top:0; }' +
+    '.nw-toc ul{ margin:0 0 4px; }' +
+    '.nw-toc li{ margin:0 0 6px; }' +
+    '.nw-toc-est{ margin-left:8px; font-size:.92em; font-variant-numeric:tabular-nums; color:var(--text-dim);' +
+      ' white-space:nowrap; }' +
     '.nw-empty{ color:var(--text-dim); font-style:italic; }' +
     '.nw-banner{ display:none; padding:12px 16px; font-size:15px; color:var(--danger);' +
       ' background:rgba(var(--danger-rgb),.12); border-bottom:1px solid var(--line); }' +
@@ -2652,10 +2665,14 @@
     });
     document.addEventListener('change', function(e){
       var id = e.target.id;
-      if(id !== 'nwThemeCheckbox' && id !== 'nwTimerCheckbox') return;
+      var act = id === 'nwThemeCheckbox' ? 'theme'
+        : id === 'nwTimerCheckbox' ? 'timer'
+        : id === 'nwClickerCheckbox' ? 'clicker'
+        : null;
+      if(!act) return;
       var h = host();
       /* The deck sets the switch back to its real mode on sync. */
-      if(h) h.action(id === 'nwTimerCheckbox' ? 'timer' : 'theme');
+      if(h) h.action(act);
       else e.target.checked = !e.target.checked;
       e.target.blur();
     });
@@ -2701,6 +2718,10 @@
         '<label class="theme-toggle nw-timer-toggle" title="Speak timer (S)">' +
           '<span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg></span>' +
           '<span class="switch"><input type="checkbox" id="nwTimerCheckbox" tabindex="-1" aria-label="Speak timer"><span class="slider"></span></span>' +
+        '</label>' +
+        '<label class="theme-toggle nw-clicker-toggle" title="Clicker mode">' +
+          '<span class="toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="8" r="1.5"/><path d="M9 14h6M9 17h6"/></svg></span>' +
+          '<span class="switch"><input type="checkbox" id="nwClickerCheckbox" tabindex="-1" aria-label="Clicker mode"><span class="slider"></span></span>' +
         '</label>' +
         btn('fullscreen', 'Full screen', 'Toggle full screen for this window') +
       '</div>' +
@@ -2751,6 +2772,47 @@
     var s = sec % 60;
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
+  function escapeNotesText(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  /* Home has no authored notes; generate a TOC of visible content slides. */
+  function homeNotesTocHtml(){
+    var vis = visibleContentIndices();
+    if(!vis.length) return '';
+    var parts = ['<div class="nw-toc">'];
+    var sectionOpen = '';
+    var listOpen = false;
+    function closeList(){
+      if(listOpen){ parts.push('</ul>'); listOpen = false; }
+    }
+    function openList(){
+      if(!listOpen){ parts.push('<ul>'); listOpen = true; }
+    }
+    vis.forEach(function(idx){
+      var t = slideTitles[idx - 1] || {};
+      var key = keyAt(idx);
+      var mod = slideModules[key] || {};
+      var section = t.agendaSection || '';
+      if(section && section !== sectionOpen){
+        closeList();
+        sectionOpen = section;
+        parts.push('<h3>' + escapeNotesText(section) + '</h3>');
+      }
+      openList();
+      var title = t.agendaTitle || mod.title || key;
+      var li = escapeNotesText(title);
+      var est = estimatedMinutesLabel(mod);
+      if(est) li += ' <span class="nw-toc-est">' + escapeNotesText(est) + '</span>';
+      parts.push('<li>' + li + '</li>');
+    });
+    closeList();
+    parts.push('</div>');
+    return parts.join('');
+  }
   function renderNotes(){
     if(!notesWinReady()) return;
     var d = notesWin.document;
@@ -2767,7 +2829,8 @@
     d.getElementById('nwSlidePos').textContent = current === 0 ? 'Home' : ('Slide ' + (pos > 0 ? pos : '—') + ' / ' + vis.length);
     d.getElementById('nwStepPos').textContent = count > 0 ? 'Step ' + (step + 1) + ' / ' + count : '';
     syncNotesTimer(speakTimerSnapshot());
-    var html = notesFor(key, step);
+    syncNotesClicker();
+    var html = current === 0 ? homeNotesTocHtml() : notesFor(key, step);
     d.getElementById('nwNotes').innerHTML = html || '<p class="nw-empty">No notes</p>';
     var disabled = {
       prevSlide: current === 0,
@@ -2794,6 +2857,14 @@
     live.textContent = text;
     live.classList.toggle('is-over', !!(text && text.charAt(0) === '+'));
   }
+  function syncNotesClicker(){
+    if(!notesWinReady()) return;
+    var d = notesWin.document;
+    var sw = d.getElementById('nwClickerCheckbox');
+    if(sw) sw.checked = !!clickerModeEnabled;
+    var label = sw && sw.closest ? sw.closest('.nw-clicker-toggle') : null;
+    if(label) label.classList.toggle('is-on', !!clickerModeEnabled);
+  }
   function notesAction(act){
     if(act === 'prevSlide') stepVisible(-1);
     else if(act === 'nextSlide') stepVisible(1);
@@ -2801,6 +2872,7 @@
     else if(act === 'nextStep') moveStep(1, false);
     else if(act === 'theme') togglePresentationTheme();
     else if(act === 'timer') toggleSpeakTimerMode();
+    else if(act === 'clicker') toggleClickerMode();
   }
   function openNotesWindow(){
     if(notesWinReady()){

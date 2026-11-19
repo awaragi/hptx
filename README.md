@@ -126,7 +126,9 @@ behave as a single forward and back control:
 | `→` / `↓` / `Page Down` | Next step. On the last step, go to the next slide |
 | `←` / `↑` / `Page Up` | Previous step. On the first step, go to the previous slide |
 
-With one button you can walk through every step of every slide in order.
+On the home page, clicker mode skips agenda-tile steps and goes straight to the
+next or previous slide (tiles stay clickable; turn clicker off to scrub them
+with `←` / `→`). On content slides, one button walks every step in order.
 Steps don't wrap in clicker mode. Reaching the end of a slide's steps moves to
 the next slide instead. If a step's detail modal is open, it follows the
 steps and closes when you move on to another slide.
@@ -165,9 +167,11 @@ to change slides.
 
 Write notes in a slide's body as `<aside class="notes">…</aside>`. They are
 hidden on the slide and shown in a separate notes window: press `N`, then drag
-that window to your own screen. It shows the current slide's notes. Optional
-`estimatedMinutes` on `registerSlide` (whole minutes) appears as a static
-`N min` label. Turn on speak timer with `S` or the Timer switch (home chrome
+that window to your own screen. It shows the current slide's notes. On the home
+page, notes show a generated table of contents (agenda groupings and slide
+titles; each slide’s `estimatedMinutes` when set). Optional `estimatedMinutes`
+on `registerSlide` (whole minutes) also appears as a static `N min` label on
+content slides. Turn on speak timer with `S` or the Timer switch (home chrome
 and notes toolbar; stored per title slug) for a live countdown — or `+`
 elapsed when a slide has no estimate — plus subtle canvas border flashes at
 enable / 60s / 30s and a locked border in overtime. `⇧S` restarts the current
