@@ -9,9 +9,11 @@
    * • Default look — :root uses light surfaces; <html data-theme="dark"> overrides for dark mode.
    * • Toggle default — <html data-theme="light"> (same as omitting dark); preference saved in localStorage when the browser allows it.
    * • Lock to one look — set --deck-theme-toggle-display: none in :root (hides switch; T disabled). When allowed, the shell shows the switch on the home page only; T still works on content slides.
+   * • Timer / clicker home toggles — --deck-timer-toggle-display / --deck-clicker-toggle-display: none (same rules as theme toggle; S disabled when timer is none; Settings → Playback controls disabled when locked).
    * • Settings gear — --deck-settings-gear-display: none to hide header gear button.
    * • Agenda T/C hints — --deck-agenda-theme-hint-display / --deck-agenda-settings-hint-display: none (use grid|none, not flex).
    * • C shortcut — opens Settings. --deck-settings-shortcut-enabled: 0 disables it only while the gear is visible; a hidden gear does not lock C out.
+   * • Deck chrome block (below) — optional in theme.css. Shell defaults are good for most decks; omit the block to keep them. Override only the --deck-* tokens you need (theme bake or Settings override; not deck.json settings). Placement enums use block-start|block-end and inline-start|inline-end only (no left/right).
    */
   /* Layout tokens — outside the theme region so a baked theme that omits them keeps them; a theme may still override them. */
   :root{
@@ -23,11 +25,23 @@
   /* DECK THEME — START */
   /* Default: Bootstrap 5.3 default palette (light + dark). Deck themes come from deck.json `theme` or Settings. */
   :root{
-    --deck-theme-toggle-display:flex;
-    --deck-settings-gear-display:flex;
-    --deck-agenda-theme-hint-display:grid;
-    --deck-agenda-settings-hint-display:grid;
-    --deck-settings-shortcut-enabled:1;
+    /* ===== Deck chrome (optional in theme.css — defaults are fine; copy only what you override) ===== */
+    --deck-theme-toggle-display:flex;              /* flex | none */
+    --deck-timer-toggle-display:flex;              /* flex | none */
+    --deck-clicker-toggle-display:flex;            /* flex | none */
+    --deck-settings-gear-display:flex;             /* flex | none */
+    --deck-agenda-theme-hint-display:grid;         /* grid | none */
+    --deck-agenda-settings-hint-display:grid;      /* grid | none */
+    --deck-settings-shortcut-enabled:1;            /* 1 | 0 */
+    --deck-progress-display:block;                 /* block | none */
+    --deck-progress-edge:block-start;              /* block-start | block-end */
+    --deck-navdots-display:flex;                   /* flex | none */
+    --deck-navdots-edge:inline-end;                /* inline-end | inline-start */
+    --deck-counter-display:block;                  /* block | none */
+    --deck-counter-inline:inline-start;            /* inline-start | inline-end */
+    --deck-arrows-display:flex;                    /* flex | none */
+    --deck-arrows-inline:inline-end;               /* inline-end | inline-start */
+    /* ===== End deck chrome ===== */
     --brand:#0d6efd;
     --brand-strong:#0a58ca;
     --brand-deep:#052c65;

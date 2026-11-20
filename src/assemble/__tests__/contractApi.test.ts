@@ -106,4 +106,56 @@ describe('slide-contract.css', () => {
     }
     for (const cls of ['.title-logo', '.title-main', '.title-desc', '.title-tags']) expect(css, cls).toContain(cls);
   });
+
+  it('clusters deck chrome visibility and logical placement tokens with defaults', () => {
+    const css = fs.readFileSync(path.join(REPO, 'shell', 'contract', 'slide-contract.css'), 'utf8');
+    const start = css.indexOf('DECK THEME — START');
+    const end = css.indexOf('DECK THEME — END');
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const region = css.slice(start, end);
+    const expected: Array<[string, string]> = [
+      ['--deck-timer-toggle-display', 'flex'],
+      ['--deck-clicker-toggle-display', 'flex'],
+      ['--deck-progress-display', 'block'],
+      ['--deck-progress-edge', 'block-start'],
+      ['--deck-navdots-display', 'flex'],
+      ['--deck-navdots-edge', 'inline-end'],
+      ['--deck-counter-display', 'block'],
+      ['--deck-counter-inline', 'inline-start'],
+      ['--deck-arrows-display', 'flex'],
+      ['--deck-arrows-inline', 'inline-end'],
+    ];
+    for (const [name, value] of expected) {
+      expect(region).toMatch(new RegExp(`${name}\\s*:\\s*${value}\\b`));
+    }
+    expect(region).toMatch(/block-start\s*\|\s*block-end/);
+    expect(region).toMatch(/inline-end\s*\|\s*inline-start/);
+    expect(region).toMatch(/optional in theme\.css/i);
+    expect(region).not.toMatch(/--deck-(?:progress|navdots|counter|arrows)[^;]*\bleft\b/);
+    expect(region).not.toMatch(/--deck-(?:progress|navdots|counter|arrows)[^;]*\bright\b/);
+  });
+});
+
+describe('shell chrome layout tokens', () => {
+  it('wires progress/navdots/counter/arrows to display tokens and logical placement attrs', () => {
+    const tpl = fs.readFileSync(path.join(REPO, 'shell', 'template.html'), 'utf8');
+    const chrome = tpl.slice(tpl.indexOf('<style id="deck-chrome">'), tpl.indexOf('</style>', tpl.indexOf('<style id="deck-chrome">')));
+    expect(chrome).toContain('display:var(--deck-progress-display)');
+    expect(chrome).toContain('display:var(--deck-navdots-display)');
+    expect(chrome).toContain('display:var(--deck-counter-display)');
+    expect(chrome).toContain('display:var(--deck-arrows-display)');
+    expect(chrome).toContain('display:var(--deck-timer-toggle-display)');
+    expect(chrome).toContain('display:var(--deck-clicker-toggle-display)');
+    expect(chrome).toContain('to inline-end');
+    expect(chrome).toContain('data-edge="block-end"');
+    expect(chrome).toContain('data-edge="inline-start"');
+    expect(chrome).toContain('data-inline="inline-end"');
+    expect(tpl).toContain('function syncChromeLayout');
+    expect(tpl).toContain('function isTimerSwitchDisabled');
+    expect(tpl).toContain('function isClickerSwitchDisabled');
+    expect(tpl).toContain("normalizeChromeEnum");
+    expect(tpl).toContain("'--deck-progress-edge'");
+    expect(tpl).toContain('id="navArrows"');
+  });
 });

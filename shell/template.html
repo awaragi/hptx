@@ -61,15 +61,28 @@
   .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--brand); box-shadow:0 0 10px var(--brand); }
   .brand small{ display:block; font-weight:400; color:var(--text-dim); font-size:11.5px; letter-spacing:1.2px; margin-top:1px; }
   .deck-title{ font-size:12.5px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); pointer-events:auto; }
-  /* progress bar */
+  /* progress bar — visibility/placement via --deck-progress-* (logical edges) */
   .progress{
-    position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--brand),var(--brand-strong));
+    position:fixed; display:var(--deck-progress-display); inset-inline-start:0; height:3px;
+    background:linear-gradient(to inline-end,var(--brand),var(--brand-strong));
     z-index:60; transition:width .5s var(--ease); box-shadow:0 0 8px rgba(var(--brand-rgb),.6);
+  }
+  .progress[data-edge="block-start"], .progress:not([data-edge]){
+    inset-block-start:0; inset-block-end:auto;
+  }
+  .progress[data-edge="block-end"]{
+    inset-block-end:0; inset-block-start:auto;
   }
   /* slide counter + dots */
   .navdots{
-    position:fixed; right:26px; top:50%; transform:translateY(-50%); z-index:50;
-    display:flex; flex-direction:column; gap:10px;
+    position:fixed; inset-block-start:50%; transform:translateY(-50%); z-index:50;
+    display:var(--deck-navdots-display); flex-direction:column; gap:10px;
+  }
+  .navdots[data-edge="inline-end"], .navdots:not([data-edge]){
+    inset-inline-end:26px; inset-inline-start:auto;
+  }
+  .navdots[data-edge="inline-start"]{
+    inset-inline-start:26px; inset-inline-end:auto;
   }
   .navdots button{
     width:9px; height:9px; border-radius:50%; border:1.5px solid var(--text-dim);
@@ -83,12 +96,27 @@
     box-shadow:0 0 8px rgba(var(--brand-rgb),.5); transform:scale(1.25);
   }
   .counter{
-    position:fixed; left:34px; bottom:22px; z-index:50; font-size:13px; color:var(--text-dim);
-    letter-spacing:1px; font-variant-numeric:tabular-nums;
+    position:fixed; display:var(--deck-counter-display); inset-block-end:22px; z-index:50;
+    font-size:13px; color:var(--text-dim); letter-spacing:1px; font-variant-numeric:tabular-nums;
+  }
+  .counter[data-inline="inline-start"], .counter:not([data-inline]){
+    inset-inline-start:34px; inset-inline-end:auto;
+  }
+  .counter[data-inline="inline-end"]{
+    inset-inline-end:34px; inset-inline-start:auto;
   }
   .counter b{ color:var(--text-strong); }
   .counter.is-agenda-hidden{ visibility:hidden; opacity:0; pointer-events:none; }
-  .arrows{ position:fixed; bottom:18px; right:26px; z-index:50; display:flex; gap:10px; }
+  .arrows{
+    position:fixed; display:var(--deck-arrows-display); inset-block-end:18px; z-index:50;
+    gap:10px;
+  }
+  .arrows[data-inline="inline-end"], .arrows:not([data-inline]){
+    inset-inline-end:26px; inset-inline-start:auto;
+  }
+  .arrows[data-inline="inline-start"]{
+    inset-inline-start:26px; inset-inline-end:auto;
+  }
   .arrows button{
     width:42px; height:42px; border-radius:50%; border:1px solid var(--line);
     background:rgba(var(--paper-rgb),.03); color:var(--text-strong); font-size:16px; cursor:pointer;
@@ -121,7 +149,7 @@
   html.is-deck-home #themeToggleWrap{ display:var(--deck-theme-toggle-display); }
   /* Speak-timer switch: home only, beside theme (no extra chrome box). */
   #timerToggleWrap{ display:none; margin-left:14px; opacity:.55; }
-  html.is-deck-home #timerToggleWrap{ display:flex; }
+  html.is-deck-home #timerToggleWrap{ display:var(--deck-timer-toggle-display); }
   #timerToggleWrap.is-on{ opacity:1; }
   #timerToggleWrap.is-on .toggle-icon{ color:var(--text-strong); }
   #timerToggleWrap .switch .slider::before{ background:var(--text-dim); }
@@ -132,7 +160,7 @@
   #timerToggleWrap.is-on .switch .slider::before{ background:var(--brand); }
   /* Clicker-mode switch: home only, beside timer. */
   #clickerToggleWrap{ display:none; margin-left:14px; opacity:.55; }
-  html.is-deck-home #clickerToggleWrap{ display:flex; }
+  html.is-deck-home #clickerToggleWrap{ display:var(--deck-clicker-toggle-display); }
   #clickerToggleWrap.is-on{ opacity:1; }
   #clickerToggleWrap.is-on .toggle-icon{ color:var(--text-strong); }
   #clickerToggleWrap .switch .slider::before{ background:var(--text-dim); }
@@ -786,7 +814,7 @@
 
 <div class="navdots" id="navDots"></div>
 <div class="counter is-agenda-hidden" id="slideCounter"><b id="curNum">00</b> / <span id="totalNum">—</span></div>
-<div class="arrows">
+<div class="arrows" id="navArrows">
   <button id="prevBtn" title="Previous (↑)">&#8593;</button>
   <button id="nextBtn" title="Next (↓)">&#8595;</button>
 </div>
@@ -1129,20 +1157,74 @@
   ];
   var DECK_CHROME_TOKEN_NAMES = [
     '--deck-theme-toggle-display',
+    '--deck-timer-toggle-display',
+    '--deck-clicker-toggle-display',
     '--deck-settings-gear-display',
     '--deck-agenda-theme-hint-display',
     '--deck-agenda-settings-hint-display',
-    '--deck-settings-shortcut-enabled'
+    '--deck-settings-shortcut-enabled',
+    '--deck-progress-display',
+    '--deck-progress-edge',
+    '--deck-navdots-display',
+    '--deck-navdots-edge',
+    '--deck-counter-display',
+    '--deck-counter-inline',
+    '--deck-arrows-display',
+    '--deck-arrows-inline'
   ];
-  var ROOT_TOKEN_NAMES = DECK_CHROME_TOKEN_NAMES
-    .concat(BRAND_TOKEN_NAMES, CONSTANT_TOKEN_NAMES, SURFACE_TOKEN_NAMES, RGB_TOKEN_NAMES);
   function deckChromeTokenLine(name){
     if(name === '--deck-settings-shortcut-enabled') return '  ' + name + ': <0|1>;';
     if(name === '--deck-agenda-theme-hint-display' || name === '--deck-agenda-settings-hint-display'){
       return '  ' + name + ': <grid|none>;';
     }
+    if(name === '--deck-progress-display' || name === '--deck-counter-display'){
+      return '  ' + name + ': <block|none>;';
+    }
+    if(name === '--deck-progress-edge') return '  ' + name + ': <block-start|block-end>;';
+    if(name === '--deck-navdots-edge') return '  ' + name + ': <inline-end|inline-start>;';
+    if(name === '--deck-counter-inline' || name === '--deck-arrows-inline'){
+      return '  ' + name + ': <inline-start|inline-end>;';
+    }
     if(name.indexOf('-display') !== -1) return '  ' + name + ': <flex|none>;';
     return '  ' + name + ': <value>;';
+  }
+  function normalizeChromeEnum(raw, allowed, fallback){
+    var v = String(raw || '').trim().toLowerCase();
+    return allowed.indexOf(v) !== -1 ? v : fallback;
+  }
+  function syncChromeLayout(){
+    var progress = document.getElementById('progressBar');
+    var dots = document.getElementById('navDots');
+    var counter = document.getElementById('slideCounter');
+    var arrows = document.getElementById('navArrows');
+    if(progress){
+      progress.setAttribute('data-edge', normalizeChromeEnum(
+        deckCssVar('--deck-progress-edge'),
+        ['block-start', 'block-end'],
+        'block-start'
+      ));
+    }
+    if(dots){
+      dots.setAttribute('data-edge', normalizeChromeEnum(
+        deckCssVar('--deck-navdots-edge'),
+        ['inline-end', 'inline-start'],
+        'inline-end'
+      ));
+    }
+    if(counter){
+      counter.setAttribute('data-inline', normalizeChromeEnum(
+        deckCssVar('--deck-counter-inline'),
+        ['inline-start', 'inline-end'],
+        'inline-start'
+      ));
+    }
+    if(arrows){
+      arrows.setAttribute('data-inline', normalizeChromeEnum(
+        deckCssVar('--deck-arrows-inline'),
+        ['inline-start', 'inline-end'],
+        'inline-end'
+      ));
+    }
   }
   function isSettingsShortcutEnabled(){
     var v = deckCssVar('--deck-settings-shortcut-enabled').trim().toLowerCase();
@@ -1159,11 +1241,30 @@
     var v = deckCssVar('--deck-theme-toggle-display').trim().toLowerCase();
     return v === 'none';
   }
+  function isTimerSwitchDisabled(){
+    var v = deckCssVar('--deck-timer-toggle-display').trim().toLowerCase();
+    return v === 'none';
+  }
+  function isClickerSwitchDisabled(){
+    var v = deckCssVar('--deck-clicker-toggle-display').trim().toLowerCase();
+    return v === 'none';
+  }
   function syncThemeSwitchControl(){
     var locked = isThemeSwitchDisabled();
     if(themeCheckbox) themeCheckbox.disabled = locked;
     var tcDark = document.getElementById('tcDarkMode');
     if(tcDark) tcDark.disabled = locked;
+    var timerLocked = isTimerSwitchDisabled();
+    var clickerLocked = isClickerSwitchDisabled();
+    var homeTimer = document.getElementById('timerCheckbox');
+    if(homeTimer) homeTimer.disabled = timerLocked;
+    var homeClicker = document.getElementById('clickerCheckbox');
+    if(homeClicker) homeClicker.disabled = clickerLocked;
+    var tcSpeak = document.getElementById('tcSpeakTimer');
+    if(tcSpeak) tcSpeak.disabled = timerLocked;
+    var tcClicker = document.getElementById('tcClickerMode');
+    if(tcClicker) tcClicker.disabled = clickerLocked;
+    syncChromeLayout();
   }
   function normalizePastedThemeCss(text){
     var t = (text || '').trim();
@@ -1285,6 +1386,8 @@
       '',
       'Theme layers (CSS cascade): shell defaults → deck.json bake → Settings override.',
       'A partial theme file is fine — unspecified tokens keep the defaults.',
+      'The Deck chrome block (--deck-* visibility/placement) is optional in theme.css;',
+      'shell defaults are good for most decks — set only the chrome tokens you want to change.',
       '',
       '1. Save the themed CSS from your AI assistant as a .css file in the deck folder',
       '   (for example theme.css), or host it at an https:// URL.',
@@ -1295,13 +1398,16 @@
       '3. Single theme (light only)',
       '   • Use :root { … } only — light colors (backgrounds, text, panels, and brand).',
       '   • Leave out the html[data-theme="dark"] { … } block.',
-      '   • Set --deck-theme-toggle-display: none; --deck-settings-gear-display: none;',
+      '   • Set --deck-theme-toggle-display: none; --deck-timer-toggle-display: none;',
+      '     --deck-clicker-toggle-display: none; --deck-settings-gear-display: none;',
       '     --deck-agenda-theme-hint-display: none; --deck-agenda-settings-hint-display: none;',
       '     --deck-settings-shortcut-enabled: 0;',
+      '   • Other --deck-* chrome tokens stay optional (omit to keep progress/dots/counter/arrows defaults).',
       '',
       '4. Dual theme (light + dark)',
       '   • :root { … } for brand + light surfaces, then html[data-theme="dark"] { … } for dark surface overrides.',
-      '   • Keep --deck-theme-toggle-display: flex; so users can switch modes.',
+      '   • Keep --deck-theme-toggle-display: flex; so users can switch modes (same for timer/clicker toggles unless hiding them).',
+      '   • Leave other --deck-* chrome tokens unset unless customizing chrome.',
       '',
       '5. Run npm run build -- <deck-folder>. The theme is appended after the shell defaults',
       '   between DECK THEME — START and DECK THEME — END (cascade, not replace).',
@@ -1357,8 +1463,12 @@
     }).join('\n');
   }
   function buildAiThemePrompt(){
-    var fullRootLines = ROOT_TOKEN_NAMES.map(function(n){
+    var colorRootNames = BRAND_TOKEN_NAMES.concat(CONSTANT_TOKEN_NAMES, SURFACE_TOKEN_NAMES, RGB_TOKEN_NAMES);
+    var colorRootLines = colorRootNames.map(function(n){
       if(n.indexOf('-rgb') !== -1) return '  ' + n + ': <r,g,b>;';
+      return '  ' + n + ': <value>;';
+    }).join('\n');
+    var chromeOptionalLines = DECK_CHROME_TOKEN_NAMES.map(function(n){
       return deckChromeTokenLine(n);
     }).join('\n');
     var sharedBrandLines = BRAND_TOKEN_NAMES.concat(CONSTANT_TOKEN_NAMES, RGB_TOKEN_NAMES).map(function(n){
@@ -1373,6 +1483,7 @@
       'You are helping theme a single-file HTML presentation via CSS custom properties.',
       'Your CSS becomes the deck\'s theme file (set as "theme" in deck.json); the build appends it after the shell defaults between the DECK THEME START/END markers so CSS cascade applies (partial themes keep unspecified defaults; :root; dual theme also includes html[data-theme="dark"]).',
       'Internal preview may use a separate overlay style tag (Settings override, third layer); your output is still one fenced css code block for copy/paste.',
+      'Deck chrome tokens (--deck-*) are optional in theme.css — shell defaults are good for most decks. Omit the chrome block unless the author asks to change chrome; when overriding, set only the tokens that change.',
       '',
       'STEP 1 — Before generating any CSS, ask me (in plain language) for:',
       '1. Company or brand name (and any public brand guidelines link, if I have one).',
@@ -1381,7 +1492,7 @@
       '4. Whether to keep the default Bootstrap primary blue as --brand or fully replace it with my brand primary.',
       '5. Any colors or hues to avoid.',
       '6. Single theme or dual theme?',
-      '   • Single theme — one complete :root { … } with every variable below set for a light presentation (brand + light surfaces in :root only).',
+      '   • Single theme — one complete :root { … } with every color variable below set for a light presentation (brand + light surfaces in :root only).',
       '   • Dual theme — :root { … } for brand + light surfaces, plus html[data-theme="dark"] { … } for dark surface/text overrides (both blocks in one theme region).',
       '',
       'Do NOT produce CSS until I have answered (single theme or dual theme). One short follow-up is fine if incomplete.',
@@ -1393,26 +1504,32 @@
       'Single theme — inside ```css include ONLY:',
       '/* hptx-custom-theme BEGIN */',
       ':root {',
-      fullRootLines,
-      '  /* Single theme must include:',
+      '  /* Single theme must include these lock tokens (not comment-only):',
       '       --deck-theme-toggle-display: none;',
+      '       --deck-timer-toggle-display: none;',
+      '       --deck-clicker-toggle-display: none;',
       '       --deck-settings-gear-display: none;',
       '       --deck-agenda-theme-hint-display: none;',
       '       --deck-agenda-settings-hint-display: none;',
-      '       --deck-settings-shortcut-enabled: 0; */',
+      '       --deck-settings-shortcut-enabled: 0;',
+      '     Other --deck-* chrome tokens are optional — omit to keep shell defaults. */',
+      colorRootLines,
       '}',
       '/* hptx-custom-theme END */',
-      '(Remap from the Current :root baseline section below. Include ALL variables listed — no omissions.',
-      ' For single theme, set all --deck-* chrome variables to the none/0 values in the comment — not comment-only.)',
+      '(Remap from the Current :root baseline section below. Include ALL color variables listed — no omissions.',
+      ' Do not paste the full Deck chrome block unless asked to customize chrome.)',
       '',
       'Dual theme — inside ```css include:',
       '/* hptx-custom-theme BEGIN */',
       ':root {',
       '  --deck-theme-toggle-display: flex;',
+      '  --deck-timer-toggle-display: flex;',
+      '  --deck-clicker-toggle-display: flex;',
       '  --deck-settings-gear-display: flex;',
       '  --deck-agenda-theme-hint-display: grid;',
       '  --deck-agenda-settings-hint-display: grid;',
       '  --deck-settings-shortcut-enabled: 1;',
+      '  /* Other --deck-* chrome tokens optional — omit to keep shell defaults. */',
       sharedBrandLines,
       lightSurfLines,
       '}',
@@ -1422,12 +1539,16 @@
       '/* hptx-custom-theme END */',
       '(I will save both :root and html[data-theme="dark"] in the deck\'s theme file.)',
       '',
+      'Optional Deck chrome reference (omit by default; set only tokens you change):',
+      chromeOptionalLines,
+      '',
       'CSS rules:',
       '- Use hex (#RRGGBB) or rgb()/rgba() values; *-rgb as comma-separated integers without rgb().',
       '- Keep --on-brand readable on the primary button; choose white or dark ink from contrast against the new primary.',
       '- If --brand changes, rematch the full brand family (--brand-strong/deep, *-rgb, donuts, gauges, chart grads) to that hue — no leftover default Bootstrap primary in charts.',
       '- Prefer my brand colors for accent tokens; do not invent orange/gold when my brand already has a strong warm/red.',
       '- --ink and --paper are fixed dark/light constants (overlays, shadows, text on --brand-deep / --danger). Set them only in :root; never invert them in html[data-theme="dark"].',
+      '- Deck chrome (--deck-*) is optional; shell defaults are good. Do not invent left/right placement — use block-start|block-end and inline-start|inline-end only.',
       '',
       'Token roles (names describe the job, not the hue):',
       '- --brand / --brand-strong / --brand-deep: primary CTA, active states, hover, deep fills; --on-brand: text/icons on --brand.',
@@ -2590,7 +2711,8 @@
     '.nw-spacer{ flex:1; }' +
     /* Same look as the deck's .theme-toggle / .switch chrome. */
     '.theme-toggle{ display:var(--deck-theme-toggle-display, flex); align-items:center; gap:8px; margin-right:6px; cursor:pointer; }' +
-    '.theme-toggle.nw-timer-toggle,.theme-toggle.nw-clicker-toggle{ display:flex; margin-left:14px; opacity:.55; }' +
+    '.theme-toggle.nw-timer-toggle{ display:var(--deck-timer-toggle-display, flex); margin-left:14px; opacity:.55; }' +
+    '.theme-toggle.nw-clicker-toggle{ display:var(--deck-clicker-toggle-display, flex); margin-left:14px; opacity:.55; }' +
     '.theme-toggle.nw-timer-toggle.is-on,.theme-toggle.nw-clicker-toggle.is-on{ opacity:1; }' +
     '.theme-toggle.nw-timer-toggle.is-on .toggle-icon,.theme-toggle.nw-clicker-toggle.is-on .toggle-icon{ color:var(--text-strong); }' +
     '.theme-toggle.nw-timer-toggle .switch .slider::before,.theme-toggle.nw-clicker-toggle .switch .slider::before{ background:var(--text-dim); }' +
@@ -2762,6 +2884,10 @@
       sw.checked = mode === 'dark';
       sw.disabled = isThemeSwitchDisabled();
     }
+    var nwTimer = d.getElementById('nwTimerCheckbox');
+    if(nwTimer) nwTimer.disabled = isTimerSwitchDisabled();
+    var nwClicker = d.getElementById('nwClickerCheckbox');
+    if(nwClicker) nwClicker.disabled = isClickerSwitchDisabled();
   }
   function estimatedMinutesLabel(mod){
     var n = estimatedMinutesFromMod(mod);
@@ -2870,9 +2996,9 @@
     else if(act === 'nextSlide') stepVisible(1);
     else if(act === 'prevStep') moveStep(-1, false);
     else if(act === 'nextStep') moveStep(1, false);
-    else if(act === 'theme') togglePresentationTheme();
-    else if(act === 'timer') toggleSpeakTimerMode();
-    else if(act === 'clicker') toggleClickerMode();
+    else if(act === 'theme'){ if(!isThemeSwitchDisabled()) togglePresentationTheme(); }
+    else if(act === 'timer'){ if(!isTimerSwitchDisabled()) toggleSpeakTimerMode(); }
+    else if(act === 'clicker'){ if(!isClickerSwitchDisabled()) toggleClickerMode(); }
   }
   function openNotesWindow(){
     if(notesWinReady()){
@@ -3286,9 +3412,13 @@
     }
     if((e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey && !e.altKey){
       if(!isKeyboardTypingTarget(document.activeElement)){
-        e.preventDefault();
-        if(e.shiftKey) resetSpeakTimerSlide();
-        else toggleSpeakTimerMode();
+        if(e.shiftKey){
+          e.preventDefault();
+          resetSpeakTimerSlide();
+        } else if(!isTimerSwitchDisabled()){
+          e.preventDefault();
+          toggleSpeakTimerMode();
+        }
       }
       return;
     }

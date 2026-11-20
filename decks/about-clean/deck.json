@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "title": "About hptx · Clean",
+  "brand": "HPTX",
+  "cover": "../about/cover.html",
+  "output": "../../dist/about-clean.html",
+  "theme": "./theme.css",
+  "slides": [
+    "../about/escape.html",
+    "../about/agent.html"
+  ],
+  "settings": {
+    "clicker": true,
+    "rememberStep": true,
+    "timer": false,
+    "appearance": "light"
+  }
+}

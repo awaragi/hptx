@@ -261,6 +261,18 @@ style tag on top of both.
 - **Tokens**: `--brand`, `--accent`, `--bg`, `--text-strong`, … plus `*-rgb`
   companions for `rgba()`. Light values on `:root`, dark on
   `html[data-theme="dark"]`.
+- **Deck chrome tokens** (`--deck-*`): optional show/hide and logical
+  placement for shell chrome (theme / timer / clicker toggles, settings gear,
+  agenda hints, progress bar, nav dots, slide counter, prev/next arrows).
+  Shell defaults are good for most decks — omit them in `theme.css` unless
+  you need to change chrome. Theme / timer / clicker toggles use the same
+  lock pattern (`flex` \| `none`): `none` hides the control and disables the
+  matching shortcut / Settings control (`T`, `S`, clicker). Defaults live in
+  one clustered block at the top of the `DECK THEME` region in
+  `slide-contract.css`; copy only the tokens you override. Placement enums
+  use `block-start` / `block-end` and `inline-start` / `inline-end` only (not
+  physical `left`/`right`). These are **not** `deck.json` `settings` keys;
+  bake overrides via `theme` or preview with Settings → Theme override.
 - **Canvas classes**: `.slide` layout, `.eyebrow`, `h1.slide-title`,
   `p.slide-sub`, `.content-area`, `.highlight`, `.box`, `.detail-box`.
 - **Helper output**: `.icon`, `.icon-badge`, `.inline-icon` (from `D.icon`,
@@ -268,7 +280,9 @@ style tag on top of both.
 - **Cover classes**: `.title-logo`, `.title-main`, `.title-desc`, `.title-tags`.
 
 Everything else in the shell (top bar, nav drawer, Settings, loader, print
-layout, home page layout and agenda tiles) is chrome: do not style or depend on it.
+layout, home page layout and agenda tiles) is chrome: do not style or depend
+on class locators for it — use the `--deck-*` tokens above when personalizing
+visibility or placement.
 
 Link the file from the slide `<head>` with a relative path so editors and AI
 tools can resolve it. The link is a reference only; assemble removes it.
